@@ -22,11 +22,11 @@
 //#endregion
 
 //#region positions
-enum chainState 	{ CH_DEF,	SAFE };	//when chain bar is SAFE, lift can move up and down without colliding with cone stack
-int chainPos[2] =	{ -10,		10 };
+enum chainState  { CH_DEF,	INTAKE, SAFE, STACK };	//when chain bar is SAFE, lift can move up and down without colliding with cone stack
+int chainPos[] = { -10,     -15,    90,   180 };
 
-enum liftState		{ L_DEF };
-int liftPos[1]	=	{ -30 };
+enum liftState  { L_DEF, PRELOAD, M_BASE_POS, S_BASE_POS };
+int liftPos[]	= { -30,   20,      -30,        10 };
 //#endregion
 
 //#region setup
@@ -47,20 +47,14 @@ int liftPos[1]	=	{ -30 };
 
 //#region constants
   //#subregion measurements
-	//all measurements in inches
-#define CONE_HEIGHT 1  //amount of stack height increase per cone
-#define LIFT_LEN 17	//length of four bar diagonals
-#define CHAIN_LEN 7	//length of chain bar
-#define LIFT_BASE_HEIGHT 12	//height of end actuator when all linkage joints are at angle 0 (above top of mobile goal)
-#define STACK_X_POS 7	//horizontal distance of cone stack from base of lift
-#define STACK_OFFSET 7	//distance above stack cone must be to be added (because of height of cones, etc.)
-#define CHAIN_BAR_OFFSET -1	//offset from the top of the cone stack when chain bar starts rotating from angle 0 to its final position (to avoid collision)
+#define CHAIN_BAR_OFFSET -1	//offset from the top of the cone stack when chain bar starts rotating from safe to its final position (to avoid collision)
+                            //measured in
   //#endsubregion
 	//#subregion still speeds
 #define INTAKE_STILL_SPEED 10
 	//#endsubregion
 #define INTAKE_DURATION 300	//amount of time rollers activate when intaking/expelling
-#define potToDegreeFactor 0.0651
+#define potToRadFactor 0.001136
 //#endregion
 
 //#region globals
@@ -109,10 +103,6 @@ void pre_auton() {
 void setLiftState(liftState state) {
 	setTargetPosition(lift, liftPos[state]);
 }
-
-double liftHeight() {
-	return LIFT_BASE_HEIGHT + LIFT_LEN * sin(getPosition(lift)) * (DR4B ? 2 : 1);
-}
 //#endregion
 
 //#region chain bar
@@ -134,25 +124,8 @@ void waitForMovementToFinish(bool waitForChain=true, bool waitForLift=true, int 
 }
 
 void stackNewCone() {	//TODO: account for limited range of motion
-	double adjustedHeight = CONE_HEIGHT * numCones - LIFT_BASE_HEIGHT;
-
-	if (DR4B) {
-		chainAngle = acos(STACK_X_POS / CHAIN_LEN);
-		liftAngle = asin((adjustedHeight - CHAIN_LEN * sin(chainAngle)) / LIFT_LEN / 2);
-	}
-	else {
-		double sqrLen1 = pow(LIFT_LEN, 2);
-		double sqrLen2 = pow(CHAIN_LEN, 2);
-		double a = pow(STACK_X_POS, 2) + pow(adjustedHeight, 2);
-		double b = a + sqrLen1 - sqrLen2;
-		double r = sqrt(2 * sqrLen1 * (sqrLen2 + b) - pow(LIFT_LEN, 4) - pow(b - sqrLen2, 2));
-
-		liftAngle = atan(adjustedHeight * (adjustedHeight * a + STACK_X_POS * r) /
-														(STACK_X_POS * a + adjustedHeight * r));
-		chainAngle = acos((STACK_X_POS - LIFT_LEN * cos(liftAngle)) / CHAIN_LEN);
-	}
-
-	stacking = true;
+	chainAngle = chainPos[STACK];
+	liftAngle = asin(potToRadFactor * getPosition(lift) + liftPos[M_BASE_POS]);
 }
 
 task liftManeuvers() {
@@ -168,6 +141,7 @@ task autoStacking() {
 		while (!stacking) EndTimeSlice();
 
 		//intake cone
+		setChainBarState(INTAKE);
 		setPower(coneIntake, 127);
 		wait1Msec(INTAKE_DURATION);
 		setPower(coneIntake, INTAKE_STILL_SPEED);
@@ -176,24 +150,19 @@ task autoStacking() {
 		setChainBarState(SAFE);
 		setTargetPosition(lift, liftAngle);
 
-		while (liftHeight() < numCones * CONE_HEIGHT + CHAIN_BAR_OFFSET) EndTimeSlice();
+		waitForMovementToFinish(false); //while (liftHeight() < numCones * CONE_HEIGHT + CHAIN_BAR_OFFSET) EndTimeSlice();
 		setTargetPosition(chainBar, chainAngle);
 
 		waitForMovementToFinish();
 
 		//expel cone
 		setPower(coneIntake, -127);
+		setChainBarState(CH_DEF);
 		wait1Msec(INTAKE_DURATION);
 		setPower(coneIntake, 0);
 
 		//return to ready positions
-		setChainBarState(SAFE);
-		waitForMovementToFinish(true, false);
-
 		setLiftState(L_DEF);
-		waitForMovementToFinish(false);
-
-		setChainBarState(CH_DEF);
 	}
 }
 //#endregion
