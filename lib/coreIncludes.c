@@ -1,6 +1,6 @@
 enum angleType { DEGREES, RADIANS, RAW };
 
-int limit(int input, int min, int max) {
+int limit(float input, float min, float max) {
 	if (input <= max && input >= min) {
 		return input;
 	}
@@ -11,7 +11,8 @@ int limit(int input, int min, int max) {
 
 float convertAngle(float angle, angleType output, angleType input=RAW) {
 	if (input != output) {
-		if (input == DEGREES) { //convert input to RAW
+		//convert input to RAW
+		if (input == DEGREES) {
 			angle *= 10;
 		} else if (input == RADIANS) {
 			angle *= 1800 / PI;
@@ -25,6 +26,11 @@ float convertAngle(float angle, angleType output, angleType input=RAW) {
 	}
 
 	return angle;
+}
+
+void arrayCopy(int* source, int* destination, int elements) {
+	for (int i=0; i<elements; i++)
+		destination[i] = source[i];
 }
 
 float tan(float x) {

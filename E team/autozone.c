@@ -30,8 +30,8 @@ int liftPos[] = { 3450,  2000,   2450,    3450,       2000 };
 #pragma platform(VEX2)
 #pragma competitionControl(Competition)
 #include "Vex_Competition_Includes.c"
-#include "lib\pd_autoMove.c"
-#include "lib\buttonTracker.c"
+#include "..\lib\pd_autoMove.c"
+#include "..\lib\buttonTracker.c"
 //#endregion
 
 //#region buttons
@@ -45,7 +45,7 @@ int liftPos[] = { 3450,  2000,   2450,    3450,       2000 };
 //#region constants
 	//#subregion measurements
 #define LIFT_BASE_HEIGHT 0
-#define CONE_HEIGHT 1
+#define CONE_HEIGHT 2.75
 #define LIFT_LEN 15
 	//#endsubregion
 	//#subregion still speeds
@@ -110,7 +110,7 @@ void setChainBarState(chainState state) {
 //#endregion
 
 //#region autostacking
-void waitForMovementToFinish(bool waitForChain=true, bool waitForLift=true, int timeout=75, double chainMargin=7, double liftMargin=10) {
+void waitForMovementToFinish(bool waitForChain=true, bool waitForLift=true, int timeout=75, float chainMargin=7, float liftMargin=10) {
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {
@@ -124,6 +124,7 @@ void waitForMovementToFinish(bool waitForChain=true, bool waitForLift=true, int 
 void stackNewCone() {	//TODO: account for limited range of motion
 	chainAngle = chainPos[STACK];
 	liftAngle = RAD_TO_POT_FCTR * asin((CONE_HEIGHT * numCones + LIFT_BASE_HEIGHT) / 2 / LIFT_LEN) + liftPos[L_ZERO];
+	stacking = true;
 }
 
 task liftManeuvers() {
@@ -160,6 +161,8 @@ task autoStacking() {
 		setPower(coneIntake, 0);
 
 		//return to ready positions
+		numCones++;
+		stacking = false;
 		setLiftState(L_DEF);
 	}
 }
