@@ -19,10 +19,10 @@
 
 //#region positions
 enum chainState  { CH_DEF,	INTAKE, SAFE, STACK };	//when chain bar is SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 1800,    2450,   1215, 200 };
+int chainPos[] = { 1600,    2400,   1215, 100 };
 
 enum liftState  { L_DEF, L_ZERO, L_MAX, PRELOAD, M_BASE_POS, S_BASE_POS };
-int liftPos[] = { 300,   1150,   2000,  1100,    375,        1250 };
+int liftPos[] = { 300,   1150,   2000,  1100,    200,        1250 };
 //#endregion
 
 //#region setup
@@ -44,14 +44,15 @@ int liftPos[] = { 300,   1150,   2000,  1100,    375,        1250 };
 
 //#region constants
 	//#subregion measurements
-#define CONE_HEIGHT 3.0
+#define CONE_HEIGHT 2.75
 #define LIFT_LEN 11.5
 	//#endsubregion
 	//#subregion still speeds
 #define INTAKE_STILL_SPEED 10
 	//#endsubregion
-#define INTAKE_DURATION 500	//amount of time rollers activate when intaking/expelling
+#define INTAKE_DURATION 250	//amount of time rollers activate when intaking/expelling
 #define RAD_TO_POT_FCTR 880.1
+#define LIFT_OFFSET 150
 //#endregion
 
 //#region globals
@@ -109,7 +110,7 @@ void setChainBarState(chainState state) {
 //#endregion
 
 //#region autostacking
-void waitForMovementToFinish(bool waitForChain=true, bool waitForLift=true, int timeout=75, float chainMargin=150, float liftMargin=150) {
+void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=75, float chainMargin=150, float liftMargin=150) {
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {
@@ -147,20 +148,24 @@ task autoStacking() {
 		//intake cone
 		setChainBarState(INTAKE);
 		setPower(coneIntake, 127);
-		wait1Msec(INTAKE_DURATION);
+		waitForMovementToFinish(false);
+		//wait1Msec(INTAKE_DURATION);
 		setPower(coneIntake, INTAKE_STILL_SPEED);
 
 		//move to desired location
 		setChainBarState(SAFE);
-		setTargetPosition(lift, liftAngle);
+		setTargetPosition(lift, liftAngle+LIFT_OFFSET);
 
-		waitForMovementToFinish(false); //while (liftHeight() < numCones * CONE_HEIGHT + CHAIN_BAR_OFFSET) EndTimeSlice();
+		while (getPosition(lift) < liftAngle) EndTimeSlice();
 		setTargetPosition(chainBar, chainAngle);
+		waitForMovementToFinish(false);
+		setTargetPosition(lift, liftAngle);
 
 		waitForMovementToFinish();
 
 		//expel cone
 		setPower(coneIntake, -127);
+		setTargetPosition(lift, liftAngle+LIFT_OFFSET);
 		wait1Msec(INTAKE_DURATION);
 		setChainBarState(CH_DEF);
 		setPower(coneIntake, 0);
