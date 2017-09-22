@@ -64,7 +64,6 @@ float liftAngle, chainAngle;	//the target angles of lift sections during a stack
 
 motorGroup lift;
 motorGroup chainBar;
-motorGroup goalIntake;
 motorGroup coneIntake;
 //#endregion
 
@@ -247,7 +246,7 @@ task usercontrol() {
 		if (newlyPressed(toggleGoalIntakeBtn))
 			toggleGoalIntakeState();
 
-		adjustConeCount()
+		adjustConeCount();
 
 		driveRuntime(drive);
 	}
