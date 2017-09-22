@@ -19,10 +19,10 @@
 
 //#region positions
 enum chainState  { CH_DEF,	INTAKE, SAFE, STACK };	//when chain bar is SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 1600,    2400,   1215, 100 };
+int chainPos[] = { 2500,    2800,   1840, 750 };
 
 enum liftState  { L_DEF, L_ZERO, L_MAX, PRELOAD, M_BASE_POS, S_BASE_POS };
-int liftPos[] = { 300,   1150,   2000,  1100,    200,        1250 };
+int liftPos[] = { 400,   1150,   2000,  1100,    200,        1250 };
 //#endregion
 
 //#region setup
@@ -35,6 +35,10 @@ int liftPos[] = { 300,   1150,   2000,  1100,    200,        1250 };
 
 //#region buttons
 #define stackBtn					Btn5U
+	//#subregion
+#define goalIntakeBtn			Btn7D
+#define goalOuttakeBtn		Btn7U
+	//#subregion
 	//#subregion cone count adjustment
 #define resetBtn					Btn8U
 #define decreaseConesBtn	Btn8D
@@ -81,7 +85,7 @@ void pre_auton() {
 
 	//configure lift
 	initializeGroup(lift, 1, liftMotors);
-  setTargetingPIDconsts(lift, 0.4, 0.001, 0.8, 25);
+  setTargetingPIDconsts(lift, 0.2, 0.001, 0.05, 25);
 	addSensor(lift, liftPot);
 
 	//configure chain bar
@@ -91,7 +95,7 @@ void pre_auton() {
 
 	//configure mobile goal intake
 	initializeGroup(goalIntake, 2, mobileGoal1, mobileGoal2);
-	configureButtonInput(goalIntake, Btn8U, Btn8D);
+	configureButtonInput(goalIntake, goalOuttakeBtn, goalIntakeBtn);
 
 	//configure cone intake
 	initializeGroup(coneIntake, 1, intake);
@@ -147,9 +151,10 @@ task autoStacking() {
 
 		//intake cone
 		setChainBarState(INTAKE);
+		setLiftState(L_DEF);
 		setPower(coneIntake, 127);
-		waitForMovementToFinish(false);
-		//wait1Msec(INTAKE_DURATION);
+		waitForMovementToFinish();
+		wait1Msec(INTAKE_DURATION);
 		setPower(coneIntake, INTAKE_STILL_SPEED);
 
 		//move to desired location
@@ -212,6 +217,8 @@ void testPIDs() {
 
 		if (abort) {
 			stopLiftTargeting();
+			setPower(lift, 0);
+			setPower(chainBar, 0);
 			abort = false;
 		}
 
