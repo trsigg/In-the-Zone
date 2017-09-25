@@ -74,14 +74,14 @@ int liftPos[] = { 400,   1150,   2000,  1100,    400,        1250 };
 #define INTAKE_DURATION 300	//amount of time rollers activate when intaking/expelling cones
 #define OUTTAKE_DURATION 200
 #define RAD_TO_POT_FCTR 880.1
-#define LIFT_OFFSET 100
+#define LIFT_OFFSET 2.5
 //#endregion
 
 //#region globals
 int numCones = 0; //current number of stacked cones
 bool stacking = false;	//whether the robot is currently in the process of stacking
 static float heightOffset = sin((liftPos[M_BASE_POS] - liftPos[L_ZERO]) / RAD_TO_POT_FCTR);
-float liftAngle, chainAngle;	//the target angles of lift sections during a stack maneuver
+float liftAngle1, liftAngle2, chainAngle;	//the target angles of lift sections during a stack maneuver
 
 motorGroup lift;
 motorGroup chainBar;
@@ -146,10 +146,17 @@ void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int 
 	}
 }
 
+float calcLiftTargetForHeight(float height) {
+	return limit(RAD_TO_POT_FCTR * asin(height / 2 / LIFT_LEN + heightOffset) + liftPos[L_ZERO],
+	             liftPos[L_DEF], liftPos[L_MAX]);
+}
+
 void stackNewCone() {	//TODO: account for limited range of motion, modulus
+	float stackHeight = CONE_HEIGHT * numCones;
+
 	chainAngle = chainPos[STACK];
-	liftAngle = limit(RAD_TO_POT_FCTR * asin(CONE_HEIGHT * numCones / 2 / LIFT_LEN + heightOffset) + liftPos[L_ZERO]/*) % (2 * PI)*/,
-										liftPos[L_DEF], liftPos[L_MAX]);
+	liftAngle2 = calcLiftTargetForHeight(stackHeight);
+	liftAngle1 = calcLiftTargetForHeight(stackHeight + LIFT_OFFSET);
 	stacking = true;
 }
 
@@ -176,18 +183,18 @@ task autoStacking() {
 
 		//move to desired location
 		setChainBarState(SAFE);
-		setTargetPosition(lift, liftAngle+LIFT_OFFSET);
+		setTargetPosition(lift, liftAngle1);
 
-		while (getPosition(lift) < liftAngle) EndTimeSlice();
+		while (getPosition(lift) < liftAngle2) EndTimeSlice();
 		setTargetPosition(chainBar, chainAngle);
 		waitForMovementToFinish(false);
-		setTargetPosition(lift, liftAngle);
+		setTargetPosition(lift, liftAngle2);
 
 		waitForMovementToFinish();
 
 		//expel cone
 		setPower(coneIntake, -127);
-		setTargetPosition(lift, liftAngle+LIFT_OFFSET);
+		setTargetPosition(lift, liftAngle1);
 		waitForMovementToFinish(true, false, OUTTAKE_DURATION);
 		setChainBarState(CH_DEF);
 		setPower(coneIntake, 0);
@@ -271,7 +278,7 @@ task usercontrol() {
 				manualLift = false;
 		}
 		else {
-			if (newlyPressed(stackBtn))
+			if (!stacking && vexRT[stackBtn]==1)
 				stackNewCone();
 
 			adjustConeCount();
