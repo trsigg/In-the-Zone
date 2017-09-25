@@ -19,10 +19,10 @@
 
 //#region positions
 enum chainState  { CH_DEF,	INTAKE, SAFE, STACK };	//when chain bar is SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 2500,    2800,   1840, 750 };
+int chainPos[] = { 2500,    2800,   1840, 760 };
 
 enum liftState  { L_DEF, L_ZERO, L_MAX, PRELOAD, M_BASE_POS, S_BASE_POS };
-int liftPos[] = { 400,   1150,   2000,  1100,    200,        1250 };
+int liftPos[] = { 400,   1150,   2000,  1100,    400,        1250 };
 //#endregion
 
 //#region setup
@@ -35,28 +35,46 @@ int liftPos[] = { 400,   1150,   2000,  1100,    200,        1250 };
 
 //#region buttons
 #define stackBtn					Btn5U
+	//#subregion lift mode
+#define manualModeBtn			Btn7R
+#define autostackBtn			Btn7L
+	//#endsubregion
 	//#subregion
 #define goalIntakeBtn			Btn7D
 #define goalOuttakeBtn		Btn7U
-	//#subregion
+	//#endsubregion
+	//#subregion lift
+#define liftUpBtn					Btn5U
+#define liftDownBtn				Btn5D
+	//#endsubregion
+	//#subregion chain bar
+#define chainInBtn				Btn6U
+#define chainOutBtn				Btn6D
+	//#endsubregion
+	//#subregion cone intake
+#define intakeBtn					Btn8U
+#define outtakeBtn				Btn8D
+	//#endsubregion
 	//#subregion cone count adjustment
-#define resetBtn					Btn8U
+#define resetBtn					Btn8L
 #define decreaseConesBtn	Btn8D
-#define increaseConesBtn	Btn8L
+#define increaseConesBtn	Btn8U
 	//#endsubregion
 //#endregion
 
 //#region constants
 	//#subregion measurements
-#define CONE_HEIGHT 2.75
+#define CONE_HEIGHT 3.0
 #define LIFT_LEN 11.5
 	//#endsubregion
 	//#subregion still speeds
-#define INTAKE_STILL_SPEED 10
+#define INTAKE_STILL_SPEED	10
+#define LIFT_STILL_SPEED		10
 	//#endsubregion
-#define INTAKE_DURATION 250	//amount of time rollers activate when intaking/expelling
+#define INTAKE_DURATION 300	//amount of time rollers activate when intaking/expelling cones
+#define OUTTAKE_DURATION 200
 #define RAD_TO_POT_FCTR 880.1
-#define LIFT_OFFSET 150
+#define LIFT_OFFSET 100
 //#endregion
 
 //#region globals
@@ -85,11 +103,13 @@ void pre_auton() {
 
 	//configure lift
 	initializeGroup(lift, 1, liftMotors);
+	configureButtonInput(lift, liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
   setTargetingPIDconsts(lift, 0.2, 0.001, 0.05, 25);
 	addSensor(lift, liftPot);
 
 	//configure chain bar
 	initializeGroup(chainBar, 1, chainMotors);
+	configureButtonInput(chainBar, chainOutBtn, chainInBtn);
 	setTargetingPIDconsts(chainBar, 0.17, 0.0, 0.4, 25);
 	addSensor(chainBar, chainPot);
 
@@ -99,6 +119,7 @@ void pre_auton() {
 
 	//configure cone intake
 	initializeGroup(coneIntake, 1, intake);
+	configureButtonInput(coneIntake, intakeBtn, outtakeBtn);
 }
 
 //#region lift
@@ -132,12 +153,9 @@ void stackNewCone() {	//TODO: account for limited range of motion, modulus
 	stacking = true;
 }
 
-task liftManeuvers() {
-	while (true) {
-		maintainTargetPos(chainBar);
-		maintainTargetPos(lift);
-		EndTimeSlice();
-	}
+void executeLiftManeuvers() {
+	maintainTargetPos(chainBar);
+	maintainTargetPos(lift);
 }
 
 void stopLiftTargeting() {
@@ -153,8 +171,7 @@ task autoStacking() {
 		setChainBarState(INTAKE);
 		setLiftState(L_DEF);
 		setPower(coneIntake, 127);
-		waitForMovementToFinish();
-		wait1Msec(INTAKE_DURATION);
+		waitForMovementToFinish(true, true, INTAKE_DURATION);
 		setPower(coneIntake, INTAKE_STILL_SPEED);
 
 		//move to desired location
@@ -171,7 +188,7 @@ task autoStacking() {
 		//expel cone
 		setPower(coneIntake, -127);
 		setTargetPosition(lift, liftAngle+LIFT_OFFSET);
-		wait1Msec(INTAKE_DURATION);
+		waitForMovementToFinish(true, false, OUTTAKE_DURATION);
 		setChainBarState(CH_DEF);
 		setPower(coneIntake, 0);
 
@@ -201,7 +218,6 @@ bool abort = false;
 bool end = false;
 
 void testPIDs() {
-	startTask(liftManeuvers);
 	int prevTargets[] = { 0, 0 };
 
 	while (!end) {
@@ -222,10 +238,8 @@ void testPIDs() {
 			abort = false;
 		}
 
-		EndTimeSlice();
+		executeLiftManeuvers();
 	}
-
-	stopTask(liftManeuvers);
 }
 
 void handleTesting() {
@@ -243,14 +257,29 @@ task autonomous() {
 task usercontrol() {
 	handleTesting();
 
-	startTask(liftManeuvers);
+	bool manualLift = false;	//whether lifting is manual or controlled by autostacking
+
 	startTask(autoStacking);
 
 	while (true) {
-		if (newlyPressed(stackBtn))
-			stackNewCone();
+		if (manualLift) {
+			takeInput(lift);
+			takeInput(chainBar);
+			takeInput(coneIntake);
 
-		adjustConeCount();
+			if (vexRT[autostackBtn] == 1)
+				manualLift = false;
+		}
+		else {
+			if (newlyPressed(stackBtn))
+				stackNewCone();
+
+			adjustConeCount();
+			executeLiftManeuvers();
+
+			if (vexRT[manualModeBtn] == 1)
+				manualLift = true;
+		}
 
 		takeInput(goalIntake);
 		driveRuntime(drive);
