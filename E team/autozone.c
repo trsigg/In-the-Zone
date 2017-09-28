@@ -6,7 +6,7 @@
 #pragma config(Motor,  port2,           LDrive2,       tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           mobileGoal1,   tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port4,           intake,        tmotorVex393_MC29, openLoop, reversed)
-#pragma config(Motor,  port5,           chainMotors,   tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port5,           chainMotors,   tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port6,           liftMotors,    tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port8,           mobileGoal2,   tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port9,           RDrive1,       tmotorVex393_MC29, openLoop, reversed)
@@ -19,10 +19,10 @@
 
 //#region positions
 enum chainState  { CH_DEF,	INTAKE, SAFE, STACK };	//when chain bar is SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 2500,    2800,   1840, 760 };
+int chainPos[] = { 1150,    1000,    2030, 2900 };
 
 enum liftState  { L_DEF, L_ZERO, L_MAX, PRELOAD, M_BASE_POS, S_BASE_POS };
-int liftPos[] = { 400,   1150,   2000,  1100,    400,        1250 };
+int liftPos[] = { 400,   1150,   2000,  1100,    350,        1250 };
 //#endregion
 
 //#region setup
@@ -64,7 +64,7 @@ int liftPos[] = { 400,   1150,   2000,  1100,    400,        1250 };
 
 //#region constants
 	//#subregion measurements
-#define CONE_HEIGHT 3.0
+#define CONE_HEIGHT 2.75
 #define LIFT_LEN 11.5
 	//#endsubregion
 	//#subregion still speeds
@@ -74,7 +74,7 @@ int liftPos[] = { 400,   1150,   2000,  1100,    400,        1250 };
 #define INTAKE_DURATION 300	//amount of time rollers activate when intaking/expelling cones
 #define OUTTAKE_DURATION 200
 #define RAD_TO_POT_FCTR 880.1
-#define LIFT_OFFSET 2.5
+#define LIFT_OFFSET 2.0
 //#endregion
 
 //#region globals
@@ -104,13 +104,13 @@ void pre_auton() {
 	//configure lift
 	initializeGroup(lift, 1, liftMotors);
 	configureButtonInput(lift, liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
-  setTargetingPIDconsts(lift, 0.2, 0.001, 0.05, 25);
+  setTargetingPIDconsts(lift, 0.27, 0.001, 0.17, 25);	//.1, .001, .05
 	addSensor(lift, liftPot);
 
 	//configure chain bar
-	initializeGroup(chainBar, 1, chainMotors);
-	configureButtonInput(chainBar, chainOutBtn, chainInBtn);
-	setTargetingPIDconsts(chainBar, 0.17, 0.0, 0.4, 25);
+	initializeGroup(chainBar, 1, chainMotors);	//TODO: setAbsolutes
+	configureButtonInput(chainBar, chainInBtn, chainOutBtn, 10);
+	setTargetingPIDconsts(chainBar, 0.15, 0.001, 0.4, 25);	//0.2, 0.001, 0.15
 	addSensor(chainBar, chainPot);
 
 	//configure mobile goal intake
@@ -119,7 +119,7 @@ void pre_auton() {
 
 	//configure cone intake
 	initializeGroup(coneIntake, 1, intake);
-	configureButtonInput(coneIntake, intakeBtn, outtakeBtn);
+	configureButtonInput(coneIntake, intakeBtn, outtakeBtn, INTAKE_STILL_SPEED);
 }
 
 //#region lift
@@ -135,7 +135,7 @@ void setChainBarState(chainState state) {
 //#endregion
 
 //#region autostacking
-void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=75, float chainMargin=150, float liftMargin=150) {
+void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=75, float chainMargin=250, float liftMargin=150) {
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {
@@ -188,13 +188,13 @@ task autoStacking() {
 		while (getPosition(lift) < liftAngle2) EndTimeSlice();
 		setTargetPosition(chainBar, chainAngle);
 		waitForMovementToFinish(false);
-		setTargetPosition(lift, liftAngle2);
+		setTargetPosition(lift, liftAngle2, false);	//change target without resetting integral
 
 		waitForMovementToFinish();
 
 		//expel cone
 		setPower(coneIntake, -127);
-		setTargetPosition(lift, liftAngle1);
+		setTargetPosition(lift, liftAngle1, false);
 		waitForMovementToFinish(true, false, OUTTAKE_DURATION);
 		setChainBarState(CH_DEF);
 		setPower(coneIntake, 0);
@@ -242,6 +242,7 @@ void testPIDs() {
 			stopLiftTargeting();
 			setPower(lift, 0);
 			setPower(chainBar, 0);
+			wait1Msec(50);
 			abort = false;
 		}
 
