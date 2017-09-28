@@ -183,8 +183,8 @@ int setPower(motorGroup *group, int power, bool overrideAbsolutes=false) {
 		initializePID(group->posPID, 0, kP, kI, kD, minSampleTime, integralMin, integralMax);
 	}
 
-	void setTargetPosition(motorGroup *group, int position) {
-		changeTarget(group->posPID, position);
+	void setTargetPosition(motorGroup *group, int position, bool resetIntegral=true) {
+		changeTarget(group->posPID, position, resetIntegral);
 		group->activelyMaintining = true;
 	}
 
