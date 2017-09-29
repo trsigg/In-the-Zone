@@ -12,6 +12,9 @@ typedef struct {
 	TVexJoysticks posInput, negInput; //inputs. NegInput only assigned if using button control
 	//button control
 	int upPower, downPower, stillSpeed;
+	//complex still speeds
+	int stillSpeedSwitchPos, stillSpeedType;	//stillSpeedType is 0 for regular, 1 for posDependent, and 2 for buttonDependent
+	bool stillSpeedReversed;
 	//execute maneuver
 	int targetPos, endPower, maneuverPower, maneuverTimeout;
 	bool forward, maneuverExecuting; //forward: whether target is forwad from initial group position
@@ -58,6 +61,8 @@ void configureButtonInput(motorGroup *group, TVexJoysticks posBtn, TVexJoysticks
 	group->posInput = posBtn;
 	group->negInput = negBtn;
 	group->stillSpeed = stillSpeed;
+	group->stillSpeedType = 0;
+	group->stillSpeedReversed = false;
 	group->upPower = upPower;
 	group->downPower = downPower;
 }
@@ -71,6 +76,17 @@ void configureJoystickInput(motorGroup *group, TVexJoysticks joystick, int deadb
 	group->powMap = powMap;
 	group->coeff = maxPow /  127.0;
 	group->lastUpdated = nPgmTime;
+}
+
+void configurePosDependentStillSpeed(motorGroup *group, int stillSpeed, int switchPos) {	//motor will have stillSpeed power when below switchPos, -stillSpeed power when above switchPos
+	group->stillSpeed = stillSpeed;
+	group->stillSpeedType = 1;
+	group->stillSpeedSwitchPos = switchPos;
+}
+
+void configureBtnDependentStillSpeed(motorGroup *group, int stillSpeed) {
+	group->stillSpeed = stillSpeed;
+	group->stillSpeedType = 2;
 }
 //#endregion
 
@@ -258,11 +274,22 @@ void getTargetInput(motorGroup *group) {
 int handleButtonInput(motorGroup *group) {
 	if (vexRT[group->posInput] == 1) {
 		group->maneuverExecuting = false;
+
+		if (group->stillSpeedType == 2)
+			group->stillSpeedReversed = false;
+
 		return group->upPower;
 	} else if (vexRT[group->negInput] == 1) {
 		group->maneuverExecuting = false;
+
+		if (group->stillSpeedType == 2)
+			group->stillSpeedReversed = true;
+
 		return group->downPower;
 	} else {
+		if (group->stillSpeedType == 1)
+			group->stillSpeedReversed = getPosition(group) > group->stillSpeedSwitchPos;
+
 		getTargetInput(group);
 
 		executeManeuver(group);
@@ -270,7 +297,7 @@ int handleButtonInput(motorGroup *group) {
 		if (group->maneuverExecuting)
 			return group->maneuverPower;
 		else
-			return group->stillSpeed;
+			return group->stillSpeed * (group->stillSpeedReversed ? -1 : 1);
 	}
 }
 

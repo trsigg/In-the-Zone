@@ -18,8 +18,8 @@
 //#endregion
 
 //#region positions
-enum chainState  { CH_DEF,	INTAKE, SAFE, STACK };	//when chain bar is SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 1150,    1000,    2030, 2900 };
+enum chainState  { CH_DEF,	INTAKE, SAFE, STACK, CH_MIN, VERT, CH_MAX };	//when chain bar is SAFE, lift can move up and down without colliding with cone stack
+int chainPos[] = { 1150,    1000,    2030, 2900, 645,    2920, 4050 };
 
 enum liftState  { L_DEF, L_ZERO, L_MAX, PRELOAD, M_BASE_POS, S_BASE_POS };
 int liftPos[] = { 400,   1150,   2000,  1100,    350,        1250 };
@@ -70,6 +70,7 @@ int liftPos[] = { 400,   1150,   2000,  1100,    350,        1250 };
 	//#subregion still speeds
 #define INTAKE_STILL_SPEED	10
 #define LIFT_STILL_SPEED		10
+#define CHAIN_STILL_SPEED		10
 	//#endsubregion
 #define INTAKE_DURATION 300	//amount of time rollers activate when intaking/expelling cones
 #define OUTTAKE_DURATION 200
@@ -109,7 +110,9 @@ void pre_auton() {
 
 	//configure chain bar
 	initializeGroup(chainBar, 1, chainMotors);	//TODO: setAbsolutes
-	configureButtonInput(chainBar, chainInBtn, chainOutBtn, 10);
+	setAbsolutes(chainBar, chainPos[CH_MIN], chainPos[CH_MAX]);
+	configureButtonInput(chainBar, chainInBtn, chainOutBtn);
+	configurePosDependentStillSpeed(chainBar, CHAIN_STILL_SPEED, chainPos[VERT]);
 	setTargetingPIDconsts(chainBar, 0.15, 0.001, 0.4, 25);	//0.2, 0.001, 0.15
 	addSensor(chainBar, chainPot);
 
@@ -155,8 +158,8 @@ void stackNewCone() {	//TODO: account for limited range of motion, modulus
 	float stackHeight = CONE_HEIGHT * numCones;
 
 	chainAngle = chainPos[STACK];
-	liftAngle2 = calcLiftTargetForHeight(stackHeight);
 	liftAngle1 = calcLiftTargetForHeight(stackHeight + LIFT_OFFSET);
+	liftAngle2 = calcLiftTargetForHeight(stackHeight);
 	stacking = true;
 }
 
