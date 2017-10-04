@@ -1,3 +1,5 @@
+
+
 task main() {
 	int coeff;
 
