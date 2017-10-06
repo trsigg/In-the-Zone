@@ -274,6 +274,7 @@ void getTargetInput(motorGroup *group) {
 int handleButtonInput(motorGroup *group) {
 	if (vexRT[group->posInput] == 1) {
 		group->maneuverExecuting = false;
+		group->activelyMaintining = false;
 
 		if (group->stillSpeedType == 2)
 			group->stillSpeedReversed = false;
@@ -281,6 +282,7 @@ int handleButtonInput(motorGroup *group) {
 		return group->upPower;
 	} else if (vexRT[group->negInput] == 1) {
 		group->maneuverExecuting = false;
+		group->activelyMaintining = false;
 
 		if (group->stillSpeedType == 2)
 			group->stillSpeedReversed = true;
