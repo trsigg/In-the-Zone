@@ -19,10 +19,10 @@
 
 //#region positions
 enum chainState  { CH_DEF,	INTAKE, SAFE, STACK, CH_MIN, VERT, CH_MAX };	//when chain bar is SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 1100,    800,    2030, 2800,  600,    2680, 4050 };
+int chainPos[] = { 800,     700,    1800, 2750,  580,    2680, 4050 };
 
-enum liftState  { L_DEF, L_ZERO, L_MAX, PRELOAD, M_BASE_POS, S_BASE_POS };
-int liftPos[] = { 1300,  1675,   2530,  525,     1300,        900 };
+enum liftState  { L_DEF, L_ZERO, L_MIN, L_MAX, PRELOAD, M_BASE_POS, S_BASE_POS };
+int liftPos[] = { 1275,  1575,   1260,  2360,  525,     1200,        900 };
 //#endregion
 
 //#region setup
@@ -50,17 +50,17 @@ int liftPos[] = { 1300,  1675,   2530,  525,     1300,        900 };
 		//#endsubsubregion
 
 	//#subregion autopositioning
-#define chainDefBtn Btn8D		//takes chain bar to CH_DEF
-#define chainStackBtn Btn8L	//takes chain bar to STACK
-                            //when pressed together, they take lift to L_DEF and chain bar to CH_DEF
+#define chainDefBtn				Btn8D	//takes chain bar to CH_DEF
+#define chainStackBtn			Btn8L //takes chain bar to STACK
+                                //when pressed together, they take lift to L_DEF and chain bar to CH_DEF
 	//#endsubregion
 
 	//#subregion autostacking control
 #define stackBtn					Btn5U
 		//#subsubregion cone count adjustment
 #define resetBtn					Btn5D
-#define decreaseConesBtn	Btn8U
-#define increaseConesBtn	Btn8R
+#define increaseConesBtn	Btn8U
+#define decreaseConesBtn	Btn8R
 		//#endsubsubregion
 	//#endsubregion
 
@@ -78,8 +78,8 @@ int liftPos[] = { 1300,  1675,   2530,  525,     1300,        900 };
 
 //#region constants
 	//#subregion measurements
-#define CONE_HEIGHT 2.5
-#define LIFT_LEN 13.5
+#define CONE_HEIGHT 1.9
+#define LIFT_LEN 14.0
 	//#endsubregion
 	//#subregion still speeds
 #define INTAKE_STILL_SPEED	15
@@ -93,7 +93,7 @@ int liftPos[] = { 1300,  1675,   2530,  525,     1300,        900 };
 #define INTAKE_DURATION 500	//amount of time rollers activate when intaking/expelling cones
 #define OUTTAKE_DURATION 200
 #define RAD_TO_POT_FCTR 880.1
-#define LIFT_OFFSET 2.5
+#define LIFT_OFFSET 2.0
 //#endregion
 
 //#region globals
@@ -130,7 +130,7 @@ void pre_auton() {
 	initializeGroup(lift, 1, liftMotors);
 	configureButtonInput(lift, liftUpBtn, liftDownBtn);
 	configureBtnDependentStillSpeed(lift, LIFT_STILL_SPEED);
-  setTargetingPIDconsts(lift, 0.27, 0.003, 2.5, 25);	//.1, .001, .05
+  setTargetingPIDconsts(lift, 0.27, 0.003, 2.5, 25);	//.1/.35, .001/.003, .05/1.7
 	addSensor(lift, liftPot);
 
 	//configure chain bar
@@ -164,7 +164,7 @@ void setChainBarState(chainState state) {
 //#endregion
 
 //#region autostacking
-void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=75, float chainMargin=250, float liftMargin=150) {
+void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=75, float chainMargin=200, float liftMargin=200) {
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {
@@ -181,7 +181,7 @@ int adjustedNumCones() {
 
 float calcLiftTargetForHeight(float height) {
 	return limit(RAD_TO_POT_FCTR * asin(height / 2 / LIFT_LEN + heightOffset) + liftPos[L_ZERO],
-	             liftPos[L_DEF], liftPos[L_MAX]);
+	             liftPos[L_MIN], liftPos[L_MAX]);
 }
 
 void stackNewCone() {	//TODO: account for limited range of motion, modulus
@@ -220,8 +220,8 @@ task autoStacking() {
 		setChainBarState(numCones<=RECKLESS_CONES ? STACK : SAFE);
 		setTargetPosition(lift, liftAngle1);
 
-		while (getPosition(lift) < liftAngle2) EndTimeSlice();
-		if (numCones > RECKLESS_CONES) setTargetPosition(chainBar, STACK);
+		while (getPosition(lift)<liftAngle2 && !errorLessThan(lift, 200)) EndTimeSlice();
+		if (numCones > RECKLESS_CONES) setChainBarState(STACK);
 		waitForMovementToFinish(false);
 		setTargetPosition(lift, liftAngle2, false);	//change target without resetting integral
 
@@ -230,7 +230,7 @@ task autoStacking() {
 
 		//expel cone
 		setPower(coneIntake, -127);
-		//setTargetPosition(lift, liftAngle1, false);
+		setTargetPosition(lift, liftAngle1, false);
 		waitForMovementToFinish(true, false, OUTTAKE_DURATION);
 		setChainBarState(CH_DEF);
 		setPower(coneIntake, 0);
