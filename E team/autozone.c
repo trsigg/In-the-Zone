@@ -321,16 +321,18 @@ void setAutopositionState(AutoPosState state) {
 }
 
 void handleAutopositioningInput() {
-	if (posState != FULL_DEF) {
-		if (vexRT[chainDefBtn] == 1) {
-			if (vexRT[chainStackBtn] == 1)
-				setAutopositionState(FULL_DEF);
-			else if (posState != CHAIN_DEF)
-				setAutopositionState(CHAIN_DEF);
-		}
-		else if (vexRT[chainStackBtn]==1 && posState!=CH_STACK) {
+	if (vexRT[chainDefBtn] == 1) {
+		if (vexRT[chainStackBtn]==1 && posState!=FULL_DEF)
+			setAutopositionState(FULL_DEF);
+		else if (posState!=CHAIN_DEF && posState!=FULL_DEF)
+			setAutopositionState(CHAIN_DEF);
+	}
+	else if (vexRT[chainStackBtn] == 1) {
+		if (posState!=CH_STACK && posState!=FULL_DEF)
 			setAutopositionState(CH_STACK);
-		}
+	}
+	else {
+		posState = NO_POS;
 	}
 }
 
