@@ -80,6 +80,8 @@ int liftPos[] = { 1230,  1575,   1220,  2360,  525,     1100,       900 };
 	//#subregion measurements
 #define CONE_HEIGHT 2.2
 #define LIFT_LEN 14.0
+#define RAD_TO_POT_FCTR 880.1
+#define LIFT_OFFSET 1.5
 	//#endsubregion
 	//#subregion still speeds
 #define INTAKE_STILL_SPEED	15
@@ -87,13 +89,15 @@ int liftPos[] = { 1230,  1575,   1220,  2360,  525,     1100,       900 };
 #define CHAIN_STILL_SPEED		15
 #define GOAL_STILL_SPEED		15
 	//#endsubregion
+	//#subregion cone counts
 #define APATHY_CONES 0	//number of cones for which lift does not move
 #define RECKLESS_CONES 5	//number of cones for which chain bar goes directly to STACK (not SAFE first)
 #define MAX_NUM_CONES 16
+	//#endsubregion
+	//#subregion timing
 #define INTAKE_DURATION 500	//amount of time rollers activate when intaking/expelling cones
 #define OUTTAKE_DURATION 200
-#define RAD_TO_POT_FCTR 880.1
-#define LIFT_OFFSET 1.5
+	//#endsubregion
 //#endregion
 
 //#region globals
@@ -126,11 +130,10 @@ void pre_auton() {
 	attachEncoder(drive, rightEnc, RIGHT, false, 3.25);
 	attachGyro(drive, hyro);*/
 
-	//configure lift
+	//configure lift (PID handled in setLiftPIDmode)
 	initializeGroup(lift, 1, liftMotors);
 	configureButtonInput(lift, liftUpBtn, liftDownBtn);
 	configureBtnDependentStillSpeed(lift, LIFT_STILL_SPEED);
-  setTargetingPIDconsts(lift, 0.4, 0.002, 1.5, 25);	//.1/.35/.27, .001/.003/.003, .05/1.7/2.5
 	addSensor(lift, liftPot);
 
 	//configure chain bar
@@ -152,8 +155,24 @@ void pre_auton() {
 }
 
 //#region lift
+void setLiftPIDmode(bool up) {	//up is true for upward movement consts, false for downward movement ones.
+	if (up)
+		setTargetingPIDconsts(lift, 0.4, 0.002, 1.5, 25);	//.1/.35/.27, .001/.003/.003, .05/1.7/2.5
+	else
+		setTargetingPIDconsts(lift, 0.4, 0.002, 1.5, 25);
+}
+
+void setLiftTargetAndPID(int target, bool resetIntegral=true) {	//sets lift target and adjusts PID consts
+	if (getPosition(lift) < target)
+		setLiftPIDmode(true);
+	else
+		setLiftPIDmode(false);
+
+	setTargetPosition(lift, target, resetIntegral);
+}
+
 void setLiftState(liftState state) {
-	setTargetPosition(lift, liftPos[state]);
+	setLiftTargetAndPID(liftPos[state]);
 }
 //#endregion
 
@@ -222,19 +241,19 @@ task autoStacking() {
 
 		//move to desired location
 		setChainBarState(numCones<=RECKLESS_CONES ? STACK : SAFE);
-		setTargetPosition(lift, liftAngle1);
+		setLiftTargetAndPID(liftAngle1);
 
 		while (getPosition(lift)<liftAngle2 && !errorLessThan(lift, 200)) EndTimeSlice();
 		if (numCones > RECKLESS_CONES) setChainBarState(STACK);
 		waitForMovementToFinish(false);
-		setTargetPosition(lift, liftAngle2, false);	//change target without resetting integral
+		setLiftTargetAndPID(liftAngle2, false);	//change target without resetting integral
 
 		waitForMovementToFinish(true, true, 250);
 		//wait1Msec(500);
 
 		//expel cone
 		setPower(coneIntake, -127);
-		setTargetPosition(lift, liftAngle1, false);
+		setLiftTargetAndPID(liftAngle1, false);
 		waitForMovementToFinish(true, false, OUTTAKE_DURATION);
 		setChainBarState(CH_DEF);
 		setPower(coneIntake, 0);
@@ -274,7 +293,7 @@ void testPIDs() {
 		}
 
 		if (targets[1] != prevTargets[1]) {
-			setTargetPosition(lift, targets[1]);
+			setLiftTargetAndPID(targets[1]);
 			prevTargets[1] = targets[1];
 		}
 
