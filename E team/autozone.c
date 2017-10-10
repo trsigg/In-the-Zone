@@ -19,7 +19,7 @@
 
 //#region positions
 enum chainState  { CH_DEF,	INTAKE, SAFE, STACK, CH_MIN, VERT, CH_MAX };	//when chain bar is SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 1000,    800,    1800, 3000,  580,    2680, 4050 };
+int chainPos[] = { 900,     800,    1800, 2800,  580,    2680, 4050 };
 
 enum liftState  { L_DEF, L_ZERO, L_MIN, L_MAX, PRELOAD, M_BASE_POS, S_BASE_POS };
 int liftPos[] = { 1230,  1575,   1220,  2360,  525,     1100,       900 };
@@ -78,10 +78,10 @@ int liftPos[] = { 1230,  1575,   1220,  2360,  525,     1100,       900 };
 
 //#region constants
 	//#subregion measurements
-#define CONE_HEIGHT 2.2
+#define CONE_HEIGHT 2.5
 #define LIFT_LEN 14.0
 #define RAD_TO_POT_FCTR 880.1
-#define LIFT_OFFSET 1.5
+#define LIFT_OFFSET 2.25
 	//#endsubregion
 	//#subregion still speeds
 #define INTAKE_STILL_SPEED	15
@@ -153,6 +153,19 @@ void pre_auton() {
 	initializeGroup(coneIntake, 1, intake);
 	configureButtonInput(coneIntake, intakeBtn, outtakeBtn, INTAKE_STILL_SPEED);
 }
+
+//#region audio
+void speakNum(int num) {
+	string numStr;
+	if (num >= 10)
+		strcat(numStr, "1");
+	char onesDigit[] = { '0' + (num % 10) };
+	strcat(numStr, onesDigit);
+	strcat(numStr, ".wav");
+
+	playSoundFile(numStr);
+}
+//#endregion
 
 //#region lift
 void setLiftPIDmode(bool up) {	//up is true for upward movement consts, false for downward movement ones.
