@@ -18,11 +18,11 @@
 //#endregion
 
 //#region positions
-enum chainState  { CH_DEF,	INTAKE, SAFE, STACK, CH_MIN, VERT, CH_MAX };	//when chain bar is SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 900,     800,    1800, 2800,  580,    2680, 4050 };
+enum chainState  { CH_DEF,	INTAKE, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX };	//when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
+int chainPos[] = { 1000,    800,    1800,    2800,  580,    2680, 4050 };
 
-enum liftState  { L_DEF, L_ZERO, L_MIN, L_MAX, PRELOAD, M_BASE_POS, S_BASE_POS };
-int liftPos[] = { 1230,  1575,   1220,  2360,  525,     1100,       900 };
+enum liftState  { L_MIN, L_DEF, L_SAFE, M_BASE_POS, PRELOAD, L_ZERO, L_MAX };	//when lift is at L_SAFE, goal intake can be moved without collision
+int liftPos[] = { 1220,  1230,  1600,   1100,       1400,    1575,   2360 };
 //#endregion
 
 //#region setup
@@ -89,12 +89,12 @@ int liftPos[] = { 1230,  1575,   1220,  2360,  525,     1100,       900 };
 	//#endsubregion
 	//#subregion cone counts
 #define APATHY_CONES 0	//number of cones for which lift does not move
-#define RECKLESS_CONES 5	//number of cones for which chain bar goes directly to STACK (not SAFE first)
+#define RECKLESS_CONES 5	//number of cones for which chain bar goes directly to STACK (not CH_SAFE first)
 #define MAX_NUM_CONES 16
 	//#endsubregion
 	//#subregion timing
-#define INTAKE_DURATION 500	//amount of time rollers activate when intaking/expelling cones
-#define OUTTAKE_DURATION 200
+#define INTAKE_DURATION 400	//amount of time rollers activate when intaking/expelling cones
+#define OUTTAKE_DURATION 350
 	//#endsubregion
 //#endregion
 
@@ -161,7 +161,7 @@ void speakNum(int num) {
 	strcat(fileName, onesDigit);
 	strcat(fileName, ".wav");
 
-	playSoundFile(numStr);
+	playSoundFile(fileName);
 }
 //#endregion
 
@@ -194,7 +194,7 @@ void setChainBarState(chainState state) {
 //#endregion
 
 //#region autostacking
-void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=75, float chainMargin=200, float liftMargin=200) {
+void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=100, float chainMargin=200, float liftMargin=200) {
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {
@@ -251,7 +251,7 @@ task autoStacking() {
 		setPower(coneIntake, INTAKE_STILL_SPEED);
 
 		//move to desired location
-		setChainBarState(numCones<=RECKLESS_CONES ? STACK : SAFE);
+		setChainBarState(numCones<=RECKLESS_CONES ? STACK : CH_SAFE);
 		setLiftTargetAndPID(liftAngle1);
 
 		while (getPosition(lift)<liftAngle2 && !errorLessThan(lift, 200)) EndTimeSlice();
@@ -272,6 +272,7 @@ task autoStacking() {
 		//return to ready positions
 		numCones++;
 		stacking = false;
+		while (getPosition(chainBar) > chainPos[CH_SAFE]) EndTimeSlice();
 		setLiftState(L_DEF);
 	}
 }
@@ -407,6 +408,13 @@ void handleAutostackInput() {
 	}
 }
 
+void handleGoalIntakeInput() {
+	int goalPower = takeInput(goalIntake, false);
+
+	if (getPosition(lift)>liftPos[L_SAFE] || goalPower<=GOAL_STILL_SPEED)
+		setPower(goalIntake, goalPower);
+}
+
 task usercontrol() {
 	handleTesting();
 
@@ -423,7 +431,8 @@ task usercontrol() {
 
 		executeLiftManeuvers();
 
-		takeInput(goalIntake);
+		handleGoalIntakeInput();
+
 		driveRuntime(drive);
 	}
 }
