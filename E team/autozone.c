@@ -34,10 +34,8 @@ int liftPos[] = { 1230,  1575,   1220,  2360,  525,     1100,       900 };
 //#endregion
 
 //#region buttons
-	//#subregion lift mode
-#define manualModeBtn			Btn7R
-#define autostackBtn			Btn7L
-	//#endsubregion
+#define sayConeNumberBtn	Btn7R
+#define toggleLiftModeBtn	Btn7L
 
 	//#subregion goal intake
 #define goalIntakeBtn			Btn7D
@@ -103,7 +101,7 @@ int liftPos[] = { 1230,  1575,   1220,  2360,  525,     1100,       900 };
 //#region globals
 int numCones = 0; //current number of stacked cones
 bool stacking = false;	//whether the robot is currently in the process of stacking
-bool manualLift = true;	//manual or automatic lift control?
+bool manualLift = false;	//manual or automatic lift control?
 static float heightOffset = sin((liftPos[M_BASE_POS] - liftPos[L_ZERO]) / RAD_TO_POT_FCTR);	//used in autostacking
 float liftAngle1, liftAngle2;	//the target angles of lift sections during a stack maneuver
 
@@ -156,12 +154,12 @@ void pre_auton() {
 
 //#region audio
 void speakNum(int num) {
-	string numStr;
+	string fileName;
 	if (num >= 10)
-		strcat(numStr, "1");
+		strcat(fileName, "1");
 	char onesDigit[] = { '0' + (num % 10) };
-	strcat(numStr, onesDigit);
-	strcat(numStr, ".wav");
+	strcat(fileName, onesDigit);
+	strcat(fileName, ".wav");
 
 	playSoundFile(numStr);
 }
@@ -280,14 +278,13 @@ task autoStacking() {
 
 void adjustConeCount() {	//change cone count based on user input
 	if (newlyPressed(resetBtn))
-			numCones = 0;
+		numCones = 0;
 
-	if (newlyPressed(increaseConesBtn))
-			numCones++;
+	if (numCones<=MAX_NUM_CONES && newlyPressed(increaseConesBtn))
+		numCones++;
 
-	if (newlyPressed(decreaseConesBtn))
-			if (numCones > 0)
-				numCones--;
+	if (numCones>0 && newlyPressed(decreaseConesBtn))
+		numCones--;
 }
 //#endregion
 
@@ -381,9 +378,10 @@ void handleManualInput() {
 
 	takeInput(coneIntake);
 
-	if (vexRT[autostackBtn] == 1) {	//switch to autostacking mode
+	if (newlyPressed(toggleLiftModeBtn)) {	//switch to autostacking mode
 		manualLift = false;
 		startTask(autoStacking);
+		playSound(soundUpwardTones);
 	}
 }
 
@@ -400,11 +398,12 @@ void handleAutostackInput() {
 
 	adjustConeCount();
 
-	if (vexRT[manualModeBtn] == 1) {	//switch to manual mode
+	if (newlyPressed(toggleLiftModeBtn)) {	//switch to manual mode
 		stacking = false;
 		stopLiftTargeting();
 		stopTask(autoStacking);
 		manualLift = true;
+		playSound(soundDownwardTones);
 	}
 }
 
@@ -418,6 +417,9 @@ task usercontrol() {
 			handleManualInput();
 		else
 			handleAutostackInput();
+
+		if (!bSoundActive && vexRT[sayConeNumberBtn]==1)
+			speakNum(numCones);
 
 		executeLiftManeuvers();
 
