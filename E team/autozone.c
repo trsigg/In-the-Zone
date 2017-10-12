@@ -34,8 +34,9 @@ int liftPos[] = { 1220,  1230,  1600,   1100,       1400,    1575,   2360 };
 //#endregion
 
 //#region buttons
-#define sayConeNumberBtn	Btn7R
-#define toggleLiftModeBtn	Btn7L
+#define abortManeuversBtn Btn7L
+#define shiftBtn					Btn7R
+#define sayConeNumberBtn  Btn8L	//with shift
 
 	//#subregion goal intake
 #define goalIntakeBtn			Btn7D
@@ -43,8 +44,8 @@ int liftPos[] = { 1220,  1230,  1600,   1100,       1400,    1575,   2360 };
 	//#endsubregion
 
 		//#subsubregion cone intake
-#define intakeBtn					Btn6U
-#define outtakeBtn				Btn6D
+#define coneIntakeBtn     Btn6U
+#define coneOuttakeBtn    Btn6D	//with shift
 		//#endsubsubregion
 
 	//#subregion autopositioning
@@ -54,11 +55,11 @@ int liftPos[] = { 1220,  1230,  1600,   1100,       1400,    1575,   2360 };
 	//#endsubregion
 
 	//#subregion autostacking control
-#define stackBtn					Btn5U
+#define stackBtn					Btn6D
 		//#subsubregion cone count adjustment
-#define resetBtn					Btn5D
-#define increaseConesBtn	Btn8U
-#define decreaseConesBtn	Btn8R
+#define resetBtn					Btn8R	//with shift
+#define increaseConesBtn	Btn8U	//with shift
+#define decreaseConesBtn	Btn8D	//with shift
 		//#endsubsubregion
 	//#endsubregion
 
@@ -101,7 +102,6 @@ int liftPos[] = { 1220,  1230,  1600,   1100,       1400,    1575,   2360 };
 //#region globals
 int numCones = 0; //current number of stacked cones
 bool stacking = false;	//whether the robot is currently in the process of stacking
-bool manualLift = false;	//manual or automatic lift control?
 static float heightOffset = sin((liftPos[M_BASE_POS] - liftPos[L_ZERO]) / RAD_TO_POT_FCTR);	//used in autostacking
 float liftAngle1, liftAngle2;	//the target angles of lift sections during a stack maneuver
 
@@ -135,7 +135,7 @@ void pre_auton() {
 	addSensor(lift, liftPot);
 
 	//configure chain bar
-	initializeGroup(chainBar, 2, chain1, chain2);	//TODO: setAbsolutes
+	initializeGroup(chainBar, 2, chain1, chain2);
 	setAbsolutes(chainBar, chainPos[CH_MIN], chainPos[CH_MAX]);
 	configureButtonInput(chainBar, chainInBtn, chainOutBtn);
 	configurePosDependentStillSpeed(chainBar, CHAIN_STILL_SPEED, chainPos[VERT]);
@@ -149,7 +149,6 @@ void pre_auton() {
 
 	//configure cone intake
 	initializeGroup(coneIntake, 1, intake);
-	configureButtonInput(coneIntake, intakeBtn, outtakeBtn, INTAKE_STILL_SPEED);
 }
 
 //#region audio
@@ -244,10 +243,8 @@ task autoStacking() {
 		while (!stacking) EndTimeSlice();
 
 		//intake cone
-		setChainBarState(INTAKE);
-		setLiftState(L_DEF);
 		setPower(coneIntake, 127);
-		waitForMovementToFinish(true, true, INTAKE_DURATION);
+		wait1Msec(INTAKE_DURATION);
 		setPower(coneIntake, INTAKE_STILL_SPEED);
 
 		//move to desired location
@@ -275,17 +272,6 @@ task autoStacking() {
 		while (getPosition(chainBar) > chainPos[CH_SAFE]) EndTimeSlice();
 		setLiftState(L_DEF);
 	}
-}
-
-void adjustConeCount() {	//change cone count based on user input
-	if (newlyPressed(resetBtn))
-		numCones = 0;
-
-	if (numCones<=MAX_NUM_CONES && newlyPressed(increaseConesBtn))
-		numCones++;
-
-	if (numCones>0 && newlyPressed(decreaseConesBtn))
-		numCones--;
 }
 //#endregion
 
@@ -333,10 +319,21 @@ task autonomous() {
 //#endregion
 
 //#region usercontrol
+void adjustConeCount() {	//change cone count based on user input
+	if (newlyPressed(resetBtn))
+		numCones = 0;
+
+	if (numCones<=MAX_NUM_CONES && newlyPressed(increaseConesBtn))
+		numCones++;
+
+	if (numCones>0 && newlyPressed(decreaseConesBtn))
+		numCones--;
+}
+
 void setAutopositionState(AutoPosState state) {
-	stacking = false;
+	stacking = false;	//TODO
 	posState = state;
-	if (!manualLift) startTask(autoStacking);	//reset task progress
+	startTask(autoStacking);	//reset task progress
 
 	switch (state) {
 		case NO_POS:
@@ -371,41 +368,13 @@ void handleAutopositioningInput() {
 	}
 }
 
-void handleManualInput() {
-	handleAutopositioningInput();
-
-	takeInput(chainBar, !chainBar.activelyMaintining);	//will only set power if not maintaining a position
-	takeInput(lift, !lift.activelyMaintining);					//if there is input, activelyMaintaining will be set to false and normal control will resume
-
-	takeInput(coneIntake);
-
-	if (newlyPressed(toggleLiftModeBtn)) {	//switch to autostacking mode
-		manualLift = false;
-		startTask(autoStacking);
-		playSound(soundUpwardTones);
-	}
-}
-
-void handleAutostackInput() {
-	if (!stacking) {
-		if (vexRT[stackBtn] == 1) {
-			stackNewCone();
-		}
-		else {
-			takeInput(coneIntake);
-			handleAutopositioningInput();
-		}
-	}
-
-	adjustConeCount();
-
-	if (newlyPressed(toggleLiftModeBtn)) {	//switch to manual mode
-		stacking = false;
-		stopLiftTargeting();
-		stopTask(autoStacking);
-		manualLift = true;
-		playSound(soundDownwardTones);
-	}
+void handleConeIntakeInput(bool shift) {
+	if (vexRT[coneIntakeBtn] == 1)
+		setPower(coneIntake, 127);
+	else if (shift && vexRT[coneOuttakeBtn]==1)
+		setPower(coneIntake, -127);
+	else
+		setPower(coneIntake, INTAKE_STILL_SPEED);
 }
 
 void handleGoalIntakeInput() {
@@ -415,22 +384,49 @@ void handleGoalIntakeInput() {
 		setPower(goalIntake, goalPower);
 }
 
+void handleLiftInput(bool shift) {
+	if (!stacking) {
+		if (!shift && vexRT[stackBtn]==1) {
+			stackNewCone();
+		}
+		else {
+			handleConeIntakeInput(shift);
+			handleAutopositioningInput();
+
+			takeInput(lift, !lift.activelyMaintining); //will only set power if not maintaining a position
+								                                 //if there is input, activelyMaintaining will be set to false and normal control will resume
+			if (!shift)	//TODO
+				takeInput(chainBar, !chainBar.activelyMaintining);
+		}
+	}
+
+	executeLiftManeuvers();
+}
+
 task usercontrol() {
 	handleTesting();
 
-	if (!manualLift) startTask(autoStacking);
+	startTask(autoStacking);
+
+	bool shift;
 
 	while (true) {
-		if (manualLift)
-			handleManualInput();
-		else
-			handleAutostackInput();
+		shift = vexRT[shiftBtn]==1;
 
-		if (!bSoundActive && vexRT[sayConeNumberBtn]==1)
-			speakNum(numCones);
+		if (shift) {
+			adjustConeCount();
 
-		executeLiftManeuvers();
+			if (!bSoundActive && vexRT[sayConeNumberBtn]==1)
+				speakNum(numCones);
+		}
 
+		if (newlyPressed(abortManeuversBtn)) {
+			stacking = false;
+			startTask(autoStacking);
+			stopLiftTargeting();
+		}
+
+		handleLiftInput(shift);
 		handleGoalIntakeInput();
 
 		driveRuntime(drive);
