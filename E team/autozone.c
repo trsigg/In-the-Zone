@@ -97,7 +97,7 @@ int liftPos[] = { 1380,  1400,    1600,   1380,       1530,    1575,   2670 };
 	//#subregion cone counts
 #define APATHY_CONES   0	//number of cones for which lift does not move
 #define RECKLESS_CONES 2	//number of cones for which chain bar goes directly to STACK (not CH_SAFE first)
-#define MAX_NUM_CONES  16
+#define MAX_NUM_CONES  15
 	//#endsubregion
 	//#subregion timing
 #define INTAKE_DURATION  400	//amount of time rollers activate when intaking/expelling cones
@@ -273,7 +273,7 @@ task autoStacking() {
 
 		waitForMovementToFinish(true, true, 250);
 
-		if (numCones <= 14) {
+		if (numCones < MAX_NUM_CONES-1) {
 			//expel cone
 			setPower(coneIntake, -127);
 			setLiftTargetAndPID(liftAngle1, false);
