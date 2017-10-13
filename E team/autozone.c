@@ -18,11 +18,11 @@
 //#endregion
 
 //#region positions
-enum chainState  { CH_DEF,	INTAKE, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX };	//when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 1000,    800,    1800,    2800,  580,    2680, 4050 };
+enum chainState  { CH_FIELD, INTAKE, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
+int chainPos[] = { 700,      700,    1800,    2800,  580,    2680, 4050 };
 
-enum liftState  { L_MIN, L_DEF, L_SAFE, M_BASE_POS, PRELOAD, L_ZERO, L_MAX };	//when lift is at L_SAFE, goal intake can be moved without collision
-int liftPos[] = { 1220,  1230,  1600,   1100,       1400,    1575,   2360 };
+enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, PRELOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
+int liftPos[] = { 1220,  1230,     1600,   1100,       1400,    1575,   2360 };
 //#endregion
 
 //#region setup
@@ -49,9 +49,9 @@ int liftPos[] = { 1220,  1230,  1600,   1100,       1400,    1575,   2360 };
 		//#endsubsubregion
 
 	//#subregion autopositioning
-#define chainDefBtn				Btn8D	//takes chain bar to CH_DEF
+#define chainDefBtn				Btn8D	//takes chain bar to default position
 #define chainStackBtn			Btn8L //takes chain bar to STACK
-                                //when pressed together, they take lift to L_DEF and chain bar to CH_DEF
+                                //when pressed together, they take lift to L_DEF and chain bar to default position for mode
 	//#endsubregion
 
 	//#subregion autostacking control
@@ -102,6 +102,7 @@ int liftPos[] = { 1220,  1230,  1600,   1100,       1400,    1575,   2360 };
 //#region globals
 int numCones = 0; //current number of stacked cones
 bool stacking = false;	//whether the robot is currently in the process of stacking
+bool preload = false;	//whether robot is intaking cones from the preload or field
 static float heightOffset = sin((liftPos[M_BASE_POS] - liftPos[L_ZERO]) / RAD_TO_POT_FCTR);	//used in autostacking
 float liftAngle1, liftAngle2;	//the target angles of lift sections during a stack maneuver
 
@@ -182,13 +183,19 @@ void setLiftTargetAndPID(int target, bool resetIntegral=true) {	//sets lift targ
 }
 
 void setLiftState(liftState state) {
-	setLiftTargetAndPID(liftPos[state]);
+	if (state == L_DEF)
+		setLiftState(preload ? PRELOAD : L_FIELD);
+	else
+		setLiftTargetAndPID(liftPos[state]);
 }
 //#endregion
 
 //#region chain bar
 void setChainBarState(chainState state) {
-	setTargetPosition(chainBar, chainPos[state]);
+	if (state == CH_DEF)
+		setChainBarState(preload ? CH_SAFE : CH_FIELD);
+	else
+		setTargetPosition(chainBar, chainPos[state]);
 }
 //#endregion
 
@@ -224,7 +231,7 @@ void stackNewCone() {	//TODO: account for limited range of motion, modulus
 void executeLiftManeuvers(bool autoStillSpeed=true) {
 	maintainTargetPos(chainBar);
 
-	if (autoStillSpeed && lift.posPID.target<=liftPos[L_DEF] && errorLessThan(lift, 25) && lift.activelyMaintining)
+	if (autoStillSpeed && lift.posPID.target<=liftPos[L_FIELD] && errorLessThan(lift, 25) && lift.activelyMaintining)
 		setPower(lift, -LIFT_STILL_SPEED);
 	else
 		maintainTargetPos(lift);
@@ -243,8 +250,10 @@ task autoStacking() {
 		while (!stacking) EndTimeSlice();
 
 		//intake cone
+		setLiftState(L_DEF);
+		setChainBarState(INTAKE);
 		setPower(coneIntake, 127);
-		wait1Msec(INTAKE_DURATION);
+		waitForMovementToFinish(true, true, INTAKE_DURATION);
 		setPower(coneIntake, INTAKE_STILL_SPEED);
 
 		//move to desired location
@@ -391,12 +400,13 @@ void handleLiftInput(bool shift) {
 		}
 		else {
 			handleConeIntakeInput(shift);
-			handleAutopositioningInput();
 
 			takeInput(lift, !lift.activelyMaintining); //will only set power if not maintaining a position
 								                                 //if there is input, activelyMaintaining will be set to false and normal control will resume
-			if (!shift)	//TODO
+			if (!shift) {
 				takeInput(chainBar, !chainBar.activelyMaintining);
+				handleAutopositioningInput();
+			}
 		}
 	}
 
