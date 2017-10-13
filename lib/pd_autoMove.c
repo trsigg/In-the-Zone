@@ -93,6 +93,9 @@ float turnProgress() {
 }
 
 bool turnIsComplete() {
+	if (!turnData.isTurning)
+		return true;
+
 	if (turnData.ramper.algorithm == PD)
 		return time(turnData.pdTimer) >= turnData.pdTimeout;
 	else	//algorithm is QUAD
@@ -193,6 +196,9 @@ typedef struct {
 driveStruct driveData;
 
 bool drivingComplete() {
+	if (!driveData.isDriving)
+		return true;
+
 	if (time(driveData.movementTimer) >= driveData.movementTimeout)
 		return true;
 
