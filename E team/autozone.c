@@ -1,5 +1,8 @@
 #pragma config(Sensor, in1,    chainPot,       sensorPotentiometer)
 #pragma config(Sensor, in2,    liftPot,        sensorPotentiometer)
+#pragma config(Sensor, in3,    hyro,           sensorGyro)
+#pragma config(Sensor, in4,    leftLine,       sensorLineFollower)
+#pragma config(Sensor, in5,    rightLine,      sensorReflection)
 #pragma config(Sensor, dgtl1,  leftEnc,        sensorQuadEncoder)
 #pragma config(Sensor, dgtl3,  rightEnc,       sensorQuadEncoder)
 #pragma config(Motor,  port1,           RDrive1,       tmotorVex393_HBridge, openLoop, reversed)
@@ -76,25 +79,28 @@ int liftPos[] = { 1220,  1230,     1600,   1100,       1400,    1575,   2360 };
 //#endregion
 
 //#region constants
+	//#subregion sensor consts
+#define RAD_TO_POT_FCTR 880.1
+#define LINE_THRESHOLD  300
+	//#endsubregion
 	//#subregion measurements
 #define CONE_HEIGHT 2.5
-#define LIFT_LEN 14.0
-#define RAD_TO_POT_FCTR 880.1
+#define LIFT_LEN    14.0
 #define LIFT_OFFSET 2.25
 	//#endsubregion
 	//#subregion still speeds
-#define INTAKE_STILL_SPEED	15
-#define LIFT_STILL_SPEED		10
-#define CHAIN_STILL_SPEED		15
-#define GOAL_STILL_SPEED		15
+#define INTAKE_STILL_SPEED 15
+#define LIFT_STILL_SPEED   10
+#define CHAIN_STILL_SPEED  15
+#define GOAL_STILL_SPEED   15
 	//#endsubregion
 	//#subregion cone counts
-#define APATHY_CONES 0	//number of cones for which lift does not move
+#define APATHY_CONES   0	//number of cones for which lift does not move
 #define RECKLESS_CONES 5	//number of cones for which chain bar goes directly to STACK (not CH_SAFE first)
-#define MAX_NUM_CONES 16
+#define MAX_NUM_CONES  16
 	//#endsubregion
 	//#subregion timing
-#define INTAKE_DURATION 400	//amount of time rollers activate when intaking/expelling cones
+#define INTAKE_DURATION  400	//amount of time rollers activate when intaking/expelling cones
 #define OUTTAKE_DURATION 350
 	//#endsubregion
 //#endregion
@@ -125,9 +131,9 @@ void pre_auton() {
 	//configure drive
 	initializeDrive(drive, true);
 	setDriveMotors(drive, 4, LDrive1, LDrive1, RDrive1, RDrive2);
-	/*attachEncoder(drive, leftEnc, LEFT);
-	attachEncoder(drive, rightEnc, RIGHT, false, 3.25);
-	attachGyro(drive, hyro);*/
+	attachEncoder(drive, leftEnc, LEFT);
+	attachEncoder(drive, rightEnc, RIGHT, false, 4.0);
+	attachGyro(drive, hyro);
 
 	//configure lift (PID handled in setLiftPIDmode)
 	initializeGroup(lift, 1, liftMotors);
@@ -322,6 +328,23 @@ void handleTesting() {
 //#endregion
 
 //#region autonomous
+void alignToLine(int power=80) {
+	setDrivePower(drive, power, power);
+	bool leftRunning=true, rightRunning=true;
+
+	while (leftRunning || rightRunning) {
+		if (leftRunning && SensorValue[leftLine]<LINE_THRESHOLD) {
+			setLeftPower(drive, 0);
+			leftRunning = false;
+		}
+
+		if (rightRunning && SensorValue[rightLine]<LINE_THRESHOLD) {
+			setRightPower(drive, 0);
+			rightRunning = false;
+		}
+	}
+}
+
 task autonomous() {
 
 }
