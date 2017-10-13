@@ -22,7 +22,7 @@
 
 //#region positions
 enum chainState  { CH_FIELD, INTAKE, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 700,      700,    1800,    2800,  580,    2680, 4050 };
+int chainPos[] = { 900,      900,    1800,    2800,  280,    2680, 4050 };
 
 enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, PRELOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
 int liftPos[] = { 1380,  1400,    1600,   1380,       1530,    1575,   2670 };
@@ -237,7 +237,7 @@ void stackNewCone() {	//TODO: account for limited range of motion, modulus
 void executeLiftManeuvers(bool autoStillSpeed=true) {
 	maintainTargetPos(chainBar);
 
-	if (autoStillSpeed && lift.posPID.target<=liftPos[L_FIELD] && errorLessThan(lift, 25) && lift.activelyMaintining)
+	if (autoStillSpeed && lift.posPID.target<=liftPos[L_FIELD] && errorLessThan(lift, 50) && lift.activelyMaintining)
 		setPower(lift, -LIFT_STILL_SPEED);
 	else
 		maintainTargetPos(lift);
@@ -289,7 +289,10 @@ task autoStacking() {
 		}
 		else {
 			numCones++;
+			stacking = false;
 		}
+
+		speakNum(numCones);
 	}
 }
 //#endregion
