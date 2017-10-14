@@ -9,8 +9,9 @@
 #pragma config(Motor,  port2,           RDrive2,       tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           chain1,        tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port4,           intake,        tmotorVex393_MC29, openLoop, reversed)
-#pragma config(Motor,  port5,           liftMotors,    tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port5,           lift1,         tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port6,           LDrive1,       tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port7,           lift2,         tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port8,           chain2,        tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port9,           goal1,         tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port10,          goal2,         tmotorVex393_HBridge, openLoop, reversed)
@@ -22,7 +23,7 @@
 
 //#region positions
 enum chainState  { CH_FIELD, INTAKE, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 900,      900,    1800,    2800,  280,    2680, 4050 };
+int chainPos[] = { 850,      850,    1800,    2800,  280,    2680, 4050 };
 
 enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, PRELOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
 int liftPos[] = { 1380,  1400,    1600,   1380,       1530,    1575,   2670 };
@@ -86,7 +87,7 @@ int liftPos[] = { 1380,  1400,    1600,   1380,       1530,    1575,   2670 };
 	//#subregion measurements
 #define CONE_HEIGHT 2.5
 #define LIFT_LEN    14.0
-#define LIFT_OFFSET 2.25
+#define LIFT_OFFSET 1.5
 	//#endsubregion
 	//#subregion still speeds
 #define INTAKE_STILL_SPEED 15
@@ -136,7 +137,7 @@ void pre_auton() {
 	attachGyro(drive, hyro);
 
 	//configure lift (PID handled in setLiftPIDmode)
-	initializeGroup(lift, 1, liftMotors);
+	initializeGroup(lift, 2, lift1, lift2);
 	configureButtonInput(lift, liftUpBtn, liftDownBtn);
 	configureBtnDependentStillSpeed(lift, LIFT_STILL_SPEED);
 	addSensor(lift, liftPot);
