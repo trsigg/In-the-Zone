@@ -22,11 +22,11 @@
 //#endregion
 
 //#region positions
-enum chainState  { CH_FIELD, INTAKE, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 850,      850,    1800,    2800,  280,    2680, 4050 };
+enum chainState  { CH_FIELD, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
+int chainPos[] = { 850,      1800,    2800,  280,    2680, 4050 };
 
 enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, PRELOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-int liftPos[] = { 1380,  1400,    1600,   1380,       1530,    1575,   2670 };
+int liftPos[] = { 1195,  1200,    1600,   1250,       1345,    1515,   2670 };
 //#endregion
 
 //#region setup
@@ -73,8 +73,8 @@ int liftPos[] = { 1380,  1400,    1600,   1380,       1530,    1575,   2670 };
 #define liftDownBtn				Btn5D
 		//#endsubsubregion
 		//#subsubregion chain bar
-#define chainInBtn				Btn8U
-#define chainOutBtn				Btn8R
+#define chainInBtn				Btn5U
+#define chainOutBtn				Btn5D
 		//#endsubsubregion
 	//#endsubregion
 //#endregion
@@ -85,9 +85,9 @@ int liftPos[] = { 1380,  1400,    1600,   1380,       1530,    1575,   2670 };
 #define LINE_THRESHOLD  300
 	//#endsubregion
 	//#subregion measurements
-#define CONE_HEIGHT 2.5
+#define CONE_HEIGHT 2.0
 #define LIFT_LEN    14.0
-#define LIFT_OFFSET 1.5
+#define LIFT_OFFSET 1.25
 	//#endsubregion
 	//#subregion still speeds
 #define INTAKE_STILL_SPEED 15
@@ -175,9 +175,9 @@ void speakNum(int num) {
 //#region lift
 void setLiftPIDmode(bool up) {	//up is true for upward movement consts, false for downward movement ones.
 	if (up)
-		setTargetingPIDconsts(lift, 0.4, 0.002, 1.5, 25);	//.1/.35/.27, .001/.003/.003, .05/1.7/2.5
+		setTargetingPIDconsts(lift, 0.37, 0.002, 1.6, 25);	//.1/.35/.27, .001/.003/.003, .05/1.7/2.5
 	else
-		setTargetingPIDconsts(lift, 0.4, 0.002, 1.5, 25);
+		setTargetingPIDconsts(lift, 0.4, 0.001, 1.5, 25);
 }
 
 void setLiftTargetAndPID(int target, bool resetIntegral=true) {	//sets lift target and adjusts PID consts
@@ -304,6 +304,7 @@ bool abort = false;
 bool end = false;
 
 void testPIDs() {
+	setLiftPIDmode(true);
 	int prevTargets[] = { 0, 0, 0, 0 };
 
 	while (!end) {
@@ -313,7 +314,7 @@ void testPIDs() {
 		}
 
 		if (targets[1] != prevTargets[1]) {
-			setLiftTargetAndPID(targets[1]);
+			setTargetPosition(lift, targets[1]);
 			prevTargets[1] = targets[1];
 		}
 
@@ -442,19 +443,21 @@ void handleGoalIntakeInput(bool shift) {
 
 void handleLiftInput(bool shift) {
 	if (!stacking) {
-		if (!shift && vexRT[stackBtn]==1) {
-			stackNewCone();
+		if (shift) {
+			takeInput(lift, !lift.activelyMaintining); //will only set power if not maintaining a position
+			                                           //if there is input, activelyMaintaining will be set to false and normal control will resume
 		}
 		else {
-			handleConeIntakeInput(shift);
-
-			takeInput(lift, !lift.activelyMaintining); //will only set power if not maintaining a position
-								                                 //if there is input, activelyMaintaining will be set to false and normal control will resume
-			if (!shift) {
-				takeInput(chainBar, !chainBar.activelyMaintining);
+			if (vexRT[stackBtn] == 1) {
+				stackNewCone();
+			}
+			else {
 				handleAutopositioningInput();
+				takeInput(chainBar, !chainBar.activelyMaintining);
 			}
 		}
+
+		handleConeIntakeInput(shift);
 	}
 
 	executeLiftManeuvers();
