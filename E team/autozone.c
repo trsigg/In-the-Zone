@@ -23,10 +23,10 @@
 
 //#region positions
 enum chainState  { CH_FIELD, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 850,      1800,    2800,  280,    2680, 4050 };
+int chainPos[] = { 850,      1800,    2815,  270,    2680, 4050 };
 
 enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, PRELOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-int liftPos[] = { 1195,  1200,    1600,   1250,       1345,    1515,   2670 };
+int liftPos[] = { 1350,  1370,    1610,   1350,       1515,    1720,   2625 };
 //#endregion
 
 //#region setup
@@ -85,9 +85,9 @@ int liftPos[] = { 1195,  1200,    1600,   1250,       1345,    1515,   2670 };
 #define LINE_THRESHOLD  300
 	//#endsubregion
 	//#subregion measurements
-#define CONE_HEIGHT 2.0
+#define CONE_HEIGHT 2.5
 #define LIFT_LEN    14.0
-#define LIFT_OFFSET 1.25
+#define LIFT_OFFSET 1.75
 	//#endsubregion
 	//#subregion still speeds
 #define INTAKE_STILL_SPEED 15
@@ -175,9 +175,9 @@ void speakNum(int num) {
 //#region lift
 void setLiftPIDmode(bool up) {	//up is true for upward movement consts, false for downward movement ones.
 	if (up)
-		setTargetingPIDconsts(lift, 0.37, 0.002, 1.6, 25);	//.1/.35/.27, .001/.003/.003, .05/1.7/2.5
+		setTargetingPIDconsts(lift, 0.33, 0.001, 1.75, 25);	//0.37, 0.002, 1.6
 	else
-		setTargetingPIDconsts(lift, 0.4, 0.001, 1.5, 25);
+		setTargetingPIDconsts(lift, 0.33, 0.001, 1.75, 25);
 }
 
 void setLiftTargetAndPID(int target, bool resetIntegral=true) {	//sets lift target and adjusts PID consts
@@ -238,8 +238,8 @@ void stackNewCone() {	//TODO: account for limited range of motion, modulus
 void executeLiftManeuvers(bool autoStillSpeed=true) {
 	maintainTargetPos(chainBar);
 
-	if (autoStillSpeed && lift.posPID.target<=liftPos[L_FIELD] && errorLessThan(lift, 50) && lift.activelyMaintining)
-		setPower(lift, -LIFT_STILL_SPEED);
+	if (autoStillSpeed && errorLessThan(lift, 50) && lift.activelyMaintining)
+		setPower(lift, LIFT_STILL_SPEED * (lift.posPID.target<=liftPos[L_FIELD] ? -1 : 1));
 	else
 		maintainTargetPos(lift);
 }
@@ -454,6 +454,8 @@ void handleLiftInput(bool shift) {
 			else {
 				handleAutopositioningInput();
 				takeInput(chainBar, !chainBar.activelyMaintining);
+				if (!lift.activelyMaintining)
+					setPower(lift, LIFT_STILL_SPEED * (lift.stillSpeedReversed ? -1 : 1));
 			}
 		}
 

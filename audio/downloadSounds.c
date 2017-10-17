@@ -16,10 +16,10 @@ task main() {
 	playSoundFile("14.wav");
 	playSoundFile("15.wav");
 	playSoundFile("16.wav");
-	playSoundFile("17.wav");
+	/*playSoundFile("17.wav");
 	playSoundFile("18.wav");
 	playSoundFile("19.wav");
-	playSoundFile("20.wav");
+	playSoundFile("20.wav");*/
 
 	while (true);
 }
