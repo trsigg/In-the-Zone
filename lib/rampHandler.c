@@ -9,7 +9,7 @@ typedef struct {
   quadraticRamp quadRamp;
 } rampHandler;
 
-void initializeRampHandler(rampHandler *ramper, rampType type,float target, float in1, float in2, float in3) { //for PID, in1=kP, in2=kI, in3=kD; for quad ramping, in1=initial, in2=maximum, and in3=final
+void initializeRampHandler(rampHandler *ramper, rampType type, float target, float in1, float in2, float in3) { //for PID, in1=kP, in2=kI, in3=kD; for quad ramping, in1=initial, in2=maximum, and in3=final
   ramper->algorithm = type;
 
   if (type == PD)
