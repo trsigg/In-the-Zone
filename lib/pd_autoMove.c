@@ -62,13 +62,13 @@ void initializeAutoMovement() {
 	driveDefaults.usePID = true;
 	driveDefaults.rampConst1 = 10;	//same as above
 	driveDefaults.rampConst2 = 0.1;
-	driveDefaults.rampConst3 = 30;
+	driveDefaults.rampConst3 = 40;
 	driveDefaults.rampConst4 = 1;
 	driveDefaults.rampConst5 = 500;
 	driveDefaults.kP_c = .55;
 	driveDefaults.kI_c = 0.007;
 	driveDefaults.kD_c = 0.15;
-	driveDefaults.minSpeed = 10;
+	driveDefaults.minSpeed = 1;	//TODO: is not being assigned correctly
 }
 //#endregion
 
@@ -287,9 +287,9 @@ void driveStraight(float distance, bool runAsTask=driveDefaults.runAsTask, float
 	driveData.distance = abs(distance);
 	driveData.direction = sgn(distance);
 	driveData.rawValue = driveDefaults.rawValue;
+	driveData.sampleTime = driveDefaults.sampleTime;
 	driveData.minSpeed = minSpeed * driveData.sampleTime / 1000;
 	driveData.movementTimeout = movementTimeout;
-	driveData.sampleTime = driveDefaults.sampleTime;
 	driveData.isDriving = true;
 	initializePID(driveData.pid, 0, kP, kI, kD);
 

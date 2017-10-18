@@ -2,9 +2,10 @@
 #pragma config(Sensor, in2,    liftPot,        sensorPotentiometer)
 #pragma config(Sensor, in3,    hyro,           sensorGyro)
 #pragma config(Sensor, in4,    leftLine,       sensorLineFollower)
-#pragma config(Sensor, in5,    rightLine,      sensorReflection)
-#pragma config(Sensor, dgtl1,  rightEnc,       sensorQuadEncoder)
-#pragma config(Sensor, dgtl3,  leftEnc,        sensorQuadEncoder)
+#pragma config(Sensor, in5,    rightLine,      sensorLineFollower)
+#pragma config(Sensor, in6,    backLine,       sensorLineFollower)
+#pragma config(Sensor, dgtl1,  leftEnc,        sensorQuadEncoder)
+#pragma config(Sensor, dgtl3,  rightEnc,       sensorQuadEncoder)
 #pragma config(Motor,  port1,           RDrive1,       tmotorVex393_HBridge, openLoop, reversed)
 #pragma config(Motor,  port2,           RDrive2,       tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           chain1,        tmotorVex393_MC29, openLoop)
@@ -131,12 +132,15 @@ void pre_auton() {
 	bStopTasksBetweenModes = true;
 
 	initializeAutoMovement();
+	driveDefaults.kP_c = 0;	//temporary (due to encoder issues)
+	driveDefaults.kI_c = 0:
+	driveDefaults.kD_c = 0:
 
 	//configure drive
 	initializeDrive(drive, true);
 	setDriveMotors(drive, 4, LDrive1, LDrive1, RDrive1, RDrive2);
 	attachEncoder(drive, leftEnc, LEFT, true);
-	attachEncoder(drive, rightEnc, RIGHT, true, 4.0);
+	attachEncoder(drive, rightEnc, RIGHT, true, 4.0, 2.0);
 	attachGyro(drive, hyro);
 
 	//configure lift (PID handled in setLiftPIDmode)
@@ -303,13 +307,14 @@ task autoStacking() {
 //#endregion
 
 //#region testing
-int targets[] = { 0, 0, 0, 0 };	//chain bar, lift, driveStraight, turn
+int targets[4] = { chainPos[CH_FIELD], liftPos[L_FIELD], 0, 0 };	//chain bar, lift, driveStraight, turn
 bool abort = false;
 bool end = false;
 
 void testPIDs() {
 	setLiftPIDmode(true);
-	int prevTargets[] = { 0, 0, 0, 0 };
+	int prevTargets[4] = { 0, 0, 0, 0 };
+	//arrayCopy(targets, prevTargets, 4);
 
 	while (!end) {
 		if (targets[0] != prevTargets[0]) {
@@ -358,21 +363,75 @@ void handleTesting() {
 //#endregion
 
 //#region autonomous
-void alignToLine(int power=80) {
+void alignToLine(int power=60, int brakePower=20, int brakeDuration=250) {	//brakepower is absolute value (sign automatically determined)
+	long leftTimer, rightTimer;
 	setDrivePower(drive, power, power);
-	bool leftRunning=true, rightRunning=true;
 
-	while (leftRunning || rightRunning) {
-		if (leftRunning && SensorValue[leftLine]<LINE_THRESHOLD) {
-			setLeftPower(drive, 0);
-			leftRunning = false;
+	int leftProgress=0, rightProgress=0;	//0 - moving
+	                                      //1 - braking
+	                                      //2 - finished
+
+	while (leftProgress<2 || rightProgress<2) {
+		if (leftProgress == 0) {
+			if (SensorValue[leftLine] < LINE_THRESHOLD) {
+				leftTimer = resetTimer();
+				setLeftPower(drive, -brakePower * sgn(power));
+				leftProgress = 1;
+			}
+		} else if (leftProgress == 1) {
+			if (time(leftTimer) >= brakeDuration) {
+				setLeftPower(drive, 0);
+				leftProgress = 2;
+			}
 		}
 
-		if (rightRunning && SensorValue[rightLine]<LINE_THRESHOLD) {
-			setRightPower(drive, 0);
-			rightRunning = false;
+		if (rightProgress == 0) {
+			if (SensorValue[rightLine] < LINE_THRESHOLD) {
+				rightTimer = resetTimer();
+				setRightPower(drive, -brakePower * sgn(power));
+				rightProgress = 1;
+			}
+		} else if (rightProgress == 1) {
+			if (time(rightTimer) >= brakeDuration) {
+				setRightPower(drive, 0);
+				rightProgress = 2;
+			}
 		}
+
+		EndTimeSlice();
 	}
+}
+
+void turnToLine(bool parallelToLine, int power, int brakePower=20, int brakeDuration=250) {
+	setDrivePower(drive, power, -power);
+
+	if (parallelToLine)
+		while (SensorValue[leftLine]<LINE_THRESHOLD && SensorValue[rightLine]<LINE_THRESHOLD) EndTimeSlice();
+	else
+		while (SensorValue[backLine] < LINE_THRESHOLD) EndTimeSlice();
+
+	setDrivePower(drive, -brakePower*sgn(power), brakePower*sgn(power));
+
+	wait1Msec(brakeDuration);
+
+	setDrivePower(drive, 0, 0);
+}
+
+void turnQuicklyToLine(bool clockwise, bool parallelToLine) {
+	int direction = clockwise ? 1 : -1;
+	turn(30 * direction);
+	turnToLine(parallelToLine, 40*direction);
+}
+
+void stackAndWait() {
+	stackNewCone();
+	while (stacking) EndTimeSlice();
+}
+
+void driveForDuration(int duration, int left=127, int right=127) {
+	setDrivePower(drive, left, right);
+	wait1Msec(duration);
+	setDrivePower(drive, 0, 0);
 }
 
 void moveGoalIntake(bool in) {
@@ -383,17 +442,39 @@ void moveGoalIntake(bool in) {
 }
 
 task sideGoal() {
+	startTask(autoStacking);
+
+	//move lift out of way of intake
 	setPower(coneIntake, INTAKE_STILL_SPEED);
 	setChainBarState(STACK);
 	setLiftTargetAndPID(liftPos[L_SAFE] + 100);
 
 	while (getPosition(lift) < liftPos[L_SAFE]) EndTimeSlice();
 
-	moveGoalIntake(false);
+	moveGoalIntake(false);	//extend intake
 
-	driveStraight(35);
+	driveStraight(30);	//driveForDuration(1500);	//drive to mobile goal
 
-	moveGoalIntake(true)
+	moveGoalIntake(true);	//retract intake
+	stackNewCone();	//preload
+
+	//position robot so it is ready to outtake goal into 20pt zone
+	driveStraight(-25, true);
+	while (driveData.isDriving || stacking) EndTimeSlice();
+
+	setLiftTargetAndPID(liftPos[L_SAFE] + 100);	//lift up so mobile goal can outtake
+
+	turn(-45);
+	driveStraight(-20);
+	turn(-90);
+	driveForDuration(3000);
+
+	moveGoalIntake(false);	//extend goal intake
+
+	driveForDuration(250);	//push goal to back of zone
+	driveForDuration(500, -127, -127);	//remove goal from intake
+
+	moveGoalIntake(true);	//retract goal intake
 }
 
 task autonomous() {
