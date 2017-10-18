@@ -3,8 +3,8 @@
 #pragma config(Sensor, in3,    hyro,           sensorGyro)
 #pragma config(Sensor, in4,    leftLine,       sensorLineFollower)
 #pragma config(Sensor, in5,    rightLine,      sensorReflection)
-#pragma config(Sensor, dgtl1,  leftEnc,        sensorQuadEncoder)
-#pragma config(Sensor, dgtl3,  rightEnc,       sensorQuadEncoder)
+#pragma config(Sensor, dgtl1,  rightEnc,       sensorQuadEncoder)
+#pragma config(Sensor, dgtl3,  leftEnc,        sensorQuadEncoder)
 #pragma config(Motor,  port1,           RDrive1,       tmotorVex393_HBridge, openLoop, reversed)
 #pragma config(Motor,  port2,           RDrive2,       tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           chain1,        tmotorVex393_MC29, openLoop)
@@ -104,6 +104,8 @@ int liftPos[] = { 1350,  1370,    1610,   1350,       1515,    1720,   2550 };
 	//#subregion timing
 #define INTAKE_DURATION  400	//amount of time rollers activate when intaking/expelling cones
 #define OUTTAKE_DURATION 350
+#define GOAL_INTAKE_DURATION  1500
+#define GOAL_OUTTAKE_DURATION 2250
 	//#endsubregion
 //#endregion
 
@@ -373,8 +375,31 @@ void alignToLine(int power=80) {
 	}
 }
 
-task autonomous() {
+void moveGoalIntake(bool in) {
+	int direction = in ? -1 : 1;
+	setPower(goalIntake, 127 * direction);
+	wait1Msec(in ? GOAL_INTAKE_DURATION : GOAL_OUTTAKE_DURATION);
+	setPower(goalIntake, GOAL_STILL_SPEED * direction);
+}
 
+task sideGoal() {
+	setPower(coneIntake, INTAKE_STILL_SPEED);
+	setChainBarState(STACK);
+	setLiftTargetAndPID(liftPos[L_SAFE] + 100);
+
+	while (getPosition(lift) < liftPos[L_SAFE]) EndTimeSlice();
+
+	moveGoalIntake(false);
+
+	driveStraight(35);
+
+	moveGoalIntake(true)
+}
+
+task autonomous() {
+	startTask(sideGoal);
+
+	while (true) executeLiftManeuvers();
 }
 //#endregion
 
