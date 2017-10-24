@@ -44,8 +44,8 @@ int liftPos[] = { 1350,  1370,    1610,   1350,       1515,    1720,   2550 };
 #define sayConeNumberBtn  Btn8L	//with shift
 
 	//#subregion goal intake
-#define goalIntakeBtn			Btn5D
-#define goalOuttakeBtn		Btn5U
+#define goalIntakeBtn			Btn7D
+#define goalOuttakeBtn		Btn7U
 	//#endsubregion
 
 		//#subsubregion cone intake
@@ -56,7 +56,7 @@ int liftPos[] = { 1350,  1370,    1610,   1350,       1515,    1720,   2550 };
 #define chainDefBtn				Btn8D	//takes chain bar to default position
 #define chainStackBtn			Btn8L //takes chain bar to STACK
                                 //when pressed together, they take lift to L_DEF and chain bar to default position for mode
-#define maxPosBtn         Btn7U //takes lift to L_MAX
+//#define maxPosBtn         Btn7U //takes lift to L_MAX
 	//#endsubregion
 
 	//#subregion autostacking control
@@ -459,13 +459,13 @@ task sideGoal() {
 	stackNewCone();	//preload
 
 	//position robot so it is ready to outtake goal into 20pt zone
-	driveStraight(-25, true);
+	driveStraight(-27, true);
 	while (driveData.isDriving || stacking) EndTimeSlice();
 
 	setLiftTargetAndPID(liftPos[L_SAFE] + 100);	//lift up so mobile goal can outtake
 
 	turn(-45);
-	driveStraight(-20);
+	driveStraight(-15);
 	turn(-90);
 	driveForDuration(3000);
 
@@ -532,10 +532,10 @@ void handleAutopositioningInput() {
 		if (posState!=CH_STACK && posState!=FULL_DEF)
 			setAutopositionState(CH_STACK);
 	}
-	else if (vexRT[maxPosBtn] == 1) {
+	/*else if (vexRT[maxPosBtn] == 1) {
 		if (posState != MAX)
 			setAutopositionState(MAX);
-	}
+	}*/
 	else {
 		posState = NO_POS;
 	}
@@ -551,10 +551,10 @@ void handleConeIntakeInput(bool shift) {
 		setPower(coneIntake, INTAKE_STILL_SPEED);
 }
 
-void handleGoalIntakeInput(bool shift) {
+void handleGoalIntakeInput() {
 	int goalPower = takeInput(goalIntake, false);
 
-	if (shift && (getPosition(lift)>liftPos[L_SAFE] || goalPower<=GOAL_STILL_SPEED))
+	if (getPosition(lift)>liftPos[L_SAFE] || goalPower<=GOAL_STILL_SPEED)
 		setPower(goalIntake, goalPower);
 }
 
@@ -610,7 +610,7 @@ task usercontrol() {
 		}
 
 		handleLiftInput(shift);
-		handleGoalIntakeInput(shift);
+		handleGoalIntakeInput();
 
 		driveRuntime(drive);
 	}
