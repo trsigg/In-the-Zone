@@ -1,6 +1,6 @@
-#pragma config(Sensor, in1,    chainPot,       sensorPotentiometer)
-#pragma config(Sensor, in2,    liftPot,        sensorPotentiometer)
-#pragma config(Sensor, in3,    hyro,           sensorGyro)
+#pragma config(Sensor, in1,    hyro,           sensorGyro)
+#pragma config(Sensor, in2,    chainPot,       sensorPotentiometer)
+#pragma config(Sensor, in3,    liftPot,        sensorPotentiometer)
 #pragma config(Sensor, in4,    leftLine,       sensorLineFollower)
 #pragma config(Sensor, in5,    rightLine,      sensorLineFollower)
 #pragma config(Sensor, in6,    backLine,       sensorLineFollower)
@@ -87,7 +87,7 @@ int liftPos[] = { 1350,  1370,    1610,   1350,       1515,    1720,   2550 };
 #define LINE_THRESHOLD  300
 	//#endsubregion
 	//#subregion measurements
-#define CONE_HEIGHT 2.5
+#define CONE_HEIGHT 2.25
 #define LIFT_LEN    14.0
 #define LIFT_OFFSET 1.75
 	//#endsubregion
