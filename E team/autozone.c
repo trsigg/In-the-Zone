@@ -24,10 +24,10 @@
 
 //#region positions
 enum chainState  { CH_FIELD, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 850,      1800,    2815,  270,    2680, 4050 };
+int chainPos[] = { 800,      1800,    2800,  270,    2680, 4050 };
 
 enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, PRELOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-int liftPos[] = { 1350,  1370,    1610,   1350,       1515,    1720,   2550 };
+int liftPos[] = { 1270,  1280,    1610,   1280,       1515,    1570,   2550 };
 //#endregion
 
 //#region setup
@@ -87,19 +87,22 @@ int liftPos[] = { 1350,  1370,    1610,   1350,       1515,    1720,   2550 };
 #define LINE_THRESHOLD  300
 	//#endsubregion
 	//#subregion measurements
-#define CONE_HEIGHT 2.25
+#define CONE_HEIGHT 2.0
 #define LIFT_LEN    14.0
-#define LIFT_OFFSET 1.75
+#define LIFT_OFFSET 2.5
 	//#endsubregion
 	//#subregion still speeds
 #define INTAKE_STILL_SPEED 15
 #define LIFT_STILL_SPEED   10
+#define L_AUTO_SS_MARGIN   50
 #define CHAIN_STILL_SPEED  15
+#define CH_AUTO_SS_MARGIN	 0
 #define GOAL_STILL_SPEED   15
 	//#endsubregion
 	//#subregion cone counts
-#define APATHY_CONES   0	//number of cones for which lift does not move
-#define RECKLESS_CONES 2	//number of cones for which chain bar goes directly to STACK (not CH_SAFE first)
+#define APATHY_CONES    0 //number of cones for which lift does not move
+#define RECKLESS_CONES  2 //number of cones for which chain bar goes directly to STACK (not CH_SAFE first)
+#define NO_OFFSET_CONES 1 //number of cones for which the lift goes straight to liftAngle2
 #define MAX_NUM_CONES  15
 	//#endsubregion
 	//#subregion timing
@@ -115,6 +118,7 @@ int numCones = 0; //current number of stacked cones
 bool stacking = false;	//whether the robot is currently in the process of stacking
 bool preload = false;	//whether robot is intaking cones from the preload or field
 static float heightOffset = sin((liftPos[M_BASE_POS] - liftPos[L_ZERO]) / RAD_TO_POT_FCTR);	//used in autostacking
+string fileName;	//used in speakNumCones (must be global because ROBOTC hates dynamic memory allocation)
 float liftAngle1, liftAngle2;	//the target angles of lift sections during a stack maneuver
 
 	//#subregion autopositioning
@@ -154,7 +158,7 @@ void pre_auton() {
 	setAbsolutes(chainBar, chainPos[CH_MIN], chainPos[CH_MAX]);
 	configureButtonInput(chainBar, chainInBtn, chainOutBtn);
 	configurePosDependentStillSpeed(chainBar, CHAIN_STILL_SPEED, chainPos[VERT]);
-	setTargetingPIDconsts(chainBar, 0.23, 0.001, 0.55, 25);	//0.2/.3, 0.001, 0.15/.7
+	setTargetingPIDconsts(chainBar, 0.15, 0.0, 0.4, 25);	//0.2/.3, 0.001, 0.15/.7
 	addSensor(chainBar, chainPot);
 
 	//configure mobile goal intake
@@ -168,10 +172,10 @@ void pre_auton() {
 
 //#region audio
 void speakNum(int num) {
-	string fileName;
+	strcpy(fileName, "");
 	if (num >= 10)
 		strcat(fileName, "1");
-	char onesDigit[] = { '0' + (num % 10) };
+	char onesDigit[2] = { '0' + (num % 10), '\0' };
 	strcat(fileName, onesDigit);
 	strcat(fileName, ".wav");
 
@@ -243,9 +247,12 @@ void stackNewCone() {	//TODO: account for limited range of motion, modulus
 }
 
 void executeLiftManeuvers(bool autoStillSpeed=true) {
-	maintainTargetPos(chainBar);
+	if (autoStillSpeed && errorLessThan(chainBar, CH_AUTO_SS_MARGIN) && chainBar.activelyMaintining)
+		setPower(chainBar, CHAIN_STILL_SPEED * (chainBar.posPID.target<=chainPos[VERT] ? 1 : -1));
+	else
+		maintainTargetPos(chainBar);
 
-	if (autoStillSpeed && errorLessThan(lift, 50) && lift.activelyMaintining)
+	if (autoStillSpeed && errorLessThan(lift, L_AUTO_SS_MARGIN) && lift.activelyMaintining)
 		setPower(lift, LIFT_STILL_SPEED * (lift.posPID.target<=liftPos[L_FIELD] ? -1 : 1));
 	else
 		maintainTargetPos(lift);
@@ -260,24 +267,24 @@ void stopLiftTargeting() {
 }
 
 task autoStacking() {
+	bool useOffset;
+
 	while (true) {
 		while (!stacking) EndTimeSlice();
 
+		useOffset = (numCones > NO_OFFSET_CONES);
+
 		//intake cone
-		/*setLiftState(L_DEF);
-		setChainBarState(INTAKE);
-		setPower(coneIntake, 127);
-		waitForMovementToFinish(true, true, INTAKE_DURATION);*/
 		setPower(coneIntake, INTAKE_STILL_SPEED);
 
 		//move to desired location
 		setChainBarState(numCones<=RECKLESS_CONES ? STACK : CH_SAFE);
-		setLiftTargetAndPID(liftAngle1);
+		setLiftTargetAndPID(useOffset ? liftAngle1 : liftAngle2);
 
 		while (!errorLessThan(lift, 200)) EndTimeSlice();
 		if (numCones > RECKLESS_CONES) setChainBarState(STACK);
 		waitForMovementToFinish(false);
-		setLiftTargetAndPID(liftAngle2, false);	//change target without resetting integral
+		if (useOffset) setLiftTargetAndPID(liftAngle2/*, false*/);	//change target without resetting integral
 
 		waitForMovementToFinish(true, true, 250);
 
@@ -298,7 +305,7 @@ task autoStacking() {
 		else {
 			numCones++;
 			stacking = false;
-			lift.stillSpeedReversed = true;	//allows lift to fall down on stack
+			setPower(lift, -LIFT_STILL_SPEED);	//allows lift to fall down on stack
 		}
 
 		speakNum(numCones);
