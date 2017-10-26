@@ -52,6 +52,11 @@ void setDriveMotors(parallel_drive *drive, int numMotors, tMotor motor1, tMotor 
 	initializeGroup(drive->rightDrive, numSideMotors, motors[numSideMotors], motors[numSideMotors + 1], motors[numSideMotors + 2], motors[numSideMotors + 3], motors[numSideMotors + 4], motors[numSideMotors + 5]);
 }
 
+void configureRamping(parallel_drive *drive, int maxAcc100ms) {
+	configureRamping(drive->leftDrive, maxAcc100ms);
+	configureRamping(drive->rightDrive, maxAcc100ms);
+}
+
 
 //#region sensor setup
 void updateEncoderConfig(parallel_drive *drive) {
