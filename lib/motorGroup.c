@@ -213,9 +213,9 @@ int setPower(motorGroup *group, int power, bool overrideAbsolutes=false) {
 		group->activelyMaintining = true;
 	}
 
-	void maintainTargetPos(motorGroup *group) {
+	void maintainTargetPos(motorGroup *group, int debugStartCol=-1) {
 		if (group->activelyMaintining && group->posPID.kP != 0) {
-			setPower(group, PID_runtime(group->posPID, getPosition(group)));
+			setPower(group, PID_runtime(group->posPID, getPosition(group), debugStartCol));
 		}
 	}
 

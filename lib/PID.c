@@ -41,7 +41,7 @@ void setIntegralMax(PID *pid, float max) {
 	pid->integralMax = max;
 }
 
-float PID_runtime(PID *pid, float input) {
+float PID_runtime(PID *pid, float input, int debugStartCol=-1) {
 	long now = nPgmTime;
 	long elapsed = now - pid->lastUpdated;
 
@@ -55,6 +55,14 @@ float PID_runtime(PID *pid, float input) {
 
 		pid->output = pid->kP*error + pid->integral + pid->kD*(error - pid->prevError);	//kI factored in above (to avoid problems when resetting gain values)
 		pid->prevError = error;
+
+		if (debugStartCol >= 0) {
+			datalogAddValueWithTimeStamp(debugStartCol, error);
+			datalogAddValueWithTimeStamp(debugStartCol+1, pid->output);
+			datalogAddValueWithTimeStamp(debugStartCol+2, pid->kP*error);
+			datalogAddValueWithTimeStamp(debugStartCol+3, pid->integral);
+			datalogAddValueWithTimeStamp(debugStartCol+4, pid->kD*(error - pid->prevError));
+		}
 	}
 
 	return pid->output;
