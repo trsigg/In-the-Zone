@@ -137,8 +137,8 @@ void pre_auton() {
 
 	initializeAutoMovement();
 	driveDefaults.kP_c = 0;	//temporary (due to encoder issues)
-	driveDefaults.kI_c = 0:
-	driveDefaults.kD_c = 0:
+	driveDefaults.kI_c = 0;
+	driveDefaults.kD_c = 0;
 
 	//configure drive
 	initializeDrive(drive, true);
@@ -147,10 +147,11 @@ void pre_auton() {
 	attachEncoder(drive, rightEnc, RIGHT, true, 4.0, 2.0);
 	attachGyro(drive, hyro);
 
-	//configure lift (PID handled in setLiftPIDmode)
+	//configure lift
 	initializeGroup(lift, 2, lift1, lift2);
 	configureButtonInput(lift, liftUpBtn, liftDownBtn);
 	configureBtnDependentStillSpeed(lift, LIFT_STILL_SPEED);
+	initializeTargetingPID(chainBar, 0, 0, 0, 25);	//gain setup in setLiftPIDmode
 	addSensor(lift, liftPot);
 
 	//configure chain bar
@@ -158,7 +159,7 @@ void pre_auton() {
 	setAbsolutes(chainBar, chainPos[CH_MIN], chainPos[CH_MAX]);
 	configureButtonInput(chainBar, chainInBtn, chainOutBtn);
 	configurePosDependentStillSpeed(chainBar, CHAIN_STILL_SPEED, chainPos[VERT]);
-	setTargetingPIDconsts(chainBar, 0.15, 0.0, 0.4, 25);	//0.2/.3, 0.001, 0.15/.7
+	initializeTargetingPID(chainBar, 0, 0, 0, 25);	//gain setup in setChainBarPIDmode
 	addSensor(chainBar, chainPot);
 
 	//configure mobile goal intake
@@ -186,9 +187,9 @@ void speakNum(int num) {
 //#region lift
 void setLiftPIDmode(bool up) {	//up is true for upward movement consts, false for downward movement ones.
 	if (up)
-		setTargetingPIDconsts(lift, 0.33, 0.001, 1.75, 25);	//0.37, 0.002, 1.6
+		setTargetingPIDconsts(lift, 0.33, 0.001, 1.75);	//0.37, 0.002, 1.6
 	else
-		setTargetingPIDconsts(lift, 0.33, 0.001, 1.75, 25);
+		setTargetingPIDconsts(lift, 0.33, 0.001, 1.75);
 }
 
 void setLiftTargetAndPID(int target, bool resetIntegral=true) {	//sets lift target and adjusts PID consts
@@ -209,11 +210,27 @@ void setLiftState(liftState state) {
 //#endregion
 
 //#region chain bar
+void setChainBarPIDmode(bool low) {	//	low should be true for targets below VERT
+	if (low)
+		setTargetingPIDconsts(chainBar, 0.15, 0.001, 0.1);
+	else
+		setTargetingPIDconsts(chainBar, 0.07, 0.001, 0.05);
+}
+
+void setChainBarTargetAndPID(int target, bool resetIntegral=true) {
+	if (target < chainPos[VERT])
+		setChainBarPIDmode(true);
+	else
+		setChainBarPIDmode(false);
+
+	setTargetPosition(chainBar, target, resetIntegral);
+}
+
 void setChainBarState(chainState state) {
 	if (state == CH_DEF)
 		setChainBarState(preload ? CH_SAFE : CH_FIELD);
 	else
-		setTargetPosition(chainBar, chainPos[state]);
+		setChainBarTargetAndPID(chainPos[state]);
 }
 //#endregion
 
@@ -314,36 +331,47 @@ task autoStacking() {
 //#endregion
 
 //#region testing
-int targets[4] = { chainPos[CH_FIELD], liftPos[L_FIELD], 0, 0 };	//chain bar, lift, driveStraight, turn
+#define NUM_TARGETS 6
+int targets[NUM_TARGETS] = { chainPos[CH_FIELD], liftPos[L_FIELD], 0, 0, 1, 1 };	//chain bar, lift, driveStraight, turn, chain PID mode(low=0), lift PID mode (up=1)
 bool abort = false;
 bool end = false;
 
+void handlePIDinput(int index) {
+	int input = targets[index];
+
+	switch (index) {
+		case 0:
+			setTargetPosition(chainBar, input);
+			break;
+		case 1:
+			setTargetPosition(lift, input);
+			break;
+		case 2:
+			driveStraight(input);
+			playSound(soundLowBuzz);
+			break;
+		case 3:
+			turn(input);
+			playSound(soundLowBuzz);
+		case 4:
+			setChainBarPIDmode(input == 0);
+			break;
+		case 5:
+			setLiftPIDmode(input == 1);
+			break;
+	}
+}
+
 void testPIDs() {
-	setLiftPIDmode(true);
-	int prevTargets[4] = { 0, 0, 0, 0 };
-	//arrayCopy(targets, prevTargets, 4);
+	int prevTargets[NUM_TARGETS] = { 0, 0, 0, 0, 0, 0 };
+	//arrayCopy(targets, prevTargets, NUM_TARGETS);
 
 	while (!end) {
-		if (targets[0] != prevTargets[0]) {
-			setTargetPosition(chainBar, targets[0]);
-			prevTargets[0] = targets[0];
-		}
-
-		if (targets[1] != prevTargets[1]) {
-			setTargetPosition(lift, targets[1]);
-			prevTargets[1] = targets[1];
-		}
-
-		if (targets[2] != prevTargets[2]) {
-			driveStraight(targets[2]);
-			playSound(soundLowBuzz);
-			prevTargets[2] = targets[2];
-		}
-
-		if (targets[3] != prevTargets[3]) {
-			turn(targets[3]);
-			playSound(soundLowBuzz);
-			prevTargets[3] = targets[3];
+		for (int i=0; i<NUM_TARGETS; i++) {
+			if (prevTargets[i] != targets[i]) {
+				prevTargets[i] = targets[i];
+				handlePIDinput(i);
+			}
 		}
 
 		if (abort) {
