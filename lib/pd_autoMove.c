@@ -46,11 +46,11 @@ void initializeAutoMovement() {
 	turnDefaults.reversed = false;
 	turnDefaults.usePID = true;
 	turnDefaults.waitAtEnd = 100;
-	turnDefaults.rampConst1 = 5;    // initialPower/kP
-	turnDefaults.rampConst2 = 0.01; // maxPower/kI
-	turnDefaults.rampConst3 = 15;	  // finalPower/kD
-	turnDefaults.rampConst4 = 5;	  // brakeDuration/pd acceptable error
-	turnDefaults.rampConst5 = 1000;	// brakePower/pd timeout
+	turnDefaults.rampConst1 = 5;    // initialPower  / kP
+	turnDefaults.rampConst2 = 0.01; // maxPower      / kI
+	turnDefaults.rampConst3 = 15;	  // finalPower    / kD
+	turnDefaults.rampConst4 = 5;	  // brakeDuration / pd acceptable error
+	turnDefaults.rampConst5 = 1000;	// brakePower    / pd timeout
 
 	//driving
 	driveDefaults.defCorrectionType = AUTO;
