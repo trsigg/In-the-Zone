@@ -54,7 +54,6 @@ float PID_runtime(PID *pid, float input, int debugStartCol=-1) {
 			pid->integral += pid->kI*error;
 
 		pid->output = pid->kP*error + pid->integral + pid->kD*(error - pid->prevError);	//kI factored in above (to avoid problems when resetting gain values)
-		pid->prevError = error;
 
 		if (debugStartCol >= 0) {
 			datalogAddValueWithTimeStamp(debugStartCol, error);
@@ -62,7 +61,11 @@ float PID_runtime(PID *pid, float input, int debugStartCol=-1) {
 			datalogAddValueWithTimeStamp(debugStartCol+2, pid->kP*error);
 			datalogAddValueWithTimeStamp(debugStartCol+3, pid->integral);
 			datalogAddValueWithTimeStamp(debugStartCol+4, pid->kD*(error - pid->prevError));
+			datalogAddValueWithTimeStamp(debugStartCol+5, pid->target);
+			datalogAddValueWithTimeStamp(debugStartCol+6, input);
 		}
+
+		pid->prevError = error;
 	}
 
 	return pid->output;
