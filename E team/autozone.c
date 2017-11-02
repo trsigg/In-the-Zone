@@ -20,15 +20,15 @@
 
 //#region config - TODO: change testing parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID)
-int testingParameters[] = { -1, 0 };	//testPIDs: { liftDebugStartCol, chainDebugStartCol }
+int testingParameters[] = { -1, -1 };	//testPIDs: { liftDebugStartCol, chainDebugStartCol }
 //#endregion
 
 //#region positions
 enum chainState  { CH_FIELD, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 1045,     1700,    3029,  372,    2748, 3888 };
+int chainPos[] = { 1485,     2365,    3805,  5,      3275, 4096 };
 
 enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, PRELOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-int liftPos[] = { 1270,  1280,    1610,   1280,       1515,    1570,   2550 };
+int liftPos[] = { 1270,  1280,    1610,   1270,       1515,    1600,   2400 };
 //#endregion
 
 //#region setup
@@ -213,9 +213,9 @@ void setLiftState(liftState state) {
 //#region chain bar
 void setChainBarPIDmode(bool low) {	//	low should be true for targets below VERT
 	if (low)
-		setTargetingPIDconsts(chainBar, 0.15, 0.001, 0.1);
+		setTargetingPIDconsts(chainBar, 0.2, 0.001, 0.7);
 	else
-		setTargetingPIDconsts(chainBar, 0.15, 0.001, 0.1);	//0.07, 0.001, 0.05
+		setTargetingPIDconsts(chainBar, 0.2, 0.001, 0.7);	//0.07, 0.001, 0.05
 }
 
 void setChainBarTargetAndPID(int target, bool resetIntegral=true) {
@@ -376,9 +376,9 @@ void testPIDs() {
 		}
 
 		if (testingParameters[0] >= 0)
-			datalogAddValueWithTimeStamp(testingParameters[0]+5, getPosition(lift));
+			datalogAddValueWithTimeStamp(testingParameters[0]+7, getPosition(lift));
 		if (testingParameters[1] >= 0)
-			datalogAddValueWithTimeStamp(testingParameters[1]+5, getPosition(chainBar));
+			datalogAddValueWithTimeStamp(testingParameters[1]+7, getPosition(chainBar));
 
 		if (abort) {
 			stopLiftTargeting();
