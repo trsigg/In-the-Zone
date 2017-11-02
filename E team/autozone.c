@@ -1,11 +1,11 @@
 #pragma config(Sensor, in1,    hyro,           sensorGyro)
-#pragma config(Sensor, in2,    chainPot,       sensorPotentiometer)
 #pragma config(Sensor, in3,    liftPot,        sensorPotentiometer)
 #pragma config(Sensor, in4,    leftLine,       sensorLineFollower)
 #pragma config(Sensor, in5,    rightLine,      sensorLineFollower)
 #pragma config(Sensor, in6,    backLine,       sensorLineFollower)
 #pragma config(Sensor, dgtl1,  leftEnc,        sensorQuadEncoder)
 #pragma config(Sensor, dgtl3,  rightEnc,       sensorQuadEncoder)
+#pragma config(Sensor, dgtl5,  chainEnc,       sensorQuadEncoder)
 #pragma config(Motor,  port1,           RDrive1,       tmotorVex393_HBridge, openLoop, reversed)
 #pragma config(Motor,  port2,           RDrive2,       tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           chain1,        tmotorVex393_MC29, openLoop)
@@ -25,10 +25,10 @@ int testingParameters[] = { -1, -1 };	//testPIDs: { liftDebugStartCol, chainDebu
 
 //#region positions
 enum chainState  { CH_FIELD, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 1485,     2365,    3805,  5,      3275, 4096 };
+int chainPos[] = { -160,     -97,     -32,   -247,   -56,  0 };
 
 enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, PRELOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-int liftPos[] = { 1270,  1280,    1610,   1270,       1515,    1600,   2400 };
+int liftPos[] = { 1270,  1270,    1610,   1270,       1515,    1600,   2400 };
 //#endregion
 
 //#region setup
@@ -90,7 +90,7 @@ int liftPos[] = { 1270,  1280,    1610,   1270,       1515,    1600,   2400 };
 	//#subregion measurements
 #define CONE_HEIGHT 2.0
 #define LIFT_LEN    14.0
-#define LIFT_OFFSET 2.5
+#define LIFT_OFFSET 2.0
 	//#endsubregion
 	//#subregion still speeds
 #define INTAKE_STILL_SPEED 15
@@ -104,7 +104,7 @@ int liftPos[] = { 1270,  1280,    1610,   1270,       1515,    1600,   2400 };
 #define APATHY_CONES    0 //number of cones for which lift does not move
 #define RECKLESS_CONES  2 //number of cones for which chain bar goes directly to STACK (not CH_SAFE first)
 #define NO_OFFSET_CONES 1 //number of cones for which the lift goes straight to liftAngle2
-#define MAX_NUM_CONES  15
+#define MAX_NUM_CONES   15
 	//#endsubregion
 	//#subregion timing
 #define INTAKE_DURATION  400	//amount of time rollers activate when intaking/expelling cones
@@ -152,7 +152,7 @@ void pre_auton() {
 	initializeGroup(lift, 2, lift1, lift2);
 	configureButtonInput(lift, liftUpBtn, liftDownBtn);
 	configureBtnDependentStillSpeed(lift, LIFT_STILL_SPEED);
-	initializeTargetingPID(chainBar, 0, 0, 0, 25);	//gain setup in setLiftPIDmode
+	initializeTargetingPID(lift, 0, 0, 0, 25);	//gain setup in setLiftPIDmode
 	addSensor(lift, liftPot);
 
 	//configure chain bar
@@ -161,7 +161,7 @@ void pre_auton() {
 	configureButtonInput(chainBar, chainInBtn, chainOutBtn);
 	configurePosDependentStillSpeed(chainBar, CHAIN_STILL_SPEED, chainPos[VERT]);
 	initializeTargetingPID(chainBar, 0, 0, 0, 25);	//gain setup in setChainBarPIDmode
-	addSensor(chainBar, chainPot);
+	addSensor(chainBar, chainEnc);
 
 	//configure mobile goal intake
 	initializeGroup(goalIntake, 2, goal1, goal2);
@@ -188,9 +188,9 @@ void speakNum(int num) {
 //#region lift
 void setLiftPIDmode(bool up) {	//up is true for upward movement consts, false for downward movement ones.
 	if (up)
-		setTargetingPIDconsts(lift, 0.33, 0.001, 1.75);	//0.37, 0.002, 1.6
+		setTargetingPIDconsts(lift, 0.5, 0.001, 1.5);	//0.37, 0.002, 1.6
 	else
-		setTargetingPIDconsts(lift, 0.33, 0.001, 1.75);
+		setTargetingPIDconsts(lift, 0.5, 0.001, 1.5);
 }
 
 void setLiftTargetAndPID(int target, bool resetIntegral=true) {	//sets lift target and adjusts PID consts
@@ -213,9 +213,9 @@ void setLiftState(liftState state) {
 //#region chain bar
 void setChainBarPIDmode(bool low) {	//	low should be true for targets below VERT
 	if (low)
-		setTargetingPIDconsts(chainBar, 0.2, 0.001, 0.7);
+		setTargetingPIDconsts(chainBar, 3.1, 0.015, 11);
 	else
-		setTargetingPIDconsts(chainBar, 0.2, 0.001, 0.7);	//0.07, 0.001, 0.05
+		setTargetingPIDconsts(chainBar, 3.1, 0.015, 11);
 }
 
 void setChainBarTargetAndPID(int target, bool resetIntegral=true) {
@@ -236,7 +236,7 @@ void setChainBarState(chainState state) {
 //#endregion
 
 //#region autostacking
-void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=100, float chainMargin=200, float liftMargin=200) {
+void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=100, float chainMargin=10, float liftMargin=200) {
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {
@@ -290,7 +290,7 @@ task autoStacking() {
 	while (true) {
 		while (!stacking) EndTimeSlice();
 
-		useOffset = (numCones > NO_OFFSET_CONES);
+		useOffset = (numCones >= NO_OFFSET_CONES);
 
 		//intake cone
 		setPower(coneIntake, INTAKE_STILL_SPEED);
@@ -333,7 +333,7 @@ task autoStacking() {
 
 //#region testing
 #define NUM_TARGETS 6
-int targets[NUM_TARGETS] = { chainPos[CH_FIELD], liftPos[L_FIELD], 0, 0, 1, 1 };	//chain bar, lift, driveStraight, turn, chain PID mode(low=0), lift PID mode (up=1)
+int targets[NUM_TARGETS] = { 0, 0, 0, 0, 1, 1 };	//chain bar, lift, driveStraight, turn, chain PID mode(low=0), lift PID mode (up=1)
 bool abort = false;
 bool end = false;
 
@@ -519,6 +519,8 @@ task sideGoal() {
 }
 
 task autonomous() {
+	resetEncoder(chainBar);
+
 	startTask(sideGoal);
 
 	while (true) executeLiftManeuvers();
@@ -619,6 +621,7 @@ void handleLiftInput(bool shift) {
 }
 
 task usercontrol() {
+	resetEncoder(chainBar);
 	handleTesting();
 
 	startTask(autoStacking);
