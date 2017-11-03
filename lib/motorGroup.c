@@ -36,6 +36,8 @@ typedef struct {
 	bool hasEncoder, hasPotentiometer;
 	bool encoderReversed, potentiometerReversed;
 	bool potentiometerDefault; //whether potentiometer (as opposed to encoder) is default sensor for position measurements
+	bool encCorrectionActive;	//drift correction
+	int encMax, maxDisp;
 	tSensors encoder, potentiometer;
 	//position targets
 	int targets[numTargets];
@@ -140,6 +142,26 @@ int getPosition(motorGroup *group) {
 
 void resetEncoder(motorGroup *group, int resetVal=0) {
 	SensorValue[group->encoder] = resetVal * (group->encoderReversed ?  -1 : 1);
+}
+
+void configureEncoderCorrection(motorGroup *group, int max) {
+	group->encMax = max;
+	group->encCorrectionActive = true;
+	group->maxDisp = 0;
+}
+
+void correctEncVal(motorGroup *group) {
+	if (group->encCorrectionActive) {
+		int encVal = encoderVal(group);
+
+		if (encVal < group->maxDisp) {
+			resetEncoder(group);
+			group->maxDisp = 0;
+		}
+		else if ((encVal - group->encMax) > group->maxDisp) {
+			group->maxDisp = encVal - group->encMax;
+		}
+	}
 }
 //#endregion
 
