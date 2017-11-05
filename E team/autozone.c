@@ -25,7 +25,7 @@ int testingParameters[] = { -1, -1 };	//testPIDs: { liftDebugStartCol, chainDebu
 
 //#region positions
 enum chainState  { CH_FIELD, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { -160,     -97,     -32,   -247,   -56,  0 };
+int chainPos[] = { 160,      97,      32,    0,      56,   247 };
 
 enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, PRELOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
 int liftPos[] = { 1270,  1270,    1610,   1270,       1515,    1600,   2400 };
@@ -162,7 +162,7 @@ void pre_auton() {
 	configurePosDependentStillSpeed(chainBar, CHAIN_STILL_SPEED, chainPos[VERT]);
 	initializeTargetingPID(chainBar, 0, 0, 0, 25);	//gain setup in setChainBarPIDmode
 	addSensor(chainBar, chainEnc, true);
-	configureEncoderCorrection(chainBar, chainPos[MAX]);
+	configureEncoderCorrection(chainBar, chainPos[CH_MAX]);
 
 	//configure mobile goal intake
 	initializeGroup(goalIntake, 2, goal1, goal2);
