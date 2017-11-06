@@ -25,10 +25,10 @@ int testingParameters[] = { -1, -1 };	//testPIDs: { liftDebugStartCol, chainDebu
 
 //#region positions
 enum chainState  { CH_FIELD, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 145,      97,      32,    0,      56,   247 };
+int chainPos[] = { 145,      97,      46,    0,      56,   247 };
 
 enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, PRELOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-int liftPos[] = { 1270,  1270,    1610,   1270,       1515,    1600,   2400 };
+int liftPos[] = { 1240,  1245,    1610,   1245,       1515,    1600,   2435 };
 //#endregion
 
 //#region setup
@@ -86,12 +86,12 @@ int liftPos[] = { 1270,  1270,    1610,   1270,       1515,    1600,   2400 };
 //#region constants
 	//#subregion sensor consts
 #define RAD_TO_POT_FCTR 880.1
-#define LINE_THRESHOLD  300
+#define LINE_THRESHOLD  1400
 	//#endsubregion
 	//#subregion measurements
-#define CONE_HEIGHT 2.0
+#define CONE_HEIGHT 2.35
 #define LIFT_LEN    14.0
-#define LIFT_OFFSET 2.0
+#define LIFT_OFFSET 2.5
 	//#endsubregion
 	//#subregion still speeds
 #define INTAKE_STILL_SPEED 15
@@ -218,7 +218,7 @@ void setChainBarPIDmode(bool low) {	//	low should be true for targets below VERT
 }
 
 void setChainBarTargetAndPID(int target, bool resetIntegral=true) {
-	if (target < chainPos[VERT])
+	if (target > chainPos[VERT])
 		setChainBarPIDmode(true);
 	else
 		setChainBarPIDmode(false);
@@ -301,7 +301,7 @@ task autoStacking() {
 		while (!errorLessThan(lift, 200)) EndTimeSlice();
 		if (numCones > RECKLESS_CONES) setChainBarState(STACK);
 		waitForMovementToFinish(false);
-		if (useOffset) setLiftTargetAndPID(liftAngle2/*, false*/);	//change target without resetting integral
+		if (useOffset) setLiftTargetAndPID(liftAngle2/*, false*/);
 
 		waitForMovementToFinish(true, true, 250);
 
@@ -316,7 +316,7 @@ task autoStacking() {
 			//return to ready positions
 			numCones++;
 			stacking = false;
-			while (getPosition(chainBar) > chainPos[CH_SAFE]) EndTimeSlice();
+			while (getPosition(chainBar) < chainPos[CH_SAFE]) EndTimeSlice();
 			setLiftState(L_DEF);
 		}
 		else {
@@ -493,13 +493,13 @@ task sideGoal() {
 
 	moveGoalIntake(false);	//extend intake
 
-	driveStraight(30);	//driveForDuration(1500);	//drive to mobile goal
+	driveStraight(33);	//driveForDuration(1500);	//drive to mobile goal
 
 	moveGoalIntake(true);	//retract intake
 	stackNewCone();	//preload
 
 	//position robot so it is ready to outtake goal into 20pt zone
-	driveStraight(-27, true);
+	driveStraight(-33, true);
 	while (driveData.isDriving || stacking) EndTimeSlice();
 
 	setLiftTargetAndPID(liftPos[L_SAFE] + 100);	//lift up so mobile goal can outtake
@@ -515,10 +515,13 @@ task sideGoal() {
 	driveForDuration(500, -127, -127);	//remove goal from intake
 
 	moveGoalIntake(true);	//retract goal intake
+	int numCones = 0;
 }
 
 task autonomous() {
 	resetEncoder(chainBar);
+	int numCones = 0;
+	turnDefaults.reversed = true;
 
 	startTask(sideGoal);
 
