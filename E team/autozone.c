@@ -25,7 +25,7 @@ int testingParameters[] = { -1, -1 };	//testPIDs: { liftDebugStartCol, chainDebu
 
 //#region positions
 enum chainState  { CH_FIELD, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 160,      97,      32,    0,      56,   247 };
+int chainPos[] = { 145,      97,      32,    0,      56,   247 };
 
 enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, PRELOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
 int liftPos[] = { 1270,  1270,    1610,   1270,       1515,    1600,   2400 };
@@ -37,6 +37,7 @@ int liftPos[] = { 1270,  1270,    1610,   1270,       1515,    1600,   2400 };
 #include "Vex_Competition_Includes.c"
 #include "..\lib\pd_autoMove.c"
 #include "..\lib\buttonTracker.c"
+#include "..\audio\downloadSounds.c"
 //#endregion
 
 //#region buttons
@@ -108,7 +109,7 @@ int liftPos[] = { 1270,  1270,    1610,   1270,       1515,    1600,   2400 };
 	//#endsubregion
 	//#subregion timing
 #define INTAKE_DURATION  400	//amount of time rollers activate when intaking/expelling cones
-#define OUTTAKE_DURATION 350
+#define OUTTAKE_DURATION 450
 #define GOAL_INTAKE_DURATION  1500
 #define GOAL_OUTTAKE_DURATION 2250
 	//#endsubregion
@@ -119,7 +120,6 @@ int numCones = 0; //current number of stacked cones
 bool stacking = false;	//whether the robot is currently in the process of stacking
 bool preload = false;	//whether robot is intaking cones from the preload or field
 static float heightOffset = sin((liftPos[M_BASE_POS] - liftPos[L_ZERO]) / RAD_TO_POT_FCTR);	//used in autostacking
-string fileName;	//used in speakNumCones (must be global because ROBOTC hates dynamic memory allocation)
 float liftAngle1, liftAngle2;	//the target angles of lift sections during a stack maneuver
 
 	//#subregion autopositioning
@@ -157,7 +157,7 @@ void pre_auton() {
 
 	//configure chain bar
 	initializeGroup(chainBar, 2, chain1, chain2);
-	setAbsolutes(chainBar, chainPos[CH_MIN], chainPos[CH_MAX]);
+	//setAbsolutes(chainBar, chainPos[CH_MIN], chainPos[CH_MAX]);
 	configureButtonInput(chainBar, chainOutBtn, chainInBtn);
 	configurePosDependentStillSpeed(chainBar, CHAIN_STILL_SPEED, chainPos[VERT]);
 	initializeTargetingPID(chainBar, 0, 0, 0, 25);	//gain setup in setChainBarPIDmode
@@ -171,17 +171,15 @@ void pre_auton() {
 
 	//configure cone intake
 	initializeGroup(coneIntake, 1, intake);
+
+	//download sound files
+	downloadSounds();
 }
 
 //#region audio
 void speakNum(int num) {
-	strcpy(fileName, "");
-	if (num >= 10)
-		strcat(fileName, "1");
-	char onesDigit[2] = { '0' + (num % 10), '\0' };
-	strcat(fileName, onesDigit);
-	strcat(fileName, ".wav");
-
+	string fileName;
+	stringFormat(fileName, "%d.wav", num);
 	playSoundFile(fileName);
 }
 //#endregion
@@ -237,7 +235,7 @@ void setChainBarState(chainState state) {
 //#endregion
 
 //#region autostacking
-void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=100, float chainMargin=10, float liftMargin=200) {
+void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=100, float chainMargin=15, float liftMargin=200) {
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {
@@ -653,6 +651,8 @@ task usercontrol() {
 			startTask(autoStacking);
 			stopLiftTargeting();
 		}
+
+		correctEncVal(chainBar);
 
 		handleLiftInput(shift);
 		handleGoalIntakeInput();
