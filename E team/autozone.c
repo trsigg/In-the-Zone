@@ -1,11 +1,11 @@
 #pragma config(Sensor, in1,    hyro,           sensorGyro)
+#pragma config(Sensor, in2,    chainPot,       sensorPotentiometer)
 #pragma config(Sensor, in3,    liftPot,        sensorPotentiometer)
 #pragma config(Sensor, in4,    leftLine,       sensorLineFollower)
 #pragma config(Sensor, in5,    rightLine,      sensorLineFollower)
 #pragma config(Sensor, in6,    backLine,       sensorLineFollower)
 #pragma config(Sensor, dgtl1,  leftEnc,        sensorQuadEncoder)
 #pragma config(Sensor, dgtl3,  rightEnc,       sensorQuadEncoder)
-#pragma config(Sensor, dgtl5,  chainEnc,       sensorQuadEncoder)
 #pragma config(Motor,  port1,           RDrive1,       tmotorVex393_HBridge, openLoop, reversed)
 #pragma config(Motor,  port2,           RDrive2,       tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           chain1,        tmotorVex393_MC29, openLoop, reversed)
@@ -25,10 +25,10 @@ int testingParameters[] = { -1, -1 };	//testPIDs: { liftDebugStartCol, chainDebu
 
 //#region positions
 enum chainState  { CH_FIELD, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 145,      97,      37,    0,      56,   247 };
+int chainPos[] = { 2800,     1740,    1015,  440,    1140, 3840 };
 
 enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, PRELOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-int liftPos[] = { 1300,  1310,    1610,   1310,       1585,    1700,   2475 };
+int liftPos[] = { 1250,  1250,    1610,   1250,       1585,    1700,   2475 };
 //#endregion
 
 //#region setup
@@ -137,9 +137,9 @@ void pre_auton() {
 	bStopTasksBetweenModes = true;
 
 	initializeAutoMovement();
-	driveDefaults.kP_c = 0;	//temporary (due to encoder issues)
+	/*driveDefaults.kP_c = 0;	//temporary (due to encoder issues)
 	driveDefaults.kI_c = 0;
-	driveDefaults.kD_c = 0;
+	driveDefaults.kD_c = 0;*/
 
 	//configure drive
 	initializeDrive(drive, true);
@@ -152,17 +152,16 @@ void pre_auton() {
 	initializeGroup(lift, 2, lift1, lift2);
 	configureButtonInput(lift, liftUpBtn, liftDownBtn);
 	configureBtnDependentStillSpeed(lift, LIFT_STILL_SPEED);
-	initializeTargetingPID(lift, 0, 0, 0, 25);	//gain setup in setLiftPIDmode
+	initializeTargetingPID(lift, 0, 0, 0, 50);	//gain setup in setLiftPIDmode
 	addSensor(lift, liftPot);
 
 	//configure chain bar
 	initializeGroup(chainBar, 2, chain1, chain2);
-	//setAbsolutes(chainBar, chainPos[CH_MIN], chainPos[CH_MAX]);
+	setAbsolutes(chainBar, chainPos[CH_MIN], chainPos[CH_MAX]);
 	configureButtonInput(chainBar, chainOutBtn, chainInBtn);
 	configurePosDependentStillSpeed(chainBar, CHAIN_STILL_SPEED, chainPos[VERT]);
 	initializeTargetingPID(chainBar, 0, 0, 0, 25);	//gain setup in setChainBarPIDmode
-	addSensor(chainBar, chainEnc, true);
-	configureEncoderCorrection(chainBar, chainPos[CH_MAX]);
+	addSensor(chainBar, chainPot);
 
 	//configure mobile goal intake
 	initializeGroup(goalIntake, 2, goal1, goal2);
@@ -187,9 +186,9 @@ void speakNum(int num) {
 //#region lift
 void setLiftPIDmode(bool up) {	//up is true for upward movement consts, false for downward movement ones.
 	if (up)
-		setTargetingPIDconsts(lift, 0.5, 0.001, 1.5);	//0.37, 0.002, 1.6
+		setTargetingPIDconsts(lift, 0.35, 0.001, 1);	//0.37, 0.002, 1.6
 	else
-		setTargetingPIDconsts(lift, 0.5, 0.001, 1.5);
+		setTargetingPIDconsts(lift, 0.35, 0.001, 1);
 }
 
 void setLiftTargetAndPID(int target, bool resetIntegral=true) {	//sets lift target and adjusts PID consts
@@ -212,9 +211,9 @@ void setLiftState(liftState state) {
 //#region chain bar
 void setChainBarPIDmode(bool low) {	//	low should be true for targets below VERT
 	if (low)
-		setTargetingPIDconsts(chainBar, 3.1, 0.015, 11);
+		setTargetingPIDconsts(chainBar, 0.25, 0.001, 0.5);
 	else
-		setTargetingPIDconsts(chainBar, 3.1, 0.015, 11);
+		setTargetingPIDconsts(chainBar, 0.25, 0.001, 0.5);
 }
 
 void setChainBarTargetAndPID(int target, bool resetIntegral=true) {
@@ -235,7 +234,7 @@ void setChainBarState(chainState state) {
 //#endregion
 
 //#region autostacking
-void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=100, float chainMargin=15, float liftMargin=200) {
+void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=100, float chainMargin=150, float liftMargin=200) {
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {
@@ -374,10 +373,10 @@ void testPIDs() {
 			}
 		}
 
-		if (testingParameters[0] >= 0)
+		/*if (testingParameters[0] >= 0)
 			datalogAddValueWithTimeStamp(testingParameters[0]+7, getPosition(lift));
 		if (testingParameters[1] >= 0)
-			datalogAddValueWithTimeStamp(testingParameters[1]+7, getPosition(chainBar));
+			datalogAddValueWithTimeStamp(testingParameters[1]+7, getPosition(chainBar));*/
 
 		if (abort) {
 			stopLiftTargeting();
@@ -468,10 +467,10 @@ void stackAndWait() {
 	while (stacking) EndTimeSlice();
 }
 
-void driveForDuration(int duration, int left=127, int right=127) {
-	setDrivePower(drive, left, right);
+void driveForDuration(int duration, int beginPower=127, int endPower=0) {
+	setDrivePower(drive, beginPower, beginPower);
 	wait1Msec(duration);
-	setDrivePower(drive, 0, 0);
+	setDrivePower(drive, beginPower, beginPower);
 }
 
 void moveGoalIntake(bool in) {
@@ -493,26 +492,26 @@ task sideGoal() {
 
 	moveGoalIntake(false);	//extend intake
 
-	driveStraight(33);	//driveForDuration(1500);	//drive to mobile goal
+	driveStraight(37);	//driveForDuration(1500);	//drive to mobile goal
 
 	moveGoalIntake(true);	//retract intake
 	stackNewCone();	//preload
 
 	//position robot so it is ready to outtake goal into 20pt zone
-	driveStraight(-33, true);
+	driveStraight(-31, true);
 	while (driveData.isDriving || stacking) EndTimeSlice();
 
 	setLiftTargetAndPID(liftPos[L_SAFE] + 100);	//lift up so mobile goal can outtake
 
-	turn(-45);
-	driveStraight(-15);
-	turn(-90);
-	driveForDuration(3000);
+	turn(-50);
+	driveStraight(-17);
+	turn(-100);
+	driveForDuration(2000, 127, 20);
 
 	moveGoalIntake(false);	//extend goal intake
 
 	driveForDuration(250);	//push goal to back of zone
-	driveForDuration(500, -127, -127);	//remove goal from intake
+	driveForDuration(500, -127);	//remove goal from intake
 
 	moveGoalIntake(true);	//retract goal intake
 	int numCones = 0;
@@ -654,8 +653,6 @@ task usercontrol() {
 			startTask(autoStacking);
 			stopLiftTargeting();
 		}
-
-		correctEncVal(chainBar);
 
 		handleLiftInput(shift);
 		handleGoalIntakeInput();
