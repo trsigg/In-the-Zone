@@ -20,6 +20,7 @@
 
 //#region config - TODO: change testing parameter scheme
 #define HOLD_LAST_CONE false
+#define skillz         false
 	//#subregion testing
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID)
 int debugParameters[] = { 0, -1 };	//{ liftDebugStartCol, chainDebugStartCol }
@@ -166,9 +167,6 @@ void pre_auton() {
 	bStopTasksBetweenModes = true;
 
 	initializeAutoMovement();
-	/*driveDefaults.kP_c = 0;	//temporary (due to encoder issues)
-	driveDefaults.kI_c = 0;
-	driveDefaults.kD_c = 0;*/
 
 	//configure drive
 	initializeDrive(drive, true);
@@ -530,9 +528,7 @@ void moveGoalIntake(bool in, bool runAsTask=false) {
 	}
 }
 
-task sideGoal() {
-	startTask(autoStacking);
-
+void sideGoal(bool twentyPt=true) {	//gets mobile goal on parking tile in front of robot and scores with preload in 10pt or 20pt zone (depending on argument)
 	//move lift out of way of intake
 	setPower(coneIntake, 60);
 	setChainBarState(STACK);
@@ -561,25 +557,45 @@ task sideGoal() {
 	turn(-45);
 	driveStraight(-23);
 	turn(-90);
-	driveForDuration(1500, 127, 20);
+	driveForDuration((twentyPt ? 1500 : 750), 127, 20);
 
 	moveGoalIntake(false);	//extend goal intake
 
-	driveForDuration(250);	//push goal to back of zone
+	if (twentyPt) driveForDuration(250);	//push goal to back of zone
 	driveForDuration(1000, -127);	//remove goal from intake
 
 	numCones = 0;
 	moveGoalIntake(true);	//retract goal intake
 }
 
+task skillz() {
+	turnDefaults.reversed = false;
+
+	sideGoal();
+
+	driveForDuration(1000, -127);	//back over poles
+	driveForDuration(750, 60);	//run into pole to align
+
+	driveStraight(-1);
+	turn(-45);
+	driveStraight(27);
+	turn(-45);
+
+	sideGoal(false);
+}
+
 task autonomous() {
-	resetEncoder(chainBar);
+	startTask(autoStacking);
 	int numCones = 0;
 	turnDefaults.reversed = true;
 
-	//alignToLine();	TODO: testing in auton mode?
-
-	startTask(sideGoal);
+	if (skillz) {
+		startTask(skillz);
+	}
+	else {
+		//alignToLine();	TODO: testing in auton mode?
+		sideGoal();
+	}
 
 	while (true) executeLiftManeuvers();
 }
@@ -679,7 +695,6 @@ void handleLiftInput(bool shift) {
 }
 
 task usercontrol() {
-	resetEncoder(chainBar);
 	handleTesting();
 
 	startTask(autoStacking);
