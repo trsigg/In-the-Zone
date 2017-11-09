@@ -49,22 +49,22 @@ void initializeAutoMovement() {
 	turnDefaults.rampConst1 = 5;    // initialPower  / kP
 	turnDefaults.rampConst2 = 0.01; // maxPower      / kI
 	turnDefaults.rampConst3 = 15;	  // finalPower    / kD
-	turnDefaults.rampConst4 = 5;	  // brakeDuration / pd acceptable error
-	turnDefaults.rampConst5 = 1000;	// brakePower    / pd timeout
+	turnDefaults.rampConst4 = 5;    // brakeDuration / pd acceptable error (absolute)
+	turnDefaults.rampConst5 = 500;	// brakePower    / pd timeout
 
 	//driving
 	driveDefaults.defCorrectionType = AUTO;
 	driveDefaults.runAsTask = false;
 	driveDefaults.rawValue = false;
-	driveDefaults.movementTimeout = 1000;
+	driveDefaults.movementTimeout = 500;
 	driveDefaults.waitAtEnd = 100;
 	driveDefaults.sampleTime = 50;
 	driveDefaults.usePID = true;
-	driveDefaults.rampConst1 = 10;	//same as above
+	driveDefaults.rampConst1 = 10;	//same as above, except
 	driveDefaults.rampConst2 = 0.1;
-	driveDefaults.rampConst3 = 40;
-	driveDefaults.rampConst4 = 1;
-	driveDefaults.rampConst5 = 500;
+	driveDefaults.rampConst3 = 50;
+	driveDefaults.rampConst4 = 0.1; //this is in proportion to distance
+	driveDefaults.rampConst5 = 250;
 	driveDefaults.kP_c = .55;
 	driveDefaults.kI_c = 0.007;
 	driveDefaults.kD_c = 0.15;
@@ -299,7 +299,7 @@ void driveStraight(float distance, bool runAsTask=driveDefaults.runAsTask, float
 
 	if (usePID) {
 		initializeRampHandler(driveData.ramper, PD, driveData.distance, in1, in2, in3);
-		driveData.error = in4;
+		driveData.error = in4 * driveData.distance;
 		driveData.pdTimeout = in5;
 		driveData.pdTimer = resetTimer();
 		driveData.finalDelay = waitAtEnd;
