@@ -1,11 +1,11 @@
 #pragma config(Sensor, in2,    chainPot,       sensorPotentiometer)
-#pragma config(Sensor, in3,    liftPot,        sensorPotentiometer)
 #pragma config(Sensor, in4,    leftLine,       sensorLineFollower)
 #pragma config(Sensor, in5,    backLine,       sensorLineFollower)
 #pragma config(Sensor, in6,    rightLine,      sensorLineFollower)
 #pragma config(Sensor, in7,    hyro,           sensorGyro)
 #pragma config(Sensor, dgtl1,  leftEnc,        sensorQuadEncoder)
 #pragma config(Sensor, dgtl3,  rightEnc,       sensorQuadEncoder)
+#pragma config(Sensor, dgtl5,  liftEnc,        sensorQuadEncoder)
 #pragma config(Motor,  port1,           RDrive1,       tmotorVex393_HBridge, openLoop, reversed)
 #pragma config(Motor,  port2,           RDrive2,       tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           chain1,        tmotorVex393_MC29, openLoop, reversed)
@@ -20,7 +20,8 @@
 
 //#region config - TODO: change testing parameter scheme
 #define HOLD_LAST_CONE false
-#define skillz         false
+#define L_USING_ENC    //uncommented if lift sensor is encoder
+#define SKILLZ_MODE    false
 	//#subregion testing
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID)
 int debugParameters[] = { 0, -1 };	//{ liftDebugStartCol, chainDebugStartCol }
@@ -93,7 +94,11 @@ int liftPos[] = { 1295,  1365,    1610,   1300,       1525,   1670,   2435 };
 
 //#region constants
 	//#subregion sensor consts
-#define RAD_TO_POT_FCTR  880.1
+	#ifdef L_USING_ENC
+		#define RAD_TO_LIFT_FCTR 180 / PI //converts radians to encoder values
+	#else
+		#define RAD_TO_LIFT_FCTR 880.1 //converts radians to potentiometer values
+	#endif
 #define R_LINE_THRESHOLD 2960
 #define L_LINE_THRESHOLD 3060
 #define B_LINE_THRESHOLD 2870
@@ -135,7 +140,7 @@ int numCones = 0; //current number of stacked cones
 bool stacking = false;	//whether the robot is currently in the process of stacking
 bool fielding = true;	//whether robot is intaking cones from the driver load or field
 int goalDirection = 0;	//0: not moving; -1: intaking; 1: outtaking
-static float heightOffset = sin((liftPos[M_BASE_POS] - liftPos[L_ZERO]) / RAD_TO_POT_FCTR);	//used in autostacking
+static float heightOffset = sin((liftPos[M_BASE_POS] - liftPos[L_ZERO]) / RAD_TO_LIFT_FCTR);	//used in autostacking
 float liftAngle1, liftAngle2;	//the target angles of lift sections during a stack maneuver
 
 	//#subregion autopositioning
@@ -178,7 +183,13 @@ void pre_auton() {
 	//configure lift
 	initializeGroup(lift, 2, lift1, lift2);
 	initializeTargetingPID(lift, 0, 0, 0, 50);	//gain setup in setLiftPIDmode
-	addSensor(lift, liftPot);
+
+	#ifdef L_USING_ENC
+		addSensor(lift, liftEnc);
+		configureEncoderCorrection(lift, liftPos[L_MAX]);
+	#else
+		addSensor(lift, liftPot);
+	#endif
 
 	//configure chain bar
 	initializeGroup(chainBar, 2, chain1, chain2);
@@ -275,7 +286,7 @@ int adjustedNumCones() {
 }
 
 float calcLiftTargetForHeight(float height) {
-	return limit(RAD_TO_POT_FCTR * asin(height / 2 / LIFT_LEN + heightOffset) + liftPos[L_ZERO],
+	return limit(RAD_TO_LIFT_FCTR * asin(height / 2 / LIFT_LEN + heightOffset) + liftPos[L_ZERO],
 	             liftPos[L_MIN], liftPos[L_MAX]);
 }
 
@@ -586,10 +597,10 @@ task skillz() {
 
 task autonomous() {
 	startTask(autoStacking);
-	int numCones = 0;
+	numCones = 0;
 	turnDefaults.reversed = true;
 
-	if (skillz) {
+	if (SKILLZ_MODE) {
 		startTask(skillz);
 	}
 	else {
@@ -727,6 +738,10 @@ task usercontrol() {
 			startTask(autoStacking);
 			stopLiftTargeting();
 		}
+
+		#ifdef L_USING_ENC
+			correctEncVal(lift);
+		#endif
 
 		handleLiftInput(shift);
 		handleGoalIntakeInput();
