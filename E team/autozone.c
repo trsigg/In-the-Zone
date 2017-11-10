@@ -23,8 +23,8 @@
 #define L_USING_ENC    //uncommented if lift sensor is encoder
 #define SKILLZ_MODE    false
 	//#subregion testing
-#define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID)
-int debugParameters[] = { 0, -1 };	//{ liftDebugStartCol, chainDebugStartCol }
+#define TESTING 1	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID)
+int debugParameters[] = { -1, 0, -1, 7 };	//{ liftDebugStartCol, chainDebugStartCol, liftSensorCol, chainSensorCol }
 	//#endsubregion
 //#endregion
 
@@ -33,7 +33,7 @@ enum chainState  { CH_FIELD, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //
 int chainPos[] = { 2800,     1915,    1150,  440,    1140, 3840 };
 
 enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-int liftPos[] = { 1295,  1365,    1610,   1300,       1525,   1670,   2435 };
+int liftPos[] = { 1060,  1065,    1350,   1060,       1395,   1400,   2035 };
 //#endregion
 
 //#region setup
@@ -247,9 +247,9 @@ void setLiftState(liftState state) {
 //#region chain bar
 void setChainBarPIDmode(bool low) {	//	low should be true for targets below VERT
 	if (low)
-		setTargetingPIDconsts(chainBar, 0.2, 0.001, 0.5);
+		setTargetingPIDconsts(chainBar, 0.25, 0.002, 0.3);
 	else
-		setTargetingPIDconsts(chainBar, 0.2, 0.001, 0.5);
+		setTargetingPIDconsts(chainBar, 0.25, 0.002, 0.3);
 }
 
 void setChainBarTargetAndPID(int target, bool resetIntegral=true) {
@@ -290,12 +290,16 @@ float calcLiftTargetForHeight(float height) {
 	             liftPos[L_MIN], liftPos[L_MAX]);
 }
 
-void stackNewCone() {	//TODO: account for limited range of motion, modulus
+void stackNewCone(bool wait=false) {
 	float stackHeight = CONE_HEIGHT * adjustedNumCones();
 
 	liftAngle1 = calcLiftTargetForHeight(stackHeight + LIFT_OFFSET);
 	liftAngle2 = calcLiftTargetForHeight(stackHeight);
 	stacking = true;
+
+	if (wait)
+		while (stacking)
+			EndTimeSlice();
 }
 
 void executeLiftManeuvers(bool autoStillSpeed=true) {
@@ -381,6 +385,13 @@ int targets[NUM_TARGETS] = { 0, 0, 0, 0, 1, 1 };	//chain bar, lift, driveStraigh
 bool abort = false;
 bool end = false;
 
+void logData() {
+	if (debugParameters[2] >= 0)
+		datalogAddValueWithTimeStamp(debugParameters[2], getPosition(lift));
+	else if (debugParameters[3] >= 0)
+		datalogAddValueWithTimeStamp(debugParameters[3], getPosition(chainBar));
+}
+
 void handlePIDinput(int index) {
 	int input = targets[index];
 
@@ -419,10 +430,7 @@ void testPIDs() {
 			}
 		}
 
-		/*if (debugParameters[0] >= 0)
-			datalogAddValueWithTimeStamp(debugParameters[0]+7, getPosition(lift));
-		else if (debugParameters[1] >= 0)
-			datalogAddValueWithTimeStamp(debugParameters[1]+7, getPosition(chainBar));*/
+		logData();
 
 		if (abort) {
 			stopLiftTargeting();
@@ -506,11 +514,6 @@ void turnQuicklyToLine(bool clockwise, bool parallelToLine) {
 	int direction = clockwise ? 1 : -1;
 	turn(30 * direction);
 	turnToLine(parallelToLine, 40*direction);
-}
-
-void stackAndWait() {
-	stackNewCone();
-	while (stacking) EndTimeSlice();
 }
 
 void driveForDuration(int duration, int beginPower=127, int endPower=0) {
@@ -608,7 +611,10 @@ task autonomous() {
 		sideGoal();
 	}
 
-	while (true) executeLiftManeuvers();
+	while (true) {
+		executeLiftManeuvers();
+		logData();
+	}
 }
 //#endregion
 
@@ -713,6 +719,7 @@ task usercontrol() {
 	bool shift;
 
 	while (true) {
+		logData();
 		shift = vexRT[shiftBtn]==1;
 
 		if (shift) {
