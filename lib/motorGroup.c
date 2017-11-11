@@ -141,7 +141,8 @@ int getPosition(motorGroup *group) {
 }
 
 void resetEncoder(motorGroup *group, int resetVal=0) {
-	SensorValue[group->encoder] = resetVal * (group->encoderReversed ?  -1 : 1);
+	if (group->hasEncoder)
+		SensorValue[group->encoder] = resetVal * (group->encoderReversed ?  -1 : 1);
 }
 
 void configureEncoderCorrection(motorGroup *group, int max) {

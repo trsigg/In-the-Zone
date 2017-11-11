@@ -49,7 +49,7 @@ void initializeAutoMovement() {
 	turnDefaults.rampConst1 = 5;    // initialPower  / kP
 	turnDefaults.rampConst2 = 0.01; // maxPower      / kI
 	turnDefaults.rampConst3 = 15;	  // finalPower    / kD
-	turnDefaults.rampConst4 = 5;    // brakeDuration / pd acceptable error (absolute)
+	turnDefaults.rampConst4 = 0.06; // brakeDuration / pd acceptable error (proportion of target)
 	turnDefaults.rampConst5 = 500;	// brakePower    / pd timeout
 
 	//driving
@@ -60,10 +60,10 @@ void initializeAutoMovement() {
 	driveDefaults.waitAtEnd = 100;
 	driveDefaults.sampleTime = 50;
 	driveDefaults.usePID = true;
-	driveDefaults.rampConst1 = 10;	//same as above, except
+	driveDefaults.rampConst1 = 10;	//same as above
 	driveDefaults.rampConst2 = 0.1;
 	driveDefaults.rampConst3 = 50;
-	driveDefaults.rampConst4 = 0.1; //this is in proportion to distance
+	driveDefaults.rampConst4 = 0.1;
 	driveDefaults.rampConst5 = 250;
 	driveDefaults.kP_c = .55;
 	driveDefaults.kI_c = 0.007;
@@ -134,7 +134,7 @@ task turnTask() {
 	turnEnd();
 }
 
-void turn(float angle, bool runAsTask=turnDefaults.runAsTask, float in1=turnDefaults.rampConst1, float in2=turnDefaults.rampConst2, float in3=turnDefaults.rampConst3, int in4=turnDefaults.rampConst4, float in5=turnDefaults.rampConst5, bool usePID=turnDefaults.usePID, angleType angleType=turnDefaults.defAngleType, bool useGyro=turnDefaults.useGyro, int waitAtEnd=turnDefaults.waitAtEnd) { //for PD, in1=kP, in2=kI, in3=kD, in4=error, in5=pd timeout; for quad ramping, in1=initial, in2=maximum, in3=final, in4=brakePower, and in5=brakeDuration
+void turn(float angle, bool runAsTask=turnDefaults.runAsTask, float in1=turnDefaults.rampConst1, float in2=turnDefaults.rampConst2, float in3=turnDefaults.rampConst3, float in4=turnDefaults.rampConst4, float in5=turnDefaults.rampConst5, bool usePID=turnDefaults.usePID, angleType angleType=turnDefaults.defAngleType, bool useGyro=turnDefaults.useGyro, int waitAtEnd=turnDefaults.waitAtEnd) { //for PD, in1=kP, in2=kI, in3=kD, in4=error, in5=pd timeout; for quad ramping, in1=initial, in2=maximum, in3=final, in4=brakePower, and in5=brakeDuration
 	//initialize variables
 	if (turnDefaults.reversed) angle *= -1;
 	float formattedAngle = convertAngle(abs(angle), DEGREES, angleType);
@@ -145,7 +145,7 @@ void turn(float angle, bool runAsTask=turnDefaults.runAsTask, float in1=turnDefa
 
 	if (usePID) {
 		initializeRampHandler(turnData.ramper, PD, formattedAngle, in1, in2, in3);
-		turnData.error = convertAngle(in4, angleType, DEGREES);
+		turnData.error = in4 * formattedAngle;
 		turnData.pdTimeout = in5;
 		turnData.pdTimer = resetTimer();
 		turnData.finalDelay = waitAtEnd;

@@ -113,6 +113,7 @@ const float CH_CORR_FCTR = (CH_USING_ENC ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define CONE_HEIGHT 2.75
 #define LIFT_LEN    14.0
 #define LIFT_OFFSET 2.0
+#define GOAL_TO_MID_DIST 17.5
 	//#endsubregion
 	//#subregion still speeds
 #define INTAKE_STILL_SPEED 15
@@ -344,9 +345,6 @@ void expelCone() {	//should be called after stacking cone
 	setPower(coneIntake, -127);
 	setLiftTargetAndPID(liftAngle1, false);
 	waitForMovementToFinish(true, false, OUTTAKE_DURATION);
-
-	numCones++;
-	stacking = false;
 }
 
 task autoStacking() {
@@ -375,6 +373,8 @@ task autoStacking() {
 
 		if (numCones < MAX_NUM_CONES-1) {
 			expelCone();
+			stacking = false;
+			numCones++;
 
 			if (liftEarly) setLiftState(L_DEF);
 			setChainBarState(CH_DEF);
@@ -387,6 +387,8 @@ task autoStacking() {
 		else {
 			if (!HOLD_LAST_CONE)
 				expelCone();
+			stacking = false;
+			numCones++;
 
 			lift.activelyMaintining = false;	//allows lift to fall down on stack
 			lift.stillSpeedReversed = true;
@@ -572,14 +574,14 @@ void moveLiftToSafePos(bool wait=true) {
 
 void scoreGoal(bool retract=true, bool twentyPt=true) {	//assumes robot is lined up to first bar (TODO: make retract 2nd arg)
 	if (twentyPt)
-		driveForDuration(1500, 127, 20);
+		driveForDuration(1000, 127, 20);
 	else
 		driveForDuration(750, 60, 15);
 
 	moveGoalIntake(false);	//extend goal intake
 
 	driveForDuration(250);	//push goal to back of zone
-	driveForDuration(500, -127);	//remove goal from intake
+	driveStraight(twentyPt ? -17 : -7);
 
 	numCones = 0;
 	if (retract) moveGoalIntake(true);	//retract goal intake
@@ -611,7 +613,7 @@ void driveAndGoal(int dist, bool in, bool stackCone=false, bool pulseIntake=fals
 void sideGoal(bool retract=true, bool twentyPt=true, bool middle=true) {	//gets mobile goal on parking tile in front of robot and scores with preload in 10pt or 20pt zone (depending on argument)
 	//pick up side goal
 	driveAndGoal(15, false, false, true, true);
-	driveStraight(25);
+	driveStraight(30);
 
 	//position robot so it is ready to outtake goal into 20pt zone
 	driveAndGoal(-42, true, true);
@@ -625,7 +627,7 @@ void sideGoal(bool retract=true, bool twentyPt=true, bool middle=true) {	//gets 
 	scoreGoal(retract, twentyPt);
 }
 
-void middleGoal(bool left, bool twentyPt) {
+void middleGoal(bool left, bool twentyPt, bool center=true) {
 	int direction = (left ? 1 : -1);
 
 	if (left) setPower(coneIntake, 60);
@@ -633,23 +635,33 @@ void middleGoal(bool left, bool twentyPt) {
 	if (left) setPower(coneIntake, INTAKE_STILL_SPEED);
 	moveGoalIntake(false);
 
-	driveStraight(35);
+	driveStraight(40);
 
-	driveAndGoal(-25, true);
+	driveAndGoal(-30, true);
 	if (twentyPt) stackNewCone();	//preload
 
-	turn(-90 * direction);
-	driveStraight(-15);
-	turn(-90 * direction);
+	if (center) {
+		turn(-90 * direction);
+		driveStraight(-15);
+		turn(-100 * direction);
+	}
+	else {
+		turn(-180);
+		driveForDuration(1250, 40);	//align to 10pt bar
+	}
 
 	while (stacking && twentyPt) EndTimeSlice();
 
 	moveLiftToSafePos();
 	scoreGoal(true, twentyPt);
 
-	driveForDuration(1500, -127);	//back out of 20pt zone
-	driveForDuration(500, 60);	//align against 10pt bar
-	alignToLine(-60);	//align to tape (TODO: rename fn?)
+	if (twentyPt) {
+		/*driveForDuration(750, -127);	//back out of 20pt zone
+		wait1Msec(750);*/
+		driveForDuration(1250, 40);	//align against 10pt bar
+	}
+	//alignToLine(-60);	//align to tape (TODO: rename fn?)
+	driveStraight(-7);
 }
 
 task skillz() {
@@ -657,19 +669,22 @@ task skillz() {
 
 	middleGoal(true, true);	//near left middle goal
 
-	turn(-90);	//TODO: turnToLine() (& similar below)
-	driveStraight(15);
-	turn(-90);
+	turn(-95);	//TODO: turnToLine() (& similar below)
+	driveStraight(GOAL_TO_MID_DIST);
+	turn(-95);
 
-	middleGoal(false, false);	//near right middle goal
+	middleGoal(false, false, false);	//near right middle goal
 
-	turn(-90);
+	/*turn(-90);
 	driveStraight(15);
-	turn(-90);
+	turn(-90);*/
+	turn(-150);
+	driveStraight(5);
+	turn(-30);
 
 	//far right middle goal
 	driveStraight(60);	//push aside cones
-	driveStraight(-15);
+	driveStraight(-GOAL_TO_MID_DIST);
 
 	moveGoalIntake(false);
 	driveStraight(20);
@@ -677,21 +692,22 @@ task skillz() {
 	driveAndGoal(30, true);
 
 	turn(-90);
-	driveStraight(15);
+	driveStraight(GOAL_TO_MID_DIST);
 	turn(90);
 
 	scoreGoal();
 
 	turn(-90);
-	driveStraight(15);
+	driveStraight(GOAL_TO_MID_DIST);
 	turn(-90);
 
-	middleGoal(false, false);
+	middleGoal(false, false, false);
 
 	turn(-90);
 	driveStraight(20);
 	turn(-45);
 
+	turnDefaults.reversed = true;
 	sideGoal(true, false, false);
 
 	/*turnDefaults.reversed = true;	//TODO: unreverse
@@ -749,6 +765,7 @@ task sideGoalTask() {
 
 task autonomous() {
 	resetEncoders();
+	stopLiftTargeting();
 	startTask(autoStacking);
 	numCones = 0;
 
@@ -862,7 +879,7 @@ void handleLiftInput(bool shift) {
 }
 
 task usercontrol() {
-	resetEncoders();
+	stopLiftTargeting();
 	handleTesting();
 
 	startTask(autoStacking);
