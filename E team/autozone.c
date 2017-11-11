@@ -1,11 +1,12 @@
-#pragma config(Sensor, in2,    chainSensor,    sensorPotentiometer)
-#pragma config(Sensor, in3,    liftSensor,     sensorPotentiometer)
+#pragma config(Sensor, in1,    sidePot,        sensorPotentiometer)
 #pragma config(Sensor, in4,    leftLine,       sensorLineFollower)
 #pragma config(Sensor, in5,    backLine,       sensorLineFollower)
 #pragma config(Sensor, in6,    rightLine,      sensorLineFollower)
 #pragma config(Sensor, in7,    hyro,           sensorGyro)
 #pragma config(Sensor, dgtl1,  leftEnc,        sensorQuadEncoder)
 #pragma config(Sensor, dgtl3,  rightEnc,       sensorQuadEncoder)
+#pragma config(Sensor, dgtl5,  liftSensor,     sensorQuadEncoder)
+#pragma config(Sensor, dgtl7,  chainSensor,    sensorQuadEncoder)
 #pragma config(Motor,  port1,           RDrive1,       tmotorVex393_HBridge, openLoop, reversed)
 #pragma config(Motor,  port2,           RDrive2,       tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           chain1,        tmotorVex393_MC29, openLoop, reversed)
@@ -20,22 +21,22 @@
 
 //#region config - TODO: change testing parameter scheme
 #define HOLD_LAST_CONE false
-#define L_USING_ENC    false
-#define CH_USING_ENC   false
+#define L_USING_ENC    true
+#define CH_USING_ENC   true
 #define SKILLZ_MODE    false
 #define MULTIPLE_PIDs  false	//if chain bar and lift use different PID consts for movement in different locations or directions
 	//#subregion testing
-#define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID)
-int debugParameters[] = { -1, 0, -1, 7 };	//{ liftDebugStartCol, chainDebugStartCol, liftSensorCol, chainSensorCol }
+#define TESTING 1	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID)
+int debugParameters[] = { 0, -1, 7, -1 };	//{ liftDebugStartCol, chainDebugStartCol, liftSensorCol, chainSensorCol }
 	//#endsubregion
 //#endregion
 
 //#region positions
 enum chainState  { CH_FIELD, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
-int chainPos[] = { 2800,     1915,    1150,  440,    1140, 3840 };
+int chainPos[] = { 146,      146,     42,    0,      42,   197 };
 
 enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-int liftPos[] = { 1160,  1165,    1350,   1160,       1255,   1400,   2035 };
+int liftPos[] = { 0,     0,       150,   0,          125,    150,    430 };
 //#endregion
 
 //#region setup
@@ -79,6 +80,7 @@ int liftPos[] = { 1160,  1165,    1350,   1160,       1255,   1400,   2035 };
 	//#endsubregion
 
 //#subregion manual control
+#define resetEncodersBtn  Btn7U
 		//#subsubregion lift
 #define f_liftUpBtn				Btn8U	//fielding mode
 #define f_liftDownBtn			Btn8R
@@ -96,8 +98,9 @@ int liftPos[] = { 1160,  1165,    1350,   1160,       1255,   1400,   2035 };
 
 //#region constants
 	//#subregion sensor consts
-#define RAD_TO_POT 880.1    //conversion factor between radians and potentiometer values
-#define RAD_TO_ENC 180 / PI //conversion factor between radians and encoder values
+#define RAD_TO_POT   880.1    //conversion factor between radians and potentiometer values
+#define L_GEAR_RATIO 5	//gear ratio between lift bar angle and sensors
+#define RAD_TO_ENC   (L_GEAR_RATIO * 180 / PI) //conversion factor between radians and encoder values
 const float RAD_TO_LIFT = (L_USING_ENC ? RAD_TO_ENC : RAD_TO_POT);
 const float L_CORR_FCTR = (L_USING_ENC ? RAD_TO_POT/RAD_TO_ENC : 1);
 const float heightOffset = sin((liftPos[M_BASE_POS] - liftPos[L_ZERO]) / RAD_TO_LIFT);	//used in autostacking
@@ -107,14 +110,14 @@ const float CH_CORR_FCTR = (CH_USING_ENC ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define B_LINE_THRESHOLD 2870
 	//#endsubregion
 	//#subregion measurements
-#define CONE_HEIGHT 2.2
+#define CONE_HEIGHT 2.0
 #define LIFT_LEN    14.0
-#define LIFT_OFFSET 1.5
+#define LIFT_OFFSET 1.75
 	//#endsubregion
 	//#subregion still speeds
 #define INTAKE_STILL_SPEED 15
 #define LIFT_STILL_SPEED   15
-#define L_AUTO_SS_MARGIN   50
+#define L_AUTO_SS_MARGIN   10
 #define CHAIN_STILL_SPEED  15
 #define CH_AUTO_SS_MARGIN	 0
 #define GOAL_STILL_SPEED   15
@@ -184,14 +187,13 @@ void pre_auton() {
 
 	//configure lift
 	initializeGroup(lift, 2, lift1, lift2);
-	initializeTargetingPID(lift, 0.35*L_CORR_FCTR, 0.005*L_CORR_FCTR, 0.7*L_CORR_FCTR, 25);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
-	addSensor(lift, liftSensor);
+	initializeTargetingPID(lift, 0.35*L_CORR_FCTR, 0.005*L_CORR_FCTR, 0.7*L_CORR_FCTR, 10);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
+	addSensor(lift, liftSensor, true);
 	if (L_USING_ENC) configureEncoderCorrection(lift, liftPos[L_MAX]);
 
 	//configure chain bar
 	initializeGroup(chainBar, 2, chain1, chain2);
-	setAbsolutes(chainBar, chainPos[CH_MIN], chainPos[CH_MAX]);
-	initializeTargetingPID(chainBar, 0.25*CH_CORR_FCTR, 0.002*CH_CORR_FCTR, 0.3*CH_CORR_FCTR, 25);	//gain setup in setChainBarPIDmode
+	initializeTargetingPID(chainBar, 7, 0.01, 20, 10);	//gain setup in setChainBarPIDmode
 	addSensor(chainBar, chainSensor);
 	if (CH_USING_ENC) configureEncoderCorrection(chainBar, chainPos[CH_MAX]);
 
@@ -220,17 +222,18 @@ void speakNum(int num) {
 //#region lift
 void setLiftPIDmode(bool up) {	//up is true for upward movement consts, false for downward movement ones.
 	if (up)
-		setTargetingPIDconsts(lift, 0.35*CH_CORR_FCTR, 0.005*CH_CORR_FCTR, 0.7*CH_CORR_FCTR);	//0.37, 0.002, 1.6
+		setTargetingPIDconsts(lift, 0.35*L_CORR_FCTR, 0.005*L_CORR_FCTR, 0.7*L_CORR_FCTR);	//0.37, 0.002, 1.6
 	else
-		setTargetingPIDconsts(lift, 0.35*CH_CORR_FCTR, 0.005*CH_CORR_FCTR, 0.7*CH_CORR_FCTR);
+		setTargetingPIDconsts(lift, 0.35*L_CORR_FCTR, 0.005*L_CORR_FCTR, 0.7*L_CORR_FCTR);
 }
 
 void setLiftTargetAndPID(int target, bool resetIntegral=true) {	//sets lift target and adjusts PID consts
-	if (MULTIPLE_PIDs)
+	if (MULTIPLE_PIDs) {
 		if (getPosition(lift) < target)
 			setLiftPIDmode(true);
 		else
 			setLiftPIDmode(false);
+	}
 
 	setTargetPosition(lift, target, resetIntegral);
 }
@@ -246,9 +249,9 @@ void setLiftState(liftState state) {
 //#region chain bar
 void setChainBarPIDmode(bool low) {	//	low should be true for targets below VERT
 	if (low)
-		setTargetingPIDconsts(chainBar, 0.25*CH_CORR_FCTR, 0.002*CH_CORR_FCTR, 0.3*CH_CORR_FCTR);
+		initializeTargetingPID(chainBar, 2.5, 0.01, 7, 10);
 	else
-		setTargetingPIDconsts(chainBar, 0.25*CH_CORR_FCTR, 0.002*CH_CORR_FCTR, 0.3*CH_CORR_FCTR);
+		initializeTargetingPID(chainBar, 2.5, 0.01, 7, 10);
 }
 
 void setChainBarTargetAndPID(int target, bool resetIntegral=true) {
@@ -269,8 +272,13 @@ void setChainBarState(chainState state) {
 }
 //#endregion
 
+void resetEncoders() {
+	resetEncoder(lift);
+	resetEncoder(chainBar);
+}
+
 //#region autostacking
-void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=100, float chainMargin=200*CH_CORR_FCTR, float liftMargin=200*L_CORR_FCTR) {
+void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=100, float chainMargin=15, float liftMargin=15) {	//fctr
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {
@@ -313,7 +321,7 @@ void handleEncoderCorrection() {
 void executeLiftManeuvers(bool autoStillSpeed=true) {
 	handleEncoderCorrection();
 
-	if (autoStillSpeed && errorLessThan(chainBar, CH_AUTO_SS_MARGIN) && chainBar.activelyMaintining)
+	if (autoStillSpeed && errorLessThan(chainBar, CH_AUTO_SS_MARGIN/CH_CORR_FCTR) && chainBar.activelyMaintining)
 		setPower(chainBar, CHAIN_STILL_SPEED * (chainBar.posPID.target<=chainPos[VERT] ? 1 : -1));
 	else
 		maintainTargetPos(chainBar, debugParameters[1]);
@@ -355,11 +363,11 @@ task autoStacking() {
 		setPower(coneIntake, INTAKE_STILL_SPEED);
 
 		//move to desired location
-		setChainBarState(numCones<=RECKLESS_CONES ? STACK : CH_SAFE);
+		setChainBarState(numCones<RECKLESS_CONES ? STACK : CH_SAFE);
 		setLiftTargetAndPID(useOffset ? liftAngle1 : liftAngle2);
 
-		while (!errorLessThan(lift, 200)) EndTimeSlice();
-		if (numCones > RECKLESS_CONES) setChainBarState(STACK);
+		while (!errorLessThan(lift, 200/L_CORR_FCTR)) EndTimeSlice();
+		if (numCones >= RECKLESS_CONES) setChainBarState(STACK);
 		waitForMovementToFinish(false);
 		if (useOffset) setLiftTargetAndPID(liftAngle2/*, false*/);
 
@@ -373,7 +381,7 @@ task autoStacking() {
 			setPower(coneIntake, 0);
 
 			//return to ready positions
-			while (getPosition(chainBar) < chainPos[CH_SAFE]-(fielding ? 0 : 100)) EndTimeSlice();
+			while (getPosition(chainBar) < chainPos[CH_SAFE]-(fielding ? 0 : 100/CH_CORR_FCTR)) EndTimeSlice();
 			if (!liftEarly) setLiftState(L_DEF);
 		}
 		else {
@@ -549,33 +557,43 @@ void moveGoalIntake(bool in, bool runAsTask=false) {
 	else {
 		wait1Msec(in ? GOAL_INTAKE_DURATION : GOAL_OUTTAKE_DURATION);
 		setPower(goalIntake, GOAL_STILL_SPEED * goalDirection);
+		goalDirection = 0;
 	}
 }
 
-void sideGoal(bool twentyPt=true) {	//gets mobile goal on parking tile in front of robot and scores with preload in 10pt or 20pt zone (depending on argument)
+void driveAndGoal(int dist, bool in, bool stackCone=false, bool pulseIntake=false, int stopShort=25, int intakeDelay=250) {
 	//move lift out of way of intake
-	setPower(coneIntake, 60);
+	if (pulseIntake) setPower(coneIntake, 60);
 	setChainBarState(STACK);
-	setLiftTargetAndPID(liftPos[L_SAFE] + 100);
+	if (lift.posPID.target <= liftPos[L_SAFE]) setLiftTargetAndPID(liftPos[L_SAFE] + 100/L_CORR_FCTR);
 
 	while (getPosition(lift) < liftPos[L_SAFE]) EndTimeSlice();
 
-	setPower(coneIntake, INTAKE_STILL_SPEED);
-	driveStraight(25, true);
-	moveGoalIntake(false);	//extend intake
-	while (driveData.isDriving) EndTimeSlice();
+	if (pulseIntake) setPower(coneIntake, INTAKE_STILL_SPEED);
+	moveGoalIntake(in, true);
 
-	driveStraight(25);
+	if (in) {
+		wait1Msec(intakeDelay);
+		driveStraight(dist);
+	}
+	else {
+		driveStraight(dist - stopShort, true);
+	}
+
+	if (stackCone) stackNewCone();
+
+	while (driveData.isDriving || goalDirection!=0 || (stacking&&stackCone)) EndTimeSlice();
+
+	if (!in) driveStraight(stopShort);
+}
+
+void sideGoal(bool twentyPt=true) {	//gets mobile goal on parking tile in front of robot and scores with preload in 10pt or 20pt zone (depending on argument)
+	driveAndGoal(50, false, false, true);
 
 	//position robot so it is ready to outtake goal into 20pt zone
-	moveGoalIntake(true, true);	//retract intake
-	wait1Msec(250);
-	driveStraight(-42, true);
-	while (goalDirection != 0) EndTimeSlice();	//wait for goal intake to be retracted before stacking preload
-	stackNewCone();	//preload
-	while (driveData.isDriving || stacking) EndTimeSlice();
+	driveAndGoal(-42, true, true);
 
-	setLiftTargetAndPID(liftPos[L_SAFE] + 100);	//lift up so mobile goal can outtake
+	setLiftTargetAndPID(liftPos[L_SAFE] + 100/L_CORR_FCTR);	//lift up so mobile goal can outtake
 	setChainBarState(STACK);
 
 	turn(-45);
@@ -589,7 +607,7 @@ void sideGoal(bool twentyPt=true) {	//gets mobile goal on parking tile in front 
 	driveForDuration(1000, -127);	//remove goal from intake
 
 	numCones = 0;
-	moveGoalIntake(true);	//retract goal intake
+	//moveGoalIntake(true);	//retract goal intake
 }
 
 task skillz() {
@@ -603,21 +621,23 @@ task skillz() {
 	driveStraight(-1);
 	turn(-45);
 	driveStraight(27);
-	turn(-45);
+	turn(-90);
 
-	sideGoal(false);
+	driveAndGoal(30, false);
+
+	//sideGoal(false);
 }
 
 task autonomous() {
+	resetEncoders();
 	startTask(autoStacking);
 	numCones = 0;
-	turnDefaults.reversed = true;
 
 	if (SKILLZ_MODE) {
 		startTask(skillz);
 	}
 	else {
-		//alignToLine();	TODO: testing in auton mode?
+		turnDefaults.reversed = SensorValue[sidePot]<2500;
 		sideGoal();
 	}
 
@@ -722,6 +742,7 @@ void handleLiftInput(bool shift) {
 }
 
 task usercontrol() {
+	resetEncoders();
 	handleTesting();
 
 	startTask(autoStacking);
@@ -734,6 +755,9 @@ task usercontrol() {
 
 		if (shift) {
 			adjustConeCount();
+
+			if (newlyPressed(resetEncodersBtn))
+				resetEncoders();
 
 			if (!bSoundActive && vexRT[sayConeNumberBtn]==1)
 				speakNum(numCones);
