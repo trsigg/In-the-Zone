@@ -326,7 +326,7 @@ void executeLiftManeuvers(bool autoStillSpeed=true) {
 	else
 		maintainTargetPos(chainBar, debugParameters[1]);
 
-	if (autoStillSpeed && errorLessThan(lift, L_AUTO_SS_MARGIN) && lift.activelyMaintining && lift.posPID.target<=liftPos[L_FIELD])
+	if (autoStillSpeed && errorLessThan(lift, L_AUTO_SS_MARGIN) && lift.activelyMaintining && lift.posPID.target<=liftPos[L_FIELD])	//TODO: fctr
 		setPower(lift, LIFT_STILL_SPEED * (lift.posPID.target<=liftPos[L_FIELD] ? -1 : 1));
 	else
 		maintainTargetPos(lift, debugParameters[0]);
@@ -403,7 +403,7 @@ int targets[NUM_TARGETS] = { 0, 0, 0, 0, 1, 1 };	//chain bar, lift, driveStraigh
 bool abort = false;
 bool end = false;
 
-void logData() {
+void logSensorVals() {
 	if (debugParameters[2] >= 0)
 		datalogAddValueWithTimeStamp(debugParameters[2], getPosition(lift));
 	else if (debugParameters[3] >= 0)
@@ -448,7 +448,7 @@ void testPIDs() {
 			}
 		}
 
-		logData();
+		logSensorVals();
 
 		if (abort) {
 			stopLiftTargeting();
@@ -537,7 +537,7 @@ void turnQuicklyToLine(bool clockwise, bool parallelToLine) {
 void driveForDuration(int duration, int beginPower=127, int endPower=0) {
 	setDrivePower(drive, beginPower, beginPower);
 	wait1Msec(duration);
-	setDrivePower(drive, beginPower, beginPower);
+	setDrivePower(drive, endPower, endPower);
 }
 
 task moveGoalIntakeTask() {
@@ -561,61 +561,140 @@ void moveGoalIntake(bool in, bool runAsTask=false) {
 	}
 }
 
-void driveAndGoal(int dist, bool in, bool stackCone=false, bool pulseIntake=false, bool stupid=false, int intakeDelay=250) {	//TODO: stop short
-	//move lift out of way of intake
-	if (pulseIntake) setPower(coneIntake, 60);
+void moveLiftToSafePos(bool wait=true) {
 	setChainBarState(STACK);
 	setLiftTargetAndPID(liftPos[L_SAFE] + 100/L_CORR_FCTR);
 
-	while (getPosition(lift) < liftPos[L_SAFE]) EndTimeSlice();
+	if (wait)
+		while (getPosition(lift) < liftPos[L_SAFE])
+			EndTimeSlice();
+}
+
+void scoreGoal(bool retract=true, bool twentyPt=true) {	//assumes robot is lined up to first bar (TODO: make retract 2nd arg)
+	if (twentyPt)
+		driveForDuration(1500, 127, 20);
+	else
+		driveForDuration(750, 60, 15);
+
+	moveGoalIntake(false);	//extend goal intake
+
+	driveForDuration(250);	//push goal to back of zone
+	driveForDuration(500, -127);	//remove goal from intake
+
+	numCones = 0;
+	if (retract) moveGoalIntake(true);	//retract goal intake
+}
+
+void driveAndGoal(int dist, bool in, bool stackCone=false, bool pulseIntake=false, bool quadRamp=false, int intakeDelay=250) {	//TODO: stop short
+	//move lift out of way of intake
+	if (pulseIntake) setPower(coneIntake, 60);
+	moveLiftToSafePos();
 
 	if (pulseIntake) setPower(coneIntake, INTAKE_STILL_SPEED);
 	moveGoalIntake(in, true);
 
 	if (in)
 		wait1Msec(intakeDelay);
-	if (stupid)
+
+	if (quadRamp)
 		driveStraight(dist, true, 50, 120, -20, 250, 20, false);
 	else
 		driveStraight(dist, true);
-	/*else {
-		driveStraight(dist - stopShort, true);
-	}*/
 
 	while (goalDirection != 0) EndTimeSlice();
 
 	if (stackCone) stackNewCone();
 
 	while (driveData.isDriving || (stacking && stackCone)) EndTimeSlice();
-
-	//if (!in) driveStraight(stopShort);
 }
 
-void sideGoal(bool twentyPt=true) {	//gets mobile goal on parking tile in front of robot and scores with preload in 10pt or 20pt zone (depending on argument)
-	driveAndGoal(50, false, false, true, true);
+void sideGoal(bool retract=true, bool twentyPt=true, bool middle=true) {	//gets mobile goal on parking tile in front of robot and scores with preload in 10pt or 20pt zone (depending on argument)
+	//pick up side goal
+	driveAndGoal(15, false, false, true, true);
+	driveStraight(25);
 
 	//position robot so it is ready to outtake goal into 20pt zone
 	driveAndGoal(-42, true, true);
 
-	setLiftTargetAndPID(liftPos[L_SAFE] + 100/L_CORR_FCTR);	//lift up so mobile goal can outtake
-	setChainBarState(STACK);
+	moveLiftToSafePos();
 
 	turn(-45);
-	driveStraight(-23);
+	driveStraight(middle ? -23 : -10);
 	turn(-90);
-	driveForDuration((twentyPt ? 1500 : 750), 127, 20);
 
-	moveGoalIntake(false);	//extend goal intake
+	scoreGoal(retract, twentyPt);
+}
 
-	if (twentyPt) driveForDuration(250);	//push goal to back of zone
-	driveForDuration(1000, -127);	//remove goal from intake
+void middleGoal(bool left, bool twentyPt) {
+	int direction = (left ? 1 : -1);
 
-	numCones = 0;
-	//moveGoalIntake(true);	//retract goal intake
+	if (left) setPower(coneIntake, 60);
+	moveLiftToSafePos();
+	if (left) setPower(coneIntake, INTAKE_STILL_SPEED);
+	moveGoalIntake(false);
+
+	driveStraight(35);
+
+	driveAndGoal(-25, true);
+	if (twentyPt) stackNewCone();	//preload
+
+	turn(-90 * direction);
+	driveStraight(-15);
+	turn(-90 * direction);
+
+	while (stacking && twentyPt) EndTimeSlice();
+
+	moveLiftToSafePos();
+	scoreGoal(true, twentyPt);
+
+	driveForDuration(1500, -127);	//back out of 20pt zone
+	driveForDuration(500, 60);	//align against 10pt bar
+	alignToLine(-60);	//align to tape (TODO: rename fn?)
 }
 
 task skillz() {
-	turnDefaults.reversed = true;	//TODO: unreverse
+	turnDefaults.reversed = false;
+
+	middleGoal(true, true);	//near left middle goal
+
+	turn(-90);	//TODO: turnToLine() (& similar below)
+	driveStraight(15);
+	turn(-90);
+
+	middleGoal(false, false);	//near right middle goal
+
+	turn(-90);
+	driveStraight(15);
+	turn(-90);
+
+	//far right middle goal
+	driveStraight(60);	//push aside cones
+	driveStraight(-15);
+
+	moveGoalIntake(false);
+	driveStraight(20);
+
+	driveAndGoal(30, true);
+
+	turn(-90);
+	driveStraight(15);
+	turn(90);
+
+	scoreGoal();
+
+	turn(-90);
+	driveStraight(15);
+	turn(-90);
+
+	middleGoal(false, false);
+
+	turn(-90);
+	driveStraight(20);
+	turn(-45);
+
+	sideGoal(true, false, false);
+
+	/*turnDefaults.reversed = true;	//TODO: unreverse
 
 	sideGoal();
 
@@ -627,13 +706,11 @@ task skillz() {
 	driveStraight(27);
 	turn(-90);
 
-	driveAndGoal(30, false);
-
-	//sideGoal(false);
+	driveAndGoal(30, false);*/
 }
 
 task sideGoalTask() {
-	sideGoal();
+	sideGoal(true);
 	//move lift out of way of intake
 	/*setPower(coneIntake, 60);
 	setChainBarState(STACK);
@@ -679,13 +756,13 @@ task autonomous() {
 		startTask(skillz);
 	}
 	else {
-		turnDefaults.reversed = true; //SensorValue[sidePot]<2500;
+		turnDefaults.reversed = SensorValue[sidePot]<1830;
 		startTask(sideGoalTask);
 	}
 
 	while (true) {
 		executeLiftManeuvers();
-		logData();
+		logSensorVals();
 		EndTimeSlice();
 	}
 }
@@ -793,7 +870,7 @@ task usercontrol() {
 	bool shift;
 
 	while (true) {
-		logData();
+		logSensorVals();
 		shift = vexRT[shiftBtn]==1;
 
 		if (shift) {
