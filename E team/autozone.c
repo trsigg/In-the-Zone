@@ -193,7 +193,7 @@ void pre_auton() {
 
 	//configure chain bar
 	initializeGroup(chainBar, 2, chain1, chain2);
-	initializeTargetingPID(chainBar, 7, 0.01, 20, 10);	//gain setup in setChainBarPIDmode
+	initializeTargetingPID(chainBar, 7, 0.01, 20, 10);	//gain setup in setChainBarPIDmode (TODO: fctr)
 	addSensor(chainBar, chainSensor);
 	if (CH_USING_ENC) configureEncoderCorrection(chainBar, chainPos[CH_MAX]);
 
@@ -249,7 +249,7 @@ void setLiftState(liftState state) {
 //#region chain bar
 void setChainBarPIDmode(bool low) {	//	low should be true for targets below VERT
 	if (low)
-		initializeTargetingPID(chainBar, 2.5, 0.01, 7, 10);
+		initializeTargetingPID(chainBar, 2.5, 0.01, 7, 10);	//TODO: fctr
 	else
 		initializeTargetingPID(chainBar, 2.5, 0.01, 7, 10);
 }
@@ -278,7 +278,7 @@ void resetEncoders() {
 }
 
 //#region autostacking
-void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=100, float chainMargin=20, float liftMargin=200) {	//fctr
+void waitForMovementToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=100, float chainMargin=20, float liftMargin=200) {	//TODO: fctr
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {
@@ -326,7 +326,7 @@ void executeLiftManeuvers(bool autoStillSpeed=true) {
 	else
 		maintainTargetPos(chainBar, debugParameters[1]);
 
-	if (autoStillSpeed && errorLessThan(lift, L_AUTO_SS_MARGIN) && lift.activelyMaintining && lift.posPID.target<=liftPos[L_FIELD])
+	if (autoStillSpeed && errorLessThan(lift, L_AUTO_SS_MARGIN/L_CORR_FCTR) && lift.activelyMaintining && lift.posPID.target<=liftPos[L_FIELD])
 		setPower(lift, LIFT_STILL_SPEED * (lift.posPID.target<=liftPos[L_FIELD] ? -1 : 1));
 	else
 		maintainTargetPos(lift, debugParameters[0]);
