@@ -15,17 +15,6 @@ typedef struct {
 	motorGroup leftDrive, rightDrive;
 	robotPosition position; //(x, y) coordinates and orientation of robot
 	float width; //width of drive in inches (wheel well to wheel well). Used to track position.
-	//joystick control
-	TVexJoysticks leftJoy, rightJoy;	//left and right input channels
-	int deadband; //range of motor values around 0 for which motors are not engaged
-	bool isRamped; //whether group is ramped
-	float msPerPowerChange; //if ramping, time between motor power changes, calculated using maxAcc100ms
-	float powMap; //degree of polynomial to which inputs are mapped (1 for linear)
-	float coeff; //factor by which motor powers are multiplied
-	float lastUpdated; //ramping
-	int absMin, absMax; //extreme  positions of motorGroup
-	bool hasAbsMin, hasAbsMax;
-	int maxPowerAtAbs, defPowerAtAbs; //maximum power at absolute position (pushing down from minimum or up from maximum) and default power if this is exceeded
 	//position tracking
 	long posLastUpdated;
 	int minSampleTime;
@@ -42,16 +31,9 @@ typedef struct {
 
 void initializeDrive(parallel_drive *drive, int numLeftMotors, tMotor *leftMotors, int numRightMotors, tMotor *rightMotors, bool isRamped=false, float maxAcc100ms=60, int deadband=10, float powMap=1, int maxPow=127, float initialX=0, float initialY=0, float initialTheta=PI/2, float width=16, int minSampleTime=50, TVexJoysticks leftInput=Ch3, TVexJoysticks rightInput=Ch2) {
 	initializeGroup(drive->leftDrive, numLeftMotors, leftMotors);
+	configureJoystickInput(drive->leftDrive, leftInput, deadband, isRamped, maxAcc100ms, powMap, maxPow);
 	initializeGroup(drive->rightDrive, numRightMotors, rightMotors);
-	//joystick control
-	drive->leftJoy = leftInput;
-	drive->rightJoy = rightInput;
-	drive->deadband = deadband;
-	drive->isRamped = isRamped;
-	drive->msPerPowerChange = 100 / maxAcc100ms;
-	drive->powMap = powMap;
-	drive->coeff = maxPow /  127.0;
-	drive->lastUpdated = nPgmTime;
+	configureJoystickInput(drive->rightDrive, rightInput, deadband, isRamped, maxAcc100ms, powMap, maxPow);
 	//position and odometry
 	drive->position.x = initialX;
 	drive->position.y = initialY;
@@ -63,7 +45,8 @@ void initializeDrive(parallel_drive *drive, int numLeftMotors, tMotor *leftMotor
 }
 
 void configureRamping(parallel_drive *drive, int maxAcc100ms) {
-	drive->msPerPowerChange = 100 / maxAcc100ms;
+	configureRamping(drive->leftDrive, maxAcc100ms);
+	configureRamping(drive->rightDrive, maxAcc100ms);
 }
 
 
@@ -245,44 +228,7 @@ float calculateWidth(parallel_drive *drive, int duration=10000, int sampleTime=2
 	}
 }
 
-int takeDriveSideInput(parallel_drive *drive, bool left, int maxDiff) {
-	int input = vexRT[ left ? drive->leftJoy : drive->rightJoy];
-	int power = sgn(input) * drive->coeff * abs(pow(input / 127.0, drive->powMap)) * 127;
-
-	if (abs(power) < drive->deadband) power = 0;
-
-	//handle ramping
-	if (drive->isRamped) {
-		int currentPower = getPower(left ? drive->leftDrive : drive->rightDrive);
-
-		if (maxDiff > 0) {
-			drive->lastUpdated = now;
-
-			if (abs(power) > abs(currentPower)) {	//only ramp up in absolute value
-				if (abs(currentPower - power) > maxDiff) {
-					drive->lastUpdated = now - (elapsed % drive->msPerPowerChange);
-					return (power>currentPower ? currentPower+maxDiff : currentPower-maxDiff);
-				}
-			}
-		} else {
-			return currentPower;
-		}
-	}
-
-	return power;
-}
-
 void driveRuntime(parallel_drive *drive) {
-	int maxDiff = 0;
-
-	if (drive->isRamped) {
-		float now = nPgmTime;
-		int elapsed = now - drive->lastUpdated;
-		if (elapsed >= drive->msPerPowerChange)
-			drive->lastUpdated = now - maxDiff * drive->msPerPowerChange;
-		maxDiff = elapsed / drive->msPerPowerChange;
-	}
-
-	takeDriveSideInput(drive, true, maxDiff);
-	takeDriveSideInput(drive, false, maxDiff);
+	takeInput(drive->leftDrive);
+	takeInput(drive->rightDrive);
 }

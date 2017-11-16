@@ -3,16 +3,30 @@
 #include "timer.c"
 #include "PID.c"
 
+enum controlType { NONE, BUTTON, JOYSTICK };
+
 typedef struct {
 	tMotor motors[12];
 	int numMotors;
+	controlType controlType;
+	bool controlActive;
 	TVexJoysticks posInput, negInput; //inputs. NegInput only assigned if using button control
 	//button control
-	bool controlActive;
 	int upPower, downPower, stillSpeed;
 		//complex still speeds
 	int stillSpeedSwitchPos, stillSpeedType;	//stillSpeedType is 0 for regular, 1 for posDependent, and 2 for buttonDependent
 	bool stillSpeedReversed;
+	//joystick control
+	int deadband; //range of motor values around 0 for which motors are not engaged
+	bool isRamped; //whether group is ramped
+	int msPerPowerChange; //if ramping, time between motor power changes, calculated using maxAcc100ms
+	float powMap; //degree of polynomial to which inputs are mapped (1 for linear)
+	float coeff; //factor by which motor powers are multiplied
+	long lastUpdated; //ramping
+	//absolutes
+	int absMin, absMax; //extreme  positions of motorGroup
+	bool hasAbsMin, hasAbsMax;
+	int maxPowerAtAbs, defPowerAtAbs; //maximum power at absolute position (pushing down from minimum or up from maximum) and default power if this is exceeded
 	//execute maneuver
 	int targetPos, endPower, maneuverPower, maneuverTimeout;
 	bool forward, maneuverExecuting; //forward: whether target is forwad from initial group position
@@ -31,6 +45,7 @@ typedef struct {
 
 //#region initialization
 void configureButtonInput(motorGroup *group, TVexJoysticks posBtn, TVexJoysticks negBtn, int stillSpeed=0, int upPower=127, int downPower=-127) {
+	group->controlType = BUTTON;
 	group->controlActive = true;
 	group->posInput = posBtn;
 	group->negInput = negBtn;
@@ -39,6 +54,18 @@ void configureButtonInput(motorGroup *group, TVexJoysticks posBtn, TVexJoysticks
 	group->stillSpeedReversed = false;
 	group->upPower = upPower;
 	group->downPower = downPower;
+}
+
+void configureJoystickInput(motorGroup *group, TVexJoysticks joystick, int deadband=10, bool isRamped=false, int maxAcc100ms=60, float powMap=1, int maxPow=127) {
+	group->controlType = JOYSTICK;
+	group->controlActive = true;
+	group->posInput = joystick;
+	group->deadband = deadband;
+	group->isRamped = isRamped;
+	group->msPerPowerChange = 100 / maxAcc100ms;
+	group->powMap = powMap;
+	group->coeff = maxPow /  127.0;
+	group->lastUpdated = nPgmTime;
 }
 
 void initializeGroup(motorGroup *group, int numMotors, tMotor *motors, TVexJoysticks posBtn=-1, TVexJoysticks negBtn=-1, int stillSpeed=0, int upPower=127, int downPower=-127) {
@@ -250,36 +277,78 @@ void goToPosition(motorGroup *group, int position, int endPower=0, int maneuverP
 //#endregion
 
 //#region user input
+int handleButtonInput(motorGroup *group) {
+	if (vexRT[group->posInput] == 1) {
+		group->maneuverExecuting = false;
+		group->activelyMaintining = false;
+
+		if (group->stillSpeedType == 2)
+			group->stillSpeedReversed = false;
+
+		return group->upPower;
+	} else if (vexRT[group->negInput] == 1) {
+		group->maneuverExecuting = false;
+		group->activelyMaintining = false;
+
+		if (group->stillSpeedType == 2)
+			group->stillSpeedReversed = true;
+
+		return group->downPower;
+	} else {
+		if (group->stillSpeedType == 1)
+			group->stillSpeedReversed = getPosition(group) > group->stillSpeedSwitchPos;
+
+		executeManeuver(group);
+
+		if (group->maneuverExecuting)
+			return group->maneuverPower;
+		else
+			return group->stillSpeed * (group->stillSpeedReversed ? -1 : 1);
+	}
+}
+
+int handleJoystickInput(motorGroup *group) {
+	int input = vexRT[group->posInput];
+	int power = sgn(input) * group->coeff * abs(pow(input / 127.0, group->powMap)) * 127;
+
+	if (abs(power) < group->deadband) power = 0;
+
+	//handle ramping
+	if (group->isRamped) {
+		long now = nPgmTime;
+		int elapsed = now - group->lastUpdated;
+		int currentPower = motor[ group->motors[0] ];
+
+		if (elapsed >= group->msPerPowerChange) {
+			group->lastUpdated = now;
+
+			if (abs(power) > abs(currentPower)) {	//only ramp up in absolute value
+				int maxDiff = elapsed / group->msPerPowerChange;
+
+				if (abs(currentPower - power) > maxDiff) {
+					group->lastUpdated = now - (elapsed % group->msPerPowerChange);
+					return (power>currentPower ? currentPower+maxDiff : currentPower-maxDiff);
+				}
+			}
+		} else {
+			return currentPower;
+		}
+	}
+
+	return power;
+}
+
 int takeInput(motorGroup *group, bool setMotors=true) {
 	int power = 0;
 
 	if (group->controlActive) {
-		if (vexRT[group->posInput] == 1) {
-			group->maneuverExecuting = false;
-			group->activelyMaintining = false;
-
-			if (group->stillSpeedType == 2)
-				group->stillSpeedReversed = false;
-
-			power = group->upPower;
-		} else if (vexRT[group->negInput] == 1) {
-			group->maneuverExecuting = false;
-			group->activelyMaintining = false;
-
-			if (group->stillSpeedType == 2)
-				group->stillSpeedReversed = true;
-
-			power = group->downPower;
-		} else {
-			if (group->stillSpeedType == 1)
-				group->stillSpeedReversed = getPosition(group) > group->stillSpeedSwitchPos;
-
-			executeManeuver(group);
-
-			if (group->maneuverExecuting)
-				power = group->maneuverPower;
-			else
-				power = group->stillSpeed * (group->stillSpeedReversed ? -1 : 1);
+		switch (group->controlType) {
+			case BUTTON:
+				power = handleButtonInput(group);
+				break;
+			case JOYSTICK:
+				power = handleJoystickInput(group);
+				break;
 		}
 	}
 
