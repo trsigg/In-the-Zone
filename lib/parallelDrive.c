@@ -29,11 +29,11 @@ typedef struct {
 } parallel_drive;
 
 
-void initializeDrive(parallel_drive *drive, int numLeftMotors, tMotor *leftMotors, int numRightMotors, tMotor *rightMotors, bool isRamped=false, float maxAcc100ms=60, int deadband=10, float powMap=1, int maxPow=127, float initialX=0, float initialY=0, float initialTheta=PI/2, float width=16, int minSampleTime=50, TVexJoysticks leftInput=Ch3, TVexJoysticks rightInput=Ch2) {
+void initializeDrive(parallel_drive *drive, int numLeftMotors, tMotor *leftMotors, int numRightMotors, tMotor *rightMotors, bool isRamped=false, float maxAcc100ms=60, int deadband=10, float powMap=1, int maxPow=127, float initialX=0, float initialY=0, float initialTheta=PI/2, float width=16, int minSampleTime=50) {
 	initializeGroup(drive->leftDrive, numLeftMotors, leftMotors);
-	configureJoystickInput(drive->leftDrive, leftInput, deadband, isRamped, maxAcc100ms, powMap, maxPow);
+	configureJoystickInput(drive->leftDrive, Ch3, deadband, isRamped, maxAcc100ms, powMap, maxPow);
 	initializeGroup(drive->rightDrive, numRightMotors, rightMotors);
-	configureJoystickInput(drive->rightDrive, rightInput, deadband, isRamped, maxAcc100ms, powMap, maxPow);
+	configureJoystickInput(drive->rightDrive, Ch2, deadband, isRamped, maxAcc100ms, powMap, maxPow);
 	//position and odometry
 	drive->position.x = initialX;
 	drive->position.y = initialY;
@@ -97,7 +97,7 @@ float driveEncoderVal(parallel_drive *drive, encoderConfig side=UNASSIGNED, bool
 
 	if (side == AVERAGE) {
 		if (absolute) {
-			return (abs(driveEncoderVal(drive, LEFT, rawValue)) + abs(driveEncoderVal(drive, RIGHT, rawValue))) / 2;
+			return (fabs(driveEncoderVal(drive, LEFT, rawValue)) + fabs(driveEncoderVal(drive, RIGHT, rawValue))) / 2;
 		} else {
 			return (driveEncoderVal(drive, LEFT, rawValue) + driveEncoderVal(drive, RIGHT, rawValue)) / 2;
 		}
@@ -218,7 +218,7 @@ float calculateWidth(parallel_drive *drive, int duration=10000, int sampleTime=2
 				resetGyro(drive);
 				wait1Msec(sampleTime);
 
-				totalWidth += driveEncoderVal(drive) * 3600 / (PI * abs(gyroVal(drive, RAW)));
+				totalWidth += driveEncoderVal(drive) * 3600 / (PI * fabs(gyroVal(drive, RAW)));
 				samples++;
 			}
 		}

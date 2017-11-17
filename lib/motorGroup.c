@@ -1,7 +1,8 @@
 #define numTargets 4
 
-#include "timer.c"
+#include "coreIncludes.c"
 #include "PID.c"
+#include "timer.c"
 
 enum controlType { NONE, BUTTON, JOYSTICK };
 
@@ -68,11 +69,17 @@ void configureJoystickInput(motorGroup *group, TVexJoysticks joystick, int deadb
 	group->lastUpdated = nPgmTime;
 }
 
-void initializeGroup(motorGroup *group, int numMotors, tMotor *motors, TVexJoysticks posBtn=-1, TVexJoysticks negBtn=-1, int stillSpeed=0, int upPower=127, int downPower=-127) {
-	group->motors = motors;
+void configureRamping(motorGroup *group, int maxAcc100ms) {
+	group->isRamped = true;
+	group->msPerPowerChange = 100 / maxAcc100ms;
+}
 
-	if (posBtn >= 0)
-		configureButtonInput(group, TVexJoysticks posBtn, TVexJoysticks negBtn, int stillSpeed, int upPower, int downPower);
+void initializeGroup(motorGroup *group, int numMotors, tMotor *motors, TVexJoysticks posBtn=Ch1, TVexJoysticks negBtn=Ch1, int stillSpeed=0, int upPower=127, int downPower=-127) {
+	for (int i=0; i<limit(numMotors, 0, 12); i++)
+		group->motors[i] = motors[i];
+
+	if (posBtn >= Btn5D)
+		configureButtonInput(group, posBtn, negBtn, stillSpeed, upPower, downPower);
 
 	group->numMotors = numMotors;
 	group->maneuverExecuting = false;
@@ -201,7 +208,7 @@ int setPower(motorGroup *group, int power, bool overrideAbsolutes=false) {
 }
 
 int getPower(motorGroup *group) {
-	return group->motor[0];
+	return group->motors[0];
 }
 //#endregion
 
@@ -229,7 +236,7 @@ int getPower(motorGroup *group) {
 	void stopTargeting(motorGroup *group) { group->activelyMaintining = false; }
 
 	bool errorLessThan(motorGroup *group, int errorMargin) {	//returns true if PID error is less than specified margin
-		return abs(group->posPID.target - getPosition(group)) < errorMargin;
+		return fabs(group->posPID.target - getPosition(group)) < errorMargin;
 	}
 	//#endsubregion
 
@@ -309,7 +316,7 @@ int handleButtonInput(motorGroup *group) {
 
 int handleJoystickInput(motorGroup *group) {
 	int input = vexRT[group->posInput];
-	int power = sgn(input) * group->coeff * abs(pow(input / 127.0, group->powMap)) * 127;
+	int power = sgn(input) * group->coeff * fabs(pow(input / 127.0, group->powMap)) * 127;
 
 	if (abs(power) < group->deadband) power = 0;
 
