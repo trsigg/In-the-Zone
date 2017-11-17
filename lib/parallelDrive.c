@@ -15,7 +15,6 @@ typedef struct {
 	motorGroup leftDrive, rightDrive;
 	robotPosition position; //(x, y) coordinates and orientation of robot
 	float width; //width of drive in inches (wheel well to wheel well). Used to track position.
-	//internal variables
 	//position tracking
 	long posLastUpdated;
 	int minSampleTime;
@@ -30,10 +29,12 @@ typedef struct {
 } parallel_drive;
 
 
-void initializeDrive(parallel_drive *drive, bool isRamped=false, int maxAcc100ms=60, int deadband=10, float powMap=1, float maxPow=127, float initialX=0, float initialY=0, float initialTheta=PI/2, float width=16, int minSampleTime=50, TVexJoysticks leftInput=Ch3, TVexJoysticks rightInput=Ch2) {
-	//initialize drive variables
-	configureJoystickInput(drive->leftDrive, leftInput, deadband, isRamped, maxAcc100ms, powMap, maxPow);
-	configureJoystickInput(drive->rightDrive, rightInput, deadband, isRamped, maxAcc100ms, powMap, maxPow);
+void initializeDrive(parallel_drive *drive, int numLeftMotors, tMotor *leftMotors, int numRightMotors, tMotor *rightMotors, bool isRamped=false, float maxAcc100ms=60, int deadband=10, float powMap=1, int maxPow=127, float initialX=0, float initialY=0, float initialTheta=PI/2, float width=16, int minSampleTime=50) {
+	initializeGroup(drive->leftDrive, numLeftMotors, leftMotors);
+	configureJoystickInput(drive->leftDrive, Ch3, deadband, isRamped, maxAcc100ms, powMap, maxPow);
+	initializeGroup(drive->rightDrive, numRightMotors, rightMotors);
+	configureJoystickInput(drive->rightDrive, Ch2, deadband, isRamped, maxAcc100ms, powMap, maxPow);
+	//position and odometry
 	drive->position.x = initialX;
 	drive->position.y = initialY;
 	drive->position.theta = initialTheta;
@@ -41,15 +42,6 @@ void initializeDrive(parallel_drive *drive, bool isRamped=false, int maxAcc100ms
 	drive->minSampleTime = minSampleTime;
 	drive->gyroCorrection = NONE;
 	drive->posLastUpdated = resetTimer();
-}
-
-void setDriveMotors(parallel_drive *drive, int numMotors, tMotor motor1, tMotor motor2=port1, tMotor motor3=port1, tMotor motor4=port1, tMotor motor5=port1, tMotor motor6=port1, tMotor motor7=port1, tMotor motor8=port1, tMotor motor9=port1, tMotor motor10=port1, tMotor motor11=port1, tMotor motor12=port1) {
-	tMotor motors[12] = { motor1, motor2, motor3, motor4, motor5, motor6, motor7, motor8, motor9, motor10, motor11, motor12 };
-
-	int numSideMotors = numMotors / 2;
-
-	initializeGroup(drive->leftDrive, numSideMotors, motors[0], motors[1], motors[2], motors[3], motors[4], motors[5]);
-	initializeGroup(drive->rightDrive, numSideMotors, motors[numSideMotors], motors[numSideMotors + 1], motors[numSideMotors + 2], motors[numSideMotors + 3], motors[numSideMotors + 4], motors[numSideMotors + 5]);
 }
 
 void configureRamping(parallel_drive *drive, int maxAcc100ms) {
@@ -105,7 +97,7 @@ float driveEncoderVal(parallel_drive *drive, encoderConfig side=UNASSIGNED, bool
 
 	if (side == AVERAGE) {
 		if (absolute) {
-			return (abs(driveEncoderVal(drive, LEFT, rawValue)) + abs(driveEncoderVal(drive, RIGHT, rawValue))) / 2;
+			return (fabs(driveEncoderVal(drive, LEFT, rawValue)) + fabs(driveEncoderVal(drive, RIGHT, rawValue))) / 2;
 		} else {
 			return (driveEncoderVal(drive, LEFT, rawValue) + driveEncoderVal(drive, RIGHT, rawValue)) / 2;
 		}
@@ -226,7 +218,7 @@ float calculateWidth(parallel_drive *drive, int duration=10000, int sampleTime=2
 				resetGyro(drive);
 				wait1Msec(sampleTime);
 
-				totalWidth += driveEncoderVal(drive) * 3600 / (PI * abs(gyroVal(drive, RAW)));
+				totalWidth += driveEncoderVal(drive) * 3600 / (PI * fabs(gyroVal(drive, RAW)));
 				samples++;
 			}
 		}
@@ -235,7 +227,6 @@ float calculateWidth(parallel_drive *drive, int duration=10000, int sampleTime=2
 		return 0;
 	}
 }
-
 
 void driveRuntime(parallel_drive *drive) {
 	takeInput(drive->leftDrive);

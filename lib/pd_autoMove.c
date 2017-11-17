@@ -100,11 +100,11 @@ bool turnIsComplete() {
 	if (turnData.ramper.algorithm == PD)
 		return time(turnData.pdTimer) >= turnData.pdTimeout;
 	else	//algorithm is QUAD
-		return abs(turnProgress()) >= turnData.angle;
+		return fabs(turnProgress()) >= turnData.angle;
 }
 
 void turnRuntime() {
-	float progress = abs(turnProgress());
+	float progress = fabs(turnProgress());
 
 	int power = rampRuntime(turnData.ramper, progress);
 
