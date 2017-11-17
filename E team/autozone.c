@@ -21,20 +21,28 @@
 
 //#region config - TODO: change testing parameter scheme
 #define HOLD_LAST_CONE true
+#define L_USING_ENC    false
+#define CH_USING_ENC   true
 #define SKILLZ_MODE    false
 #define MULTIPLE_PIDs  false	//if chain bar and lift use different PID consts for movement in different locations or directions
-#define ONE_CONTROLLER
 	//#subregion testing
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID)
 int debugParameters[] = { 0, -1, 7, -1 };	//{ liftDebugStartCol, chainDebugStartCol, liftSensorCol, chainSensorCol }
 	//#endsubregion
 //#endregion
 
+//#region positions
+enum chainState  { CH_FIELD, CH_SAFE, STACK, CH_MIN, VERT, CH_MAX, CH_DEF };  //when chain bar is at CH_SAFE, lift can move up and down without colliding with cone stack
+int chainPos[] = { 146,      146,     42,    0,      42,   197 };
+
+enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
+int liftPos[] = { 1425,  1430,    1880,   1420,       1880,   1880,   2960 };
+//#endregion
+
 //#region setup
 #pragma platform(VEX2)
 #pragma competitionControl(Competition)
 #include "Vex_Competition_Includes.c"
-#include "lift.c"
 #include "..\lib\pd_autoMove.c"
 #include "..\lib\buttonTracker.c"
 #include "..\audio\downloadSounds.c"
@@ -71,8 +79,20 @@ int debugParameters[] = { 0, -1, 7, -1 };	//{ liftDebugStartCol, chainDebugStart
 		//#endsubsubregion
 	//#endsubregion
 
-	//#subregion manual control
+//#subregion manual control
 #define resetEncodersBtn  Btn7U
+		//#subsubregion lift
+#define f_liftUpBtn				Btn8U	//fielding mode
+#define f_liftDownBtn			Btn8R
+#define d_liftUpBtn       Btn5U	//driver load mode
+#define d_liftDownBtn     Btn5D
+		//#endsubsubregion
+		//#subsubregion chain bar
+#define f_chainInBtn			Btn5U	//fielding mode
+#define f_chainOutBtn			Btn5D
+#define d_chainInBtn			Btn8R	//driver load mode
+#define d_chainOutBtn			Btn8U
+		//#endsubsubregion
 	//#endsubregion
 //#endregion
 
