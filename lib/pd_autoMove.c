@@ -104,7 +104,7 @@ bool turnIsComplete() {
 }
 
 void turnRuntime() {
-	float progress = abs(turnProgress());
+	float progress = fabs(turnProgress());
 
 	int power = rampRuntime(turnData.ramper, progress);
 
