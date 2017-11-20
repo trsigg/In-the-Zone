@@ -1,4 +1,4 @@
-#include "config.c"
+#include "..\config\config.c"
 
 int goalDirection = 0;	//0: not moving; -1: intaking; 1: outtaking
 

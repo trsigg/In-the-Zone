@@ -1,4 +1,4 @@
-#include "config.c"
+#include "..\config\config.c"
 
 
 bool fielding = true;	//whether robot is intaking cones from the driver load or field

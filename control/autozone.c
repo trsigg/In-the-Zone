@@ -3,8 +3,8 @@
 #pragma competitionControl(Competition)
 #include "Vex_Competition_Includes.c"
 #include "..\lib\buttonTracker.c"
-#include "teamLibs\autonomous.c"
-#include "teamLibs\testing.c"
+#include "..\game\autonomous.c"
+#include "..\game\testing.c"
 //#endregion
 
 //#region autopositioning

@@ -226,7 +226,7 @@ const float CH_CORR_FCTR = (CH_USING_ENC ? RAD_TO_POT/RAD_TO_ENC : 1);
 //#endregion
 
 
-#include "..\..\lib\pd_autoMove.c" //for drive declaration
+#include "..\lib\pd_autoMove.c" //for drive declaration
 
 motorGroup goalIntake;
 motorGroup coneIntake;
