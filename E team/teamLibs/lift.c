@@ -33,7 +33,7 @@ void handleEncoderCorrection() {
 //#endregion
 
 //#region position targeting
-void waitForLiftingToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=100, float chainMargin=20, float liftMargin=200) {	//fctr
+void waitForLiftingToFinish(bool waitForLift=true, bool waitForChain=true, int timeout=100, float chainMargin=200/CH_CORR_FCTR, float liftMargin=200/L_CORR_FCTR) {
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {
@@ -52,7 +52,7 @@ void executeLiftManeuvers(bool autoStillSpeed=true) {
 	else
 		maintainTargetPos(chainBar, debugParameters[1]);
 
-	if (autoStillSpeed && errorLessThan(lift, L_AUTO_SS_MARGIN) && lift.activelyMaintining && lift.posPID.target<=liftPos[L_FIELD])	//TODO: fctr
+	if (autoStillSpeed && errorLessThan(lift, L_AUTO_SS_MARGIN/L_CORR_FCTR) && lift.activelyMaintining && lift.posPID.target<=liftPos[L_FIELD])
 		setPower(lift, LIFT_STILL_SPEED * (lift.posPID.target<=liftPos[L_FIELD] ? -1 : 1));
 	else
 		maintainTargetPos(lift, debugParameters[0]);

@@ -17,7 +17,8 @@ void pre_auton() {
 
 	initializeStructs();
 	initializeAutoMovement();
-	initializeAudio();
+	if (HAS_SPEAKER)
+		initializeAudio();
 
 	setLiftControlMode(fielding);
 }
