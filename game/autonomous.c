@@ -1,12 +1,26 @@
 #include "autostacking.c"
 #include "mobileGoal.c"
 
+
+//#region perparation
+void deployConeManipulators() {
+	setState(coneIntake, true);
+	wait1Msec(50);
+
+	setLiftTargetAndPID(liftPos[L_FIELD] + 250/L_CORR_FCTR);
+	wait1Msec(250);
+	setLiftState(L_DEF);
+}
+
 void prepareForAuton() {
 	resetLiftEncoders();
 	stopLiftTargeting();
 	startTask(autoStacking);
 	numCones = 0;
+
+	deployConeManipulators();
 }
+//#endregion
 
 //#region complex maneuvers
 void alignToLine(int power=60, int brakePower=10, int brakeDuration=250) {	//brakepower is absolute value (sign automatically determined)
@@ -75,12 +89,7 @@ void driveForDuration(int duration, int beginPower=127, int endPower=0) {
 	setDrivePower(drive, endPower, endPower);
 }
 
-void driveAndGoal(int dist, bool in, bool stackCone=false, bool pulseIntake=false, bool quadRamp=false, int intakeDelay=250) {	//TODO: stop short
-	//move lift out of way of intake
-	if (pulseIntake) setPower(coneIntake, 60);
-	moveLiftToSafePos();
-
-	if (pulseIntake) setPower(coneIntake, INTAKE_STILL_SPEED);
+void driveAndGoal(int dist, bool in, bool stackCone=false, bool quadRamp=false, int intakeDelay=250) {
 	moveGoalIntake(in, true);
 
 	if (in)
@@ -135,9 +144,6 @@ void sideGoal(bool retract=true, bool twentyPt=true, bool middle=true) {	//gets 
 void middleGoal(bool left, bool twentyPt, bool center=true) {
 	int direction = (left ? 1 : -1);
 
-	if (left) setPower(coneIntake, 60);
-	moveLiftToSafePos();
-	if (left) setPower(coneIntake, INTAKE_STILL_SPEED);
 	moveGoalIntake(false);
 
 	driveStraight(40);
@@ -191,9 +197,8 @@ task skillz() {
 
 	//far right middle goal
 	driveStraight(60);	//push aside cones
-	driveStraight(-GOAL_TO_MID_DIST);
+	driveAndGoal(-GOAL_TO_MID_DIST, false);
 
-	moveGoalIntake(false);
 	driveStraight(20);
 
 	driveAndGoal(30, true);

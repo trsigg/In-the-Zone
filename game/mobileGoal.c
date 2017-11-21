@@ -1,19 +1,23 @@
-#include "..\config\config.c"
+#include "lift.c"
 
 int goalDirection = 0;	//0: not moving; -1: intaking; 1: outtaking
+long goalTimer;
 
 task moveGoalIntakeTask() {
-	while (time1(GOAL_TIMER) < (goalDirection==1 ? GOAL_OUTTAKE_DURATION : GOAL_INTAKE_DURATION)) EndTimeSlice();
+	while (time(goalTimer) < (goalDirection==1 ? GOAL_OUTTAKE_DURATION : GOAL_INTAKE_DURATION)) EndTimeSlice();
 	setPower(goalIntake, GOAL_STILL_SPEED * goalDirection);
 	goalDirection = 0;
 }
 
 void moveGoalIntake(bool in, bool runAsTask=false) {
+	if (lift.posPID.target < liftPos[L_SAFE])
+		moveLiftToSafePos();
+
 	goalDirection = in ? -1 : 1;
 	setPower(goalIntake, 127 * goalDirection);
 
 	if (runAsTask) {
-		clearTimer(GOAL_TIMER);
+		goalTimer = resetTimer();
 		startTask(moveGoalIntakeTask);
 	}
 	else {

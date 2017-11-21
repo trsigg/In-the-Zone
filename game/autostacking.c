@@ -29,9 +29,9 @@ void stackNewCone(bool wait=false) {
 }
 
 void expelCone() {	//should be called after stacking cone
-	setPower(coneIntake, -127);
+	setState(coneIntake, false);
 	setLiftTargetAndPID(liftAngle1, false);
-	waitForLiftingToFinish(true, false, OUTTAKE_DURATION);
+	waitForLiftingToFinish(OUTTAKE_DURATION);
 }
 
 task autoStacking() {
@@ -44,41 +44,33 @@ task autoStacking() {
 		useOffset = (numCones >= NO_OFFSET_CONES);
 		liftEarly = !fielding && (numCones < D_LIFT_EARLY_CONES);
 
-		//intake cone
-		setPower(coneIntake, INTAKE_STILL_SPEED);
-
 		//move to desired location
-		setChainBarState(numCones<RECKLESS_CONES ? STACK : CH_SAFE);
 		setLiftTargetAndPID(useOffset ? liftAngle1 : liftAngle2);
 
 		while (!errorLessThan(lift, 200/L_CORR_FCTR)) EndTimeSlice();
-		if (numCones >= RECKLESS_CONES) setChainBarState(STACK);
-		waitForLiftingToFinish(false);
+		setState(fourBar, true);
 		if (useOffset) setLiftTargetAndPID(liftAngle2/*, false*/);
 
-		waitForLiftingToFinish(true, true, 250);
+		waitForLiftingToFinish(250);
 
-		if (numCones < MAX_NUM_CONES-1) {
-			expelCone();
-			stacking = false;
-			numCones++;
+		expelCone();
+		stacking = false;
+		numCones++;
 
-			if (liftEarly) setLiftState(L_DEF);
-			setChainBarState(CH_DEF);
-			setPower(coneIntake, 0);
-
-			//return to ready positions
-			while (getPosition(chainBar) < chainPos[CH_SAFE]-(fielding ? 0 : 100/CH_CORR_FCTR)) EndTimeSlice();
-			if (!liftEarly) setLiftState(L_DEF);
+		if (numCones<MAX_NUM_CONES || !HOLD_LAST_CONE) {
+			if (liftEarly) {
+				setLiftState(L_DEF);
+				waitForLiftingToFinish();
+				setState(fourBar, false);
+			}
+			else {
+				setState(fourBar, false);
+				setLiftState(L_DEF);
+			}
 		}
 		else {
-			if (!HOLD_LAST_CONE)
-				expelCone();
-			stacking = false;
-			numCones++;
-
-			lift.activelyMaintining = false;	//allows lift to fall down on stack
-			lift.stillSpeedReversed = true;
+			lift.activelyMaintining = false;	//passively maintains lift position
+			lift.stillSpeedReversed = false;
 		}
 
 		speakNum(numCones);

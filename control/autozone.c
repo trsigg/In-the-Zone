@@ -8,8 +8,7 @@
 //#endregion
 
 //#region autopositioning
-enum AutoPosState { NO_POS, CHAIN_DEF, CH_STACK, FULL_DEF, MAX };
-AutoPosState posState = NO_POS;
+bool movingToMax = false;	//true if lifting up to MAX_POS
 //#endregion
 
 void pre_auton() {
@@ -19,8 +18,6 @@ void pre_auton() {
 	initializeAutoMovement();
 	if (HAS_SPEAKER)
 		initializeAudio();
-
-	setLiftControlMode(fielding);
 }
 
 task autonomous() {
@@ -54,59 +51,22 @@ void adjustConeCount() {	//change cone count based on user input
 		numCones--;
 }
 
-void setAutopositionState(AutoPosState state) {
-	stacking = false;	//TODO: ?
-	posState = state;
-	startTask(autoStacking);	//reset task progress
-
-	switch (state) {
-		case NO_POS:
-			stopLiftTargeting();
-			break;
-		case CHAIN_DEF:
-			setChainBarState(CH_DEF);
-			break;
-		case CH_STACK:
-			setChainBarState(STACK);
-			break;
-		case FULL_DEF:
-			setChainBarState(CH_DEF);
-			setLiftState(L_DEF);
-			break;
-		case MAX:
-			setLiftState(L_MAX);
-			break;
-	}
-}
-
 void handleAutopositioningInput() {
-	if (vexRT[chainDefBtn] == 1) {
-		if (vexRT[chainStackBtn]==1 && posState!=FULL_DEF)
-			setAutopositionState(FULL_DEF);
-		else if (posState!=CHAIN_DEF && posState!=FULL_DEF)
-			setAutopositionState(CHAIN_DEF);
+	if (newlyPressed(defPosBtn)) {
+		setState(coneIntake, true);
+		setState(fourBar, false);
+		setLiftState(L_DEF);
 	}
-	else if (vexRT[chainStackBtn] == 1) {
-		if (posState!=CH_STACK && posState!=FULL_DEF)
-			setAutopositionState(CH_STACK);
-	}
-	/*else if (vexRT[maxPosBtn] == 1) {
-		if (posState != MAX)
-			setAutopositionState(MAX);
-	}*/
-	else {
-		posState = NO_POS;
-	}
-}
 
-void handleConeIntakeInput(bool shift) {
-	if (vexRT[coneIntakeBtn] == 1)
-		if (shift)
-			setPower(coneIntake, -127);
-		else
-			setPower(coneIntake, 127);
-	else
-		setPower(coneIntake, INTAKE_STILL_SPEED);
+	if (newlyPressed(maxPosBtn)) {
+		setLiftState(L_MAX);
+		movingToMax = true;
+	}
+
+	if (movingToMax && errorLessThan(lift, 100)) {
+		setState(fourBar, true);
+		movingToMax = false;
+	}
 }
 
 void handleGoalIntakeInput() {
@@ -116,20 +76,16 @@ void handleGoalIntakeInput() {
 		setPower(goalIntake, goalPower);
 }
 
-void handleLiftInput(bool shift) {
+void handleLiftInput() {
 	if (!stacking) {
-		if (!shift) {
-			if (vexRT[stackBtn] == 1) {
-				stackNewCone();
-			}
-			else {
-				handleAutopositioningInput();
-				takeInput(chainBar, !chainBar.activelyMaintining); //will only set power if not maintaining a position
-			  takeInput(lift, !lift.activelyMaintining);         //if there is input, activelyMaintaining will be set to false and normal control will resume
-			}
+		if (vexRT[stackBtn] == 1) {
+			stackNewCone();
 		}
-
-		handleConeIntakeInput(shift);
+		else {
+			handleAutopositioningInput();
+			takeInput(lift, !lift.activelyMaintining); //will only set power if not maintaining a position
+		                                             //if there is input, activelyMaintaining will be set to false and normal control will resume
+		}
 	}
 
 	executeLiftManeuvers();
@@ -149,23 +105,18 @@ task usercontrol() {
 		if (shift) {
 			adjustConeCount();
 
-			if (newlyPressed(resetEncodersBtn))
-				resetLiftEncoders();
-
 			if (!bSoundActive && vexRT[sayConeNumberBtn]==1)
 				speakNum(numCones);
+		}
 
-			if (newlyPressed(toggleFieldingBtn)) {
+		if (newlyPressed(toggleFieldingBtn)) {
 				fielding = !fielding;
 
 				if (fielding)
 					playSound(soundDownwardTones);
 				else
 					playSound(soundUpwardTones);
-
-				setLiftControlMode(fielding);
 			}
-		}
 
 		if (newlyPressed(abortManeuversBtn)) {
 			stacking = false;
@@ -173,8 +124,10 @@ task usercontrol() {
 			stopLiftTargeting();
 		}
 
-		handleLiftInput(shift);
-		handleGoalIntakeInput();
+		handleLiftInput();
+
+		takeInput(coneIntake);
+		takeInput(fourBar);
 
 		driveRuntime(drive);
 	}

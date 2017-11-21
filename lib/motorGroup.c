@@ -75,13 +75,14 @@ void configureRamping(motorGroup *group, int maxAcc100ms) {
 }
 
 void initializeGroup(motorGroup *group, int numMotors, tMotor *motors, TVexJoysticks posBtn=Ch1, TVexJoysticks negBtn=Ch1, int stillSpeed=0, int upPower=127, int downPower=-127) {
-	for (int i=0; i<limit(numMotors, 0, 12); i++)
+	group->numMotors = limit(numMotors, 0, 12);
+
+	for (int i=0; i<group->numMotors; i++)
 		group->motors[i] = motors[i];
 
 	if (posBtn >= Btn5D)
 		configureButtonInput(group, posBtn, negBtn, stillSpeed, upPower, downPower);
 
-	group->numMotors = numMotors;
 	group->maneuverExecuting = false;
 }
 

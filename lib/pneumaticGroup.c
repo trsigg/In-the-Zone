@@ -1,3 +1,4 @@
+#include "coreIncludes.c"
 #include "buttonTracker.c"
 
 enum pneumaticControlType { P_NONE, TOGGLE, TWO_BTN };
@@ -11,12 +12,18 @@ typedef struct {
   bool isOpen;
 } pneumaticGroup;
 
-void initializePneumaticGroup(pneumaticGroup *group, int numSolenoids, tSensors sol1, tSensors sol2=dgtl1, tSensors sol3=dgtl1, tSensors sol4=dgtl1, tSensors sol5=dgtl1, tSensors sol6=dgtl1, tSensors sol7=dgtl1, tSensors sol8=dgtl1, tSensors sol9=dgtl1, tSensors sol10=dgtl1) {
-  tSensors solenoids[10] = { sol1, sol2, sol3, sol4, sol5, sol6, sol7, sol8, sol9, sol10 };
-  for (int i=0; i<numSolenoids; i++)
+void initializePneumaticGroup(pneumaticGroup *group, int numSolenoids, tSensors *solenoids) {
+  group->numSolenoids = limit(numSolenoids, 0, 10);
+
+  for (int i=0; i<group->numSolenoids; i++)
     group->solenoids[i] = solenoids[i];
 
-  group->numSolenoids = numSolenoids;
+  group->isOpen = false;
+}
+
+void initializePneumaticGroup(pneumaticGroup *group, tSensors solenoid) {
+  group->numSolenoids = 1;
+  group->solenoids[0] = solenoid;
   group->isOpen = false;
 }
 
