@@ -19,26 +19,28 @@ int debugParameters[] = { 0, 7 };	//{ liftDebugStartCol, liftSensorCol }
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1425,  1430,    1880,   1420,       1880,   1880,   2960 };
+	int liftPos[] = { 1425,  1430,    -1,   1420,       1880,   1880,   2960 };
 	//#endsubregion
 
 	//#subregion motors
 	#define NUM_LIFT_MOTORS 2
-	tMotor liftMotors[NUM_LIFT_MOTORS] = { port5, port7 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
+	tMotor liftMotors[NUM_LIFT_MOTORS] = { port2, port9 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
 
 	#define NUM_RIGHT_MOTORS 2
-	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port1, port2 };
+	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port5, port7 };
 
-	#define NUM_LEFT_MOTORS 1
-	tMotor leftMotors[NUM_LEFT_MOTORS] = { port6 };
+	#define NUM_LEFT_MOTORS 2
+	tMotor leftMotors[NUM_LEFT_MOTORS] = { port4, port6 };
 
 	#define NUM_GOAL_MOTORS 2
-	tMotor goalMotors[NUM_GOAL_MOTORS] = { port9, port10 };
+	tMotor goalMotors[NUM_GOAL_MOTORS] = { port3, port8 };
 	//#endsubregion
 
 	//#subregion solenoids
 	#define INTAKE_SOL dgtl5
-	#define FB_SOL     dgtl6
+
+	#define NUM_FB_SOLS 2
+	tSensors fourBarSols[NUM_FB_SOLS] = { dgtl6, dgtl7 };
 	//#endsubregion
 
 	//#subregion sensors
@@ -47,14 +49,16 @@ int debugParameters[] = { 0, 7 };	//{ liftDebugStartCol, liftSensorCol }
 	#define L_ENC_REVERSED  true	//drive
 	#define R_ENC_REVERSED  true
 
-	#define SIDE_POT     in1
-	#define LIFT_SENSOR  in2
-	#define LEFT_LINE    in4
-	#define BACK_LINE    in5
-	#define RIGHT_LINE   in6
-	#define HYRO         in7
-	#define LEFT_ENC     dgtl1
-	#define RIGHT_ENC    dgtl3
+	#define LIFT_SENSOR in1
+	#define SIDE_POT    in2
+	#define MODE_POT    in3
+	#define HYRO        in4
+	#define LEFT_ENC    dgtl1
+	#define RIGHT_ENC   dgtl3
+
+	#define LEFT_LINE   in1	//not currently attached
+	#define BACK_LINE   in1
+	#define RIGHT_LINE  in1
 	//#endsubregion
 
 	//#subregion measurements
@@ -128,7 +132,7 @@ const float L_CORR_FCTR = (L_USING_ENC ? RAD_TO_POT/RAD_TO_LIFT : 1);
 #define APATHY_CONES       0 //number of cones for which lift does not move
 #define NO_OFFSET_CONES    1 //number of cones for which the lift goes straight to liftAngle2
 #define D_LIFT_EARLY_CONES 3 //number of cones in driver load mode for which lift and chain go to defaults simultaneously (TODO: chain?)
-#define MAX_NUM_CONES      15
+#define MAX_NUM_CONES      14
 	//#endsubregion
 	//#subregion timing
 #define OUTTAKE_DURATION      100
@@ -155,6 +159,8 @@ void initializeStructs() {
 
 	//lift
   initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors);
+	configureButtonInput(lift, liftUpBtn, liftDownBtn);
+	configureBtnDependentStillSpeed(lift, LIFT_STILL_SPEED);
 	initializeTargetingPID(lift, 0.4*L_CORR_FCTR, 0.005*L_CORR_FCTR, 5*L_CORR_FCTR, 10);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
 	addSensor(lift, LIFT_SENSOR, L_SENS_REVERSED);
 	if (L_USING_ENC) configureEncoderCorrection(lift, liftPos[L_MAX]);
@@ -169,6 +175,6 @@ void initializeStructs() {
 	configureToggleInput(coneIntake, toggleIntakeBtn);
 
 	//top four bar
-	initializePneumaticGroup(fourBar, FB_SOL);
+	initializePneumaticGroup(fourBar, NUM_FB_SOLS, fourBarSols);
 	configureToggleInput(fourBar, toggle4bBtn);
 }

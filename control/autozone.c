@@ -51,16 +51,19 @@ void adjustConeCount() {	//change cone count based on user input
 		numCones--;
 }
 
-void handleAutopositioningInput() {
-	if (newlyPressed(defPosBtn)) {
-		setState(coneIntake, true);
-		setState(fourBar, false);
-		setLiftState(L_DEF);
-	}
+void handleAutopositioningInput(bool shift) {
+	if (!shift) {
+		if (newlyPressed(defPosBtn)) {
+			setState(coneIntake, true);
+			setState(fourBar, false);
+			setLiftState(L_DEF);
+			movingToMax = false;
+		}
 
-	if (newlyPressed(maxPosBtn)) {
-		setLiftState(L_MAX);
-		movingToMax = true;
+		if (newlyPressed(maxPosBtn)) {
+			setLiftState(L_MAX);
+			movingToMax = true;
+		}
 	}
 
 	if (movingToMax && errorLessThan(lift, 100)) {
@@ -76,13 +79,14 @@ void handleGoalIntakeInput() {
 		setPower(goalIntake, goalPower);
 }
 
-void handleLiftInput() {
+void handleLiftInput(bool shift) {
 	if (!stacking) {
 		if (vexRT[stackBtn] == 1) {
+			movingToMax = false;
 			stackNewCone();
 		}
 		else {
-			handleAutopositioningInput();
+			handleAutopositioningInput(shift);
 			takeInput(lift, !lift.activelyMaintining); //will only set power if not maintaining a position
 		                                             //if there is input, activelyMaintaining will be set to false and normal control will resume
 		}
@@ -120,11 +124,13 @@ task usercontrol() {
 
 		if (newlyPressed(abortManeuversBtn)) {
 			stacking = false;
+			movingToMax = false;
 			startTask(autoStacking);
 			stopLiftTargeting();
 		}
 
-		handleLiftInput();
+		handleLiftInput(shift);
+		handleGoalIntakeInput();
 
 		takeInput(coneIntake);
 		takeInput(fourBar);
