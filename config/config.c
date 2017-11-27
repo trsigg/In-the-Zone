@@ -19,7 +19,7 @@ int debugParameters[] = { 0, 7 };	//{ liftDebugStartCol, liftSensorCol }
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1425,  1430,    -1,   1420,       1880,   1880,   2960 };
+	int liftPos[] = { 650,   900,     1190,   750,        1300,   1195,   2160 };
 	//#endsubregion
 
 	//#subregion motors
@@ -49,10 +49,10 @@ int debugParameters[] = { 0, 7 };	//{ liftDebugStartCol, liftSensorCol }
 	#define L_ENC_REVERSED  true	//drive
 	#define R_ENC_REVERSED  true
 
-	#define LIFT_SENSOR in1
+	#define HYRO        in1
 	#define SIDE_POT    in2
 	#define MODE_POT    in3
-	#define HYRO        in4
+	#define LIFT_SENSOR in4
 	#define LEFT_ENC    dgtl1
 	#define RIGHT_ENC   dgtl3
 
@@ -62,7 +62,7 @@ int debugParameters[] = { 0, 7 };	//{ liftDebugStartCol, liftSensorCol }
 	//#endsubregion
 
 	//#subregion measurements
-	#define LIFT_LEN 14.0
+	#define LIFT_LEN 13.5
 	//#endsubregion
 #endif
 //#endregion
@@ -119,8 +119,8 @@ const float L_CORR_FCTR = (L_USING_ENC ? RAD_TO_POT/RAD_TO_LIFT : 1);
 #define B_LINE_THRESHOLD 2870
 	//#endsubregion
 	//#subregion measurements
-#define CONE_HEIGHT 2.75
-#define LIFT_OFFSET 2.0
+#define CONE_HEIGHT 4.0
+#define LIFT_OFFSET 2.5
 #define GOAL_TO_MID_DIST 17.5
 	//#endsubregion
 	//#subregion still speeds
@@ -130,12 +130,13 @@ const float L_CORR_FCTR = (L_USING_ENC ? RAD_TO_POT/RAD_TO_LIFT : 1);
 	//#endsubregion
 	//#subregion cone counts
 #define APATHY_CONES       0 //number of cones for which lift does not move
-#define NO_OFFSET_CONES    1 //number of cones for which the lift goes straight to liftAngle2
+#define NO_OFFSET_CONES    0 //number of cones for which the lift goes straight to liftAngle2
 #define D_LIFT_EARLY_CONES 3 //number of cones in driver load mode for which lift and chain go to defaults simultaneously (TODO: chain?)
 #define MAX_NUM_CONES      14
 	//#endsubregion
 	//#subregion timing
-#define OUTTAKE_DURATION      100
+#define OUTTAKE_DURATION      300
+#define FB_LIFT_DURATION      400	//amount of time it takes for 4b to move between positions
 #define GOAL_INTAKE_DURATION  1500
 #define GOAL_OUTTAKE_DURATION 1750
 	//#endsubregion
@@ -161,7 +162,7 @@ void initializeStructs() {
   initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors);
 	configureButtonInput(lift, liftUpBtn, liftDownBtn);
 	configureBtnDependentStillSpeed(lift, LIFT_STILL_SPEED);
-	initializeTargetingPID(lift, 0.4*L_CORR_FCTR, 0.005*L_CORR_FCTR, 5*L_CORR_FCTR, 10);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
+	initializeTargetingPID(lift, 0.25*L_CORR_FCTR, 0.01*L_CORR_FCTR, 5*L_CORR_FCTR, 10);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
 	addSensor(lift, LIFT_SENSOR, L_SENS_REVERSED);
 	if (L_USING_ENC) configureEncoderCorrection(lift, liftPos[L_MAX]);
 

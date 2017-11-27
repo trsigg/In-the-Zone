@@ -97,6 +97,7 @@ void handleLiftInput(bool shift) {
 
 task usercontrol() {
 	stopLiftTargeting();
+	setState(coneIntake, true);
 
 	startTask(autoStacking);
 

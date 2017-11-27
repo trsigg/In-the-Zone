@@ -51,7 +51,7 @@ task autoStacking() {
 		setState(fourBar, true);
 		if (useOffset) setLiftTargetAndPID(liftAngle2/*, false*/);
 
-		waitForLiftingToFinish(250);
+		waitForLiftingToFinish(FB_LIFT_DURATION);
 
 		expelCone();
 		stacking = false;
@@ -65,6 +65,7 @@ task autoStacking() {
 			}
 			else {
 				setState(fourBar, false);
+				wait1Msec(FB_LIFT_DURATION);
 				setLiftState(L_DEF);
 			}
 		}
@@ -73,6 +74,7 @@ task autoStacking() {
 			lift.stillSpeedReversed = false;
 		}
 
+		setState(coneIntake, true);	//TODO: put this before lifting?
 		speakNum(numCones);
 	}
 }

@@ -15,7 +15,7 @@ void handleEncoderCorrection() {
 //#endregion
 
 //#region position targeting
-void waitForLiftingToFinish(int timeout=100, float liftMargin=200/L_CORR_FCTR) {
+void waitForLiftingToFinish(int timeout=100, float liftMargin=75/L_CORR_FCTR) {
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {
