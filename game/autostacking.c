@@ -5,7 +5,6 @@ const float heightOffset = sin((liftPos[M_BASE_POS] - liftPos[L_ZERO]) / RAD_TO_
 
 int numCones = 0; //current number of stacked cones
 bool stacking = false;	//whether the robot is currently in the process of stacking
-float liftAngle1, liftAngle2;	//the target angles of lift sections during a stack maneuver
 
 int adjustedNumCones() {
 	return limit(numCones-APATHY_CONES, 0, MAX_NUM_CONES-APATHY_CONES);
@@ -19,8 +18,7 @@ float calcLiftTargetForHeight(float height) {
 void stackNewCone(bool wait=false) {
 	float stackHeight = CONE_HEIGHT * adjustedNumCones();
 
-	liftAngle1 = calcLiftTargetForHeight(stackHeight + LIFT_OFFSET);
-	liftAngle2 = calcLiftTargetForHeight(stackHeight);
+	setLiftTargetAndPID(calcLiftTargetForHeight(stackHeight));
 	stacking = true;
 
 	if (wait)
@@ -29,52 +27,29 @@ void stackNewCone(bool wait=false) {
 }
 
 void expelCone() {	//should be called after stacking cone
-	setState(coneIntake, false);
-	setLiftTargetAndPID(liftAngle1, false);
-	waitForLiftingToFinish(OUTTAKE_DURATION);
+	setPower(sideRollers, 127);
+	wait1Msec(OUTTAKE_DURATION);
+	setPower(sideRollers, 0);
 }
 
 task autoStacking() {
-	bool useOffset;
-	bool liftEarly;
-
 	while (true) {
 		while (!stacking) EndTimeSlice();
 
-		useOffset = (numCones >= NO_OFFSET_CONES);
-		liftEarly = !fielding && (numCones < D_LIFT_EARLY_CONES);
-
-		//move to desired location
-		setLiftTargetAndPID(useOffset ? liftAngle1 : liftAngle2);
-
-		while (!errorLessThan(lift, 200/L_CORR_FCTR)) EndTimeSlice();
-		setState(fourBar, true);
-		if (useOffset) setLiftTargetAndPID(liftAngle2/*, false*/);
-
-		waitForLiftingToFinish(FB_LIFT_DURATION);
+		waitForLiftingToFinish(400);	//wait for lift to move to stacking position
 
 		expelCone();
 		stacking = false;
 		numCones++;
 
-		if (numCones<MAX_NUM_CONES || !HOLD_LAST_CONE) {
-			if (liftEarly) {
-				setLiftState(L_DEF);
-				waitForLiftingToFinish();
-				setState(fourBar, false);
-			}
-			else {
-				setState(fourBar, false);
-				wait1Msec(FB_LIFT_DURATION);
-				setLiftState(L_DEF);
-			}
-		}
-		else {
+		if (numCones==MAX_NUM_CONES && HOLD_LAST_CONE) {
 			lift.activelyMaintining = false;	//passively maintains lift position
 			lift.stillSpeedReversed = false;
 		}
+		else {
+			setLiftState(L_DEF);
+		}
 
-		setState(coneIntake, true);	//TODO: put this before lifting?
 		speakNum(numCones);
 	}
 }

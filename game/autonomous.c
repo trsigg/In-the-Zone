@@ -3,22 +3,11 @@
 
 
 //#region perparation
-void deployConeManipulators() {
-	setState(coneIntake, true);
-	wait1Msec(50);
-
-	setLiftTargetAndPID(liftPos[L_FIELD] + 250/L_CORR_FCTR);
-	wait1Msec(250);
-	setLiftState(L_DEF);
-}
-
 void prepareForAuton() {
 	resetLiftEncoders();
 	stopLiftTargeting();
 	startTask(autoStacking);
 	numCones = 0;
-
-	deployConeManipulators();
 }
 //#endregion
 

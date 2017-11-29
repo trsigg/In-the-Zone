@@ -28,7 +28,7 @@ task autonomous() {
 		startTask(skillz);
 	}
 	else {
-		turnDefaults.reversed = SensorValue[SIDE_POT]<1830;
+		turnDefaults.reversed = SensorValue[SIDE_POT]<1830;	//TODO: put this val in config
 		startTask(sideGoalTask);
 	}
 
@@ -54,8 +54,6 @@ void adjustConeCount() {	//change cone count based on user input
 void handleAutopositioningInput(bool shift) {
 	if (!shift) {
 		if (newlyPressed(defPosBtn)) {
-			setState(coneIntake, true);
-			setState(fourBar, false);
 			setLiftState(L_DEF);
 			movingToMax = false;
 		}
@@ -67,7 +65,6 @@ void handleAutopositioningInput(bool shift) {
 	}
 
 	if (movingToMax && errorLessThan(lift, 100)) {
-		setState(fourBar, true);
 		movingToMax = false;
 	}
 }
@@ -87,6 +84,7 @@ void handleLiftInput(bool shift) {
 		}
 		else {
 			handleAutopositioningInput(shift);
+			takeInput(sideRollers);
 			takeInput(lift, !lift.activelyMaintining); //will only set power if not maintaining a position
 		                                             //if there is input, activelyMaintaining will be set to false and normal control will resume
 		}
@@ -97,7 +95,6 @@ void handleLiftInput(bool shift) {
 
 task usercontrol() {
 	stopLiftTargeting();
-	setState(coneIntake, true);
 
 	startTask(autoStacking);
 
@@ -132,9 +129,6 @@ task usercontrol() {
 
 		handleLiftInput(shift);
 		handleGoalIntakeInput();
-
-		takeInput(coneIntake);
-		takeInput(fourBar);
 
 		driveRuntime(drive);
 	}

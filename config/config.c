@@ -2,9 +2,9 @@
 
 
 //#region options
-#define HOLD_LAST_CONE true
 #define SKILLZ_MODE    false
 #define MULTIPLE_PIDs  false //if lift uses different PID consts for movement in different locations or directions
+#define HOLD_LAST_CONE true	//if lift stays up after stacking last cone
 #define HAS_SPEAKER    true
 
 	//#subregion testing - TODO: change parameter scheme
@@ -26,6 +26,9 @@ int debugParameters[] = { 0, 7 };	//{ liftDebugStartCol, liftSensorCol }
 	#define NUM_LIFT_MOTORS 2
 	tMotor liftMotors[NUM_LIFT_MOTORS] = { port2, port9 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
 
+	#define NUM_ROLLER_MOTORS 1
+	tMotor rollerMotors[NUM_ROLLER_MOTORS] = { port1 };
+
 	#define NUM_RIGHT_MOTORS 2
 	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port5, port7 };
 
@@ -34,13 +37,6 @@ int debugParameters[] = { 0, 7 };	//{ liftDebugStartCol, liftSensorCol }
 
 	#define NUM_GOAL_MOTORS 2
 	tMotor goalMotors[NUM_GOAL_MOTORS] = { port3, port8 };
-	//#endsubregion
-
-	//#subregion solenoids
-	#define INTAKE_SOL dgtl5
-
-	#define NUM_FB_SOLS 2
-	tSensors fourBarSols[NUM_FB_SOLS] = { dgtl6, dgtl7 };
 	//#endsubregion
 
 	//#subregion sensors
@@ -59,6 +55,7 @@ int debugParameters[] = { 0, 7 };	//{ liftDebugStartCol, liftSensorCol }
 	#define LEFT_LINE   in1	//not currently attached
 	#define BACK_LINE   in1
 	#define RIGHT_LINE  in1
+	#define CONE_SWITCH dgtl5
 	//#endsubregion
 
 	//#subregion measurements
@@ -78,12 +75,14 @@ int debugParameters[] = { 0, 7 };	//{ liftDebugStartCol, liftSensorCol }
 #define goalOuttakeBtn    Btn7U
 	//#endsubregion
 
-	//#subregion cone intake
-#define toggleIntakeBtn   Btn8U	//toggles cone intake solenoid
+	//#subregion side rollers
+#define intakeBtn         Btn6U
+#define outtakeBtn        Btn6D
 	//#endsubregion
 
-	//#subregion top four bar
-#define toggle4bBtn       Btn6D
+	//#subregion lift
+#define liftUpBtn         Btn5U	//fielding mode
+#define liftDownBtn       Btn5D
 	//#endsubregion
 
 	//#subregion autopositioning
@@ -100,11 +99,6 @@ int debugParameters[] = { 0, 7 };	//{ liftDebugStartCol, liftSensorCol }
 #define decreaseConesBtn  Btn8D
 		//#endsubsubregion
 	//#endsubregion
-
-	//#subregion lift
-#define liftUpBtn         Btn5U	//fielding mode
-#define liftDownBtn       Btn5D
-	//#endsubregion
 //#endregion
 
 //#region constants
@@ -120,7 +114,6 @@ const float L_CORR_FCTR = (L_USING_ENC ? RAD_TO_POT/RAD_TO_LIFT : 1);
 	//#endsubregion
 	//#subregion measurements
 #define CONE_HEIGHT 4.0
-#define LIFT_OFFSET 2.5
 #define GOAL_TO_MID_DIST 17.5
 	//#endsubregion
 	//#subregion still speeds
@@ -130,13 +123,10 @@ const float L_CORR_FCTR = (L_USING_ENC ? RAD_TO_POT/RAD_TO_LIFT : 1);
 	//#endsubregion
 	//#subregion cone counts
 #define APATHY_CONES       0 //number of cones for which lift does not move
-#define NO_OFFSET_CONES    0 //number of cones for which the lift goes straight to liftAngle2
-#define D_LIFT_EARLY_CONES 3 //number of cones in driver load mode for which lift and chain go to defaults simultaneously (TODO: chain?)
 #define MAX_NUM_CONES      14
 	//#endsubregion
 	//#subregion timing
-#define OUTTAKE_DURATION      300
-#define FB_LIFT_DURATION      400	//amount of time it takes for 4b to move between positions
+#define OUTTAKE_DURATION      500
 #define GOAL_INTAKE_DURATION  1500
 #define GOAL_OUTTAKE_DURATION 1750
 	//#endsubregion
@@ -144,12 +134,10 @@ const float L_CORR_FCTR = (L_USING_ENC ? RAD_TO_POT/RAD_TO_LIFT : 1);
 
 
 #include "..\lib\pd_autoMove.c" //for drive declaration
-#include "..\lib\pneumaticGroup.c"
 
 motorGroup goalIntake;
 motorGroup lift;
-pneumaticGroup fourBar;
-pneumaticGroup coneIntake;
+motorGroup sideRollers;
 
 void initializeStructs() {
   //drive
@@ -171,11 +159,7 @@ void initializeStructs() {
 	configureButtonInput(goalIntake, goalOuttakeBtn, goalIntakeBtn);
 	configureBtnDependentStillSpeed(goalIntake, GOAL_STILL_SPEED);
 
-	//cone intake
-	initializePneumaticGroup(coneIntake, INTAKE_SOL);
-	configureToggleInput(coneIntake, toggleIntakeBtn);
-
-	//top four bar
-	initializePneumaticGroup(fourBar, NUM_FB_SOLS, fourBarSols);
-	configureToggleInput(fourBar, toggle4bBtn);
+	//side rollers
+	initializeGroup(sideRollers, NUM_ROLLER_MOTORS, rollerMotors);
+	configureButtonInput(sideRollers, intakeBtn, outtakeBtn);
 }

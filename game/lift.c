@@ -66,7 +66,6 @@ void setLiftState(liftState state) {
 //#endregion
 
 void moveLiftToSafePos(bool wait=true) {
-	setState(fourBar, false);
 	setLiftTargetAndPID(liftPos[L_SAFE] + 100/L_CORR_FCTR);
 
 	if (wait)
