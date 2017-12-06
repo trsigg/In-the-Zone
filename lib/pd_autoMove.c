@@ -110,7 +110,7 @@ void turnRuntime() {
 
 	setDrivePower(autoDrive, turnData.direction*power, -turnData.direction*power);
 
-	if (turnData.ramper.algorithm==PD && abs(progress - turnData.angle) > turnData.error)	//track timeout state
+	if (turnData.ramper.algorithm==PD && fabs(progress - turnData.angle) > turnData.error)	//track timeout state
 		turnData.pdTimer = resetTimer();
 }
 
