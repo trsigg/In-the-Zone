@@ -65,6 +65,7 @@ void handleAutopositioningInput(bool shift) {
 	}
 
 	if (movingToMax && errorLessThan(lift, 100)) {
+		setFbState(STACK);
 		movingToMax = false;
 	}
 }
@@ -84,9 +85,9 @@ void handleLiftInput(bool shift) {
 		}
 		else {
 			handleAutopositioningInput(shift);
-			takeInput(sideRollers);
-			takeInput(lift, !lift.activelyMaintining); //will only set power if not maintaining a position
-		                                             //if there is input, activelyMaintaining will be set to false and normal control will resume
+
+			takeInput(fourBar, !fourBar.activelyMaintining); //will only set power if not maintaining a position
+			takeInput(lift, !lift.activelyMaintining);       //if there is input, activelyMaintaining will be set to false and normal control will resume
 		}
 	}
 

@@ -86,14 +86,14 @@ void initializeGroup(motorGroup *group, int numMotors, tMotor *motors, TVexJoyst
 	group->maneuverExecuting = false;
 }
 
-void configurePosDependentStillSpeed(motorGroup *group, int stillSpeed, int switchPos) {	//motor will have stillSpeed power when below switchPos, -stillSpeed power when above switchPos
-	group->stillSpeed = stillSpeed;
+void configurePosDependentStillSpeed(motorGroup *group, int switchPos, int stillSpeed=0) {	//motor will have stillSpeed power when below switchPos, -stillSpeed power when above switchPos
+	if (stillSpeed!=0) group->stillSpeed = stillSpeed;
 	group->stillSpeedType = 1;
 	group->stillSpeedSwitchPos = switchPos;
 }
 
-void configureBtnDependentStillSpeed(motorGroup *group, int stillSpeed) {
-	group->stillSpeed = stillSpeed;
+void configureBtnDependentStillSpeed(motorGroup *group, int stillSpeed=0) {
+	if (stillSpeed!=0) group->stillSpeed = stillSpeed;
 	group->stillSpeedType = 2;
 }
 //#endregion
