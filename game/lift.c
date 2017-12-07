@@ -22,7 +22,8 @@ void waitForLiftingToFinish(bool waitForFB=true, bool waitForLift=true, int time
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {
-		if (!(errorLessThan(lift, liftMargin) || errorLessThan(fourBar, fbMargin)))
+		if (!(errorLessThan(lift, liftMargin)
+		    	&& (FB_SENSOR<0 || errorLessThan(fourBar, fbMargin)&&FB_SENSOR<=0)))
 			movementTimer = resetTimer();
 		EndTimeSlice();
 	}
@@ -36,17 +37,19 @@ void executeLiftManeuvers(bool autoStillSpeed=true) {
 	else
 		maintainTargetPos(lift, debugParameters[0]);
 
-	if (autoStillSpeed && errorLessThan(fourBar, FB_AUTO_SS_MARGIN/FB_CORR_FCTR) && fourBar.activelyMaintining)
-		setPower(fourBar, FB_STILL_SPEED);	//TODO: pos dependent?
-	else
-		maintainTargetPos(fourBar, debugParameters[2]);
+	if (FB_SENSOR >= 0) {
+		if (autoStillSpeed && errorLessThan(fourBar, FB_AUTO_SS_MARGIN/FB_CORR_FCTR) && fourBar.activelyMaintining)
+			setPower(fourBar, FB_STILL_SPEED);	//TODO: pos dependent?
+		else
+			maintainTargetPos(fourBar, debugParameters[2]);
+	}
 }
 
 void stopLiftTargeting() {
 	stopTargeting(lift);
 	stopTargeting(fourBar);
 	setPower(lift, 0);
-	setPower(fourBar, 0);
+	setPower(fourBar, 0);	//TODO: only when sensor attached?
 }
 
 //#region lift
