@@ -16,7 +16,7 @@ float calcLiftTargetForHeight(float height) {
 	             liftPos[L_MIN], liftPos[L_MAX]);
 }
 
-void stackNewCone(bool wait=false) {
+void stackNewCone(bool wait=false) {	//TODO: liftTarget and liftRelease
 	float stackHeight = CONE_HEIGHT * adjustedNumCones();
 
 	liftTarget = calcLiftTargetForHeight(stackHeight);

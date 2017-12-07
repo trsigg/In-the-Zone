@@ -58,7 +58,7 @@ int debugParameters[] = { 0, 7, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, 
 	#define LEFT_LINE   in1	//not currently attached
 	#define BACK_LINE   in1
 	#define RIGHT_LINE  in1
-	#define FB_SENSOR   in1
+	#define FB_SENSOR   -1	//-1 if not attached
 	//#endsubregion
 
 	//#subregion measurements
@@ -154,8 +154,8 @@ void initializeStructs() {
 
 	//lift
   initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors);
-	configureButtonInput(lift, liftUpBtn, liftDownBtn);
-	configureBtnDependentStillSpeed(lift, LIFT_STILL_SPEED);
+	configureButtonInput(lift, liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
+	configureBtnDependentStillSpeed(lift);
 	initializeTargetingPID(lift, 0.25*L_CORR_FCTR, 0.01*L_CORR_FCTR, 5*L_CORR_FCTR, 10);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
 	addSensor(lift, LIFT_SENSOR, L_SENS_REVERSED);
 	if (LIFT_SENSOR>=dgtl1) configureEncoderCorrection(lift, liftPos[L_MAX]);
@@ -169,7 +169,10 @@ void initializeStructs() {
 	initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors);
 	configureButtonInput(fourBar, fbInBtn, fbOutBtn);
 	configureBtnDependentStillSpeed(fourBar, FB_STILL_SPEED);
-	initializeTargetingPID(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 1.3*FB_CORR_FCTR, 10);
-	addSensor(fourBar, FB_SENSOR, FB_SENS_REVERSED);
-	if (FB_SENSOR>=dgtl1) configureEncoderCorrection(fourBar, fbPos[FB_MAX]);
+
+	if (FB_SENSOR >= 0) {
+		initializeTargetingPID(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 1.3*FB_CORR_FCTR, 10);
+		addSensor(fourBar, FB_SENSOR, FB_SENS_REVERSED);
+		if (FB_SENSOR>=dgtl1) configureEncoderCorrection(fourBar, fbPos[FB_MAX]);
+	}
 }

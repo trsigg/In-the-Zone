@@ -42,6 +42,7 @@ void pre_auton()
 
   tMotor liftMotors[] = { lift1, lift2 };
 	initializeGroup(lift, 2, liftMotors, Btn5U, Btn5D, 10);
+	configureBtnDependentStillSpeed(lift);
 
 	tMotor goalMotors[] = { goal1, goal2 };
 	initializeGroup(goalIntake, 2, goalMotors, Btn7D, Btn7U);
