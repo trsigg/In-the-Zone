@@ -5,6 +5,7 @@
 #include "timer.c"
 
 enum controlType { NONE, BUTTON, JOYSTICK };
+enum automovementType { NO, PID, MANEUVER, DURATION };
 
 typedef struct {
 	tMotor motors[12];
@@ -28,14 +29,18 @@ typedef struct {
 	int absMin, absMax; //extreme  positions of motorGroup
 	bool hasAbsMin, hasAbsMax;
 	int maxPowerAtAbs, defPowerAtAbs; //maximum power at absolute position (pushing down from minimum or up from maximum) and default power if this is exceeded
-	//execute maneuver
-	int targetPos, endPower, maneuverPower, maneuverTimeout;
-	bool forward, maneuverExecuting; //forward: whether target is forwad from initial group position
+	//automovement
+	automovementType moving;
+	int movePower, endPower;	//both maneuver and duration
 	long maneuverTimer;
-	//maintainPos
+		//execute maneuver
+	int targetPos, maneuverTimeout;
+	bool forward; //forward: whether target is forwad from initial group position
+		//move for duration
+	int moveDuration;
+		//maintainPos
 	PID posPID;	//PID controller which maintains position
-	bool activelyMaintining;	//whether position is being maintained
-	//sensors
+		//sensors
 	bool hasEncoder, hasPotentiometer;
 	bool encoderReversed, potentiometerReversed;
 	bool potentiometerDefault; //whether potentiometer (as opposed to encoder) is default sensor for position measurements
@@ -225,16 +230,19 @@ int getPower(motorGroup *group) {
 
 	void setTargetPosition(motorGroup *group, int position, bool resetIntegral=true) {
 		changeTarget(group->posPID, position, resetIntegral);
-		group->activelyMaintining = true;
+		group->moving = PID;
 	}
 
 	void maintainTargetPos(motorGroup *group, int debugStartCol=-1) {
-		if (group->activelyMaintining && group->posPID.kP != 0) {
+		if (group->moving==PID && group->posPID.kP!=0) {
 			setPower(group, PID_runtime(group->posPID, getPosition(group), debugStartCol));
 		}
 	}
 
-	void stopTargeting(motorGroup *group) { group->activelyMaintining = false; }
+	void stopTargeting(motorGroup *group) {
+		if(group->moving == PID)
+			group->moving = NO;
+	}
 
 	bool errorLessThan(motorGroup *group, int errorMargin) {	//returns true if PID error is less than specified margin
 		return fabs(group->posPID.target - getPosition(group)) < errorMargin;
@@ -245,42 +253,50 @@ int moveTowardPosition(motorGroup *group, int position, int power=127) {
 	return setPower(group, power * sgn(position - getPosition(group)));
 }
 
+	//#subregion maneuvers
 void executeManeuver(motorGroup *group) {
-	if (group->maneuverExecuting) {
+	if (group->moving = MANEUVER) {
 		if (group->forward == (getPosition(group) < group->targetPos)) {
 			group->maneuverTimer = resetTimer();
-			setPower(group, group->maneuverPower);
+			setPower(group, group->movePower);
 		}
 
 		if (time(group->maneuverTimer) > group->maneuverTimeout) {
-			group->maneuverExecuting = false;
+			group->moving = NO;
 			setPower(group, group->endPower);
 		}
 	}
 }
 
-void createManeuver(motorGroup *group, int position, int endPower=0, int maneuverPower=127, int timeout=10) {
+void createManeuver(motorGroup *group, int position, int endPower=0, int movePower=127, int timeout=10) {
 	group->targetPos = position;
 	group->endPower = endPower;
 	group->forward = group->targetPos > getPosition(group);
-	group->maneuverPower = abs(maneuverPower) * (group->forward ? 1 : -1);
-	group->maneuverExecuting = true;
+	group->movePower = abs(movePower) * (group->forward ? 1 : -1);
 	group->maneuverTimeout = timeout;
 	group->maneuverTimer = resetTimer();
+	group->moving = MANEUVER;
 
-	setPower(group, maneuverPower);
+	setPower(group, movePower);
 }
 
-void goToPosition(motorGroup *group, int position, int endPower=0, int maneuverPower=127, int timeout=100) {
+void goToPosition(motorGroup *group, int position, bool runConcurrently=false, int endPower=0, int movePower=127, int timeout=100) {
 	long posTimer = resetTimer();
 	int displacementSign = sgn(position - getPosition(group));
-	setPower(group, displacementSign*maneuverPower);
+	setPower(group, displacementSign*movePower);
 
 	while (time(posTimer) < timeout) {
 		if (sgn(position - getPosition(group)) == displacementSign) posTimer = resetTimer();
 	}
 
 	setPower(group, endPower);
+}
+	//#endsubregion
+
+void moveForDuration(motorGroup *group, int power, int duration, int endPower=0, bool runAsTask=false) {
+	group->movePower = power;
+	group->moveDuration = duration;
+	group->endPower = endPower;
 }
 //#endregion
 
@@ -309,7 +325,7 @@ int handleButtonInput(motorGroup *group) {
 		executeManeuver(group);
 
 		if (group->maneuverExecuting)
-			return group->maneuverPower;
+			return group->movePower;
 		else
 			return group->stillSpeed * (group->stillSpeedReversed ? -1 : 1);
 	}
