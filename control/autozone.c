@@ -86,8 +86,8 @@ void handleLiftInput(bool shift) {
 		else {
 			handleAutopositioningInput(shift);
 
-			takeInput(fourBar, !fourBar.activelyMaintining); //will only set power if not maintaining a position
-			takeInput(lift, !lift.activelyMaintining);       //if there is input, activelyMaintaining will be set to false and normal control will resume
+			takeInput(fourBar, fourBar.moving!=NO); //will only set power if not maintaining a position
+			takeInput(lift, lift.moving!=NO);       //if there is input, activelyMaintaining will be set to false and normal control will resume
 		}
 	}
 

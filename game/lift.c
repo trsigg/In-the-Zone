@@ -32,16 +32,16 @@ void waitForLiftingToFinish(bool waitForFB=true, bool waitForLift=true, int time
 void executeLiftManeuvers(bool autoStillSpeed=true) {
 	handleEncoderCorrection();
 
-	if (autoStillSpeed && errorLessThan(lift, L_AUTO_SS_MARGIN/L_CORR_FCTR) && lift.activelyMaintining && lift.posPID.target<=liftPos[L_FIELD])
+	if (autoStillSpeed && errorLessThan(lift, L_AUTO_SS_MARGIN/L_CORR_FCTR) && lift.moving==TARGET && lift.posPID.target<=liftPos[L_FIELD])
 		setPower(lift, LIFT_STILL_SPEED * (lift.posPID.target<=liftPos[L_FIELD] ? -1 : 1));
 	else
-		maintainTargetPos(lift, debugParameters[0]);
+		executeAutomovement(lift, debugParameters[0]);
 
 	if (FB_SENSOR >= 0) {
-		if (autoStillSpeed && errorLessThan(fourBar, FB_AUTO_SS_MARGIN/FB_CORR_FCTR) && fourBar.activelyMaintining)
+		if (autoStillSpeed && errorLessThan(fourBar, FB_AUTO_SS_MARGIN/FB_CORR_FCTR) && fourBar.moving==TARGET)
 			setPower(fourBar, FB_STILL_SPEED);	//TODO: pos dependent?
 		else
-			maintainTargetPos(fourBar, debugParameters[2]);
+			executeAutomovement(fourBar, debugParameters[2]);
 	}
 }
 

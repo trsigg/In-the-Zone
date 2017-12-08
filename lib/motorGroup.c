@@ -5,7 +5,7 @@
 #include "timer.c"
 
 enum controlType { NONE, BUTTON, JOYSTICK };
-enum automovementType { NO, PID, MANEUVER, DURATION };
+enum automovementType { NO, TARGET, MANEUVER, DURATION };
 
 typedef struct {
 	tMotor motors[12];
@@ -31,7 +31,7 @@ typedef struct {
 	int maxPowerAtAbs, defPowerAtAbs; //maximum power at absolute position (pushing down from minimum or up from maximum) and default power if this is exceeded
 	//automovement
 	automovementType moving;
-	int movePower, endPower;	//both maneuver and duration
+	int endPower;	//both maneuver and duration
 	long maneuverTimer;
 		//execute maneuver
 	int targetPos, maneuverTimeout;
@@ -88,7 +88,7 @@ void initializeGroup(motorGroup *group, int numMotors, tMotor *motors, TVexJoyst
 	if (posBtn >= Btn5D)
 		configureButtonInput(group, posBtn, negBtn, stillSpeed, upPower, downPower);
 
-	group->maneuverExecuting = false;
+	group->moving = NO;
 }
 
 void configurePosDependentStillSpeed(motorGroup *group, int switchPos, int stillSpeed=0) {	//motor will have stillSpeed power when below switchPos, -stillSpeed power when above switchPos
@@ -219,7 +219,41 @@ int getPower(motorGroup *group) {
 //#endregion
 
 //#region position movement
-	//#subregion maintainPos
+void executeAutomovement(motorGroup *group, int debugStartCol=-1) {
+	switch (group->moving) {
+		case TARGET:
+			if (group->posPID.kP != 0)
+				setPower(group, PID_runtime(group->posPID, getPosition(group), debugStartCol));
+			break;
+
+		case MANEUVER:
+			if (group->forward == (getPosition(group) < group->targetPos)) {
+				group->maneuverTimer = resetTimer();
+			}
+			else if (time(group->maneuverTimer) > group->maneuverTimeout) {
+				setPower(group, group->endPower);
+				group->moving = NO;
+			}
+			break;
+
+		case DURATION:
+			if (time(group->maneuverTimer) > group->maneuverTimeout) {
+				setPower(group, group->endPower);
+				group->moving = NO;
+			}
+			break;
+	}
+}
+
+void stopAutomovement(motorGroup *group) {
+	group->moving = NO;
+}
+
+int moveTowardPosition(motorGroup *group, int position, int power=127) {
+	return setPower(group, power * sgn(position - getPosition(group)));
+}
+
+	//#subregion targeting
 	void initializeTargetingPID(motorGroup *group, float kP, float kI, float kD, int minSampleTime=25, int integralMax=127) {
 		initializePID(group->posPID, 0, kP, kI, kD, minSampleTime, integralMax);
 	}
@@ -230,17 +264,11 @@ int getPower(motorGroup *group) {
 
 	void setTargetPosition(motorGroup *group, int position, bool resetIntegral=true) {
 		changeTarget(group->posPID, position, resetIntegral);
-		group->moving = PID;
-	}
-
-	void maintainTargetPos(motorGroup *group, int debugStartCol=-1) {
-		if (group->moving==PID && group->posPID.kP!=0) {
-			setPower(group, PID_runtime(group->posPID, getPosition(group), debugStartCol));
-		}
+		group->moving = TARGET;
 	}
 
 	void stopTargeting(motorGroup *group) {
-		if(group->moving == PID)
+		if(group->moving == TARGET)
 			group->moving = NO;
 	}
 
@@ -249,70 +277,60 @@ int getPower(motorGroup *group) {
 	}
 	//#endsubregion
 
-int moveTowardPosition(motorGroup *group, int position, int power=127) {
-	return setPower(group, power * sgn(position - getPosition(group)));
-}
-
 	//#subregion maneuvers
-void executeManeuver(motorGroup *group) {
-	if (group->moving = MANEUVER) {
-		if (group->forward == (getPosition(group) < group->targetPos)) {
-			group->maneuverTimer = resetTimer();
-			setPower(group, group->movePower);
-		}
-
-		if (time(group->maneuverTimer) > group->maneuverTimeout) {
-			group->moving = NO;
-			setPower(group, group->endPower);
-		}
-	}
-}
-
-void createManeuver(motorGroup *group, int position, int endPower=0, int movePower=127, int timeout=10) {
+void createManeuver(motorGroup *group, int position, bool runConcurrently=true, int endPower=0, int movePower=127, int timeout=10) {
 	group->targetPos = position;
 	group->endPower = endPower;
 	group->forward = group->targetPos > getPosition(group);
-	group->movePower = abs(movePower) * (group->forward ? 1 : -1);
 	group->maneuverTimeout = timeout;
 	group->maneuverTimer = resetTimer();
 	group->moving = MANEUVER;
 
-	setPower(group, movePower);
-}
+	setPower(group, abs(movePower) * (group->forward ? 1 : -1));
 
-void goToPosition(motorGroup *group, int position, bool runConcurrently=false, int endPower=0, int movePower=127, int timeout=100) {
-	long posTimer = resetTimer();
-	int displacementSign = sgn(position - getPosition(group));
-	setPower(group, displacementSign*movePower);
-
-	while (time(posTimer) < timeout) {
-		if (sgn(position - getPosition(group)) == displacementSign) posTimer = resetTimer();
+	if (runConcurrently) {
+		while (group->moving == MANEUVER) {
+			executeAutomovement(group);
+			EndTimeSlice();
+		}
 	}
-
-	setPower(group, endPower);
 }
 	//#endsubregion
 
-void moveForDuration(motorGroup *group, int power, int duration, int endPower=0, bool runAsTask=false) {
-	group->movePower = power;
+	//#subregion durational movement
+void moveForDuration(motorGroup *group, int power, int duration, bool runConcurrently=true, int endPower=128) {	//if endPower>127, will finish with group.stillSpeed
 	group->moveDuration = duration;
-	group->endPower = endPower;
+	group->moving = DURATION;
+
+	group->endPower = endPower>127 ?
+	                    (group->stillSpeed * (group->stillSpeedType==0 ?
+		                                         1 :
+																					   (group->stillSpeedType==1 ?
+																						   (getPosition(group)>group->stillSpeedSwitchPos ? 1 : -1) :
+																							 (power>0 ? 1 : -1)))) :
+											endPower;	//I'm feeling like some functional programming today. Can you tell?
+
+	setPower(group, power);
+
+	if (runConcurrently) {
+		wait1Msec(duration);
+		setPower(group, group->endPower);
+	}
 }
+	//#endsubregion
 //#endregion
 
 //#region user input
 int handleButtonInput(motorGroup *group) {
 	if (vexRT[group->posInput] == 1) {
-		group->maneuverExecuting = false;
-		group->activelyMaintining = false;
+		group->moving = NO;
 
 		if (group->stillSpeedType == 2)
 			group->stillSpeedReversed = false;
 
 		return group->upPower;
 	} else if (vexRT[group->negInput] == 1) {
-		group->maneuverExecuting = false;
-		group->activelyMaintining = false;
+		group->moving = NO;
 
 		if (group->stillSpeedType == 2)
 			group->stillSpeedReversed = true;
@@ -322,12 +340,7 @@ int handleButtonInput(motorGroup *group) {
 		if (group->stillSpeedType == 1)
 			group->stillSpeedReversed = getPosition(group) > group->stillSpeedSwitchPos;
 
-		executeManeuver(group);
-
-		if (group->maneuverExecuting)
-			return group->movePower;
-		else
-			return group->stillSpeed * (group->stillSpeedReversed ? -1 : 1);
+		return group->stillSpeed * (group->stillSpeedReversed ? -1 : 1);	//TODO: executeAutomovement?
 	}
 }
 

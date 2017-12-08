@@ -38,7 +38,7 @@ task autoStacking() {
 		waitForLiftingToFinish();
 
 		if (numCones>=MAX_NUM_CONES-1 && HOLD_LAST_CONE) {
-			lift.activelyMaintining = false;	//passively maintains lift position
+			lift.moving = NO;	//passively maintains lift position
 			lift.stillSpeedReversed = false;
 		}
 		else {
