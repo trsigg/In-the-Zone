@@ -1,8 +1,9 @@
-#define numTargets 4
-
 #include "coreIncludes.c"
 #include "PID.c"
 #include "timer.c"
+
+#define DEF_WAIT_TIMEOUT 100
+#define DEF_WAIT_LIST_LEN 1
 
 enum controlType { NONE, BUTTON, JOYSTICK };
 enum automovementType { NO, TARGET, MANEUVER, DURATION };
@@ -38,8 +39,9 @@ typedef struct {
 	bool forward; //forward: whether target is forwad from initial group position
 		//move for duration
 	int moveDuration;
-		//maintainPos
+		//targeting
 	PID posPID;	//PID controller which maintains position
+	int waitErrorMargin;
 		//sensors
 	bool hasEncoder, hasPotentiometer;
 	bool encoderReversed, potentiometerReversed;
@@ -49,7 +51,6 @@ typedef struct {
 	tSensors encoder, potentiometer;
 } motorGroup;
 
-#define DEF_WAIT_LIST_LEN 1
 motorGroup defGroupWaitList[DEF_WAIT_LIST_LEN];
 
 //#region initialization
@@ -257,7 +258,7 @@ int moveTowardPosition(motorGroup *group, int position, int power=127) {
 }
 
 	//#subregion targeting
-	void initializeTargetingPID(motorGroup *group, float kP, float kI, float kD, int minSampleTime=25, int integralMax=127) {
+	void initializeTargetingPID(motorGroup *group, float kP, float kI, float kD, int errorMargin, int minSampleTime=10, int integralMax=127) {
 		initializePID(group->posPID, 0, kP, kI, kD, minSampleTime, integralMax);
 	}
 
@@ -322,19 +323,33 @@ void moveForDuration(motorGroup *group, int power, int duration, bool runConcurr
 }
 	//#endsubregion
 
-void waitForMovementToFinish(int timeout, int numGroups=DEF_WAIT_LIST_LEN, motorGroup *groups=defGroupWaitList) {	//that's right, nested pointers                                   (help me)
+void waitForMovementToFinish(int timeout=DEF_WAIT_TIMEOUT, int numGroups=DEF_WAIT_LIST_LEN, motorGroup *groups=defGroupWaitList) {	//that's right, nested pointers                                   (help me)
 	long movementTimer = resetTimer();
 
-	while (time(movementTimer) < timeout) {
+	while (time(movementTimer) < timeout) {	//wait for targeting to stabilize
 		for (int i=0; i<numGroups; i++) {
-			if (groups[i].moving=TARGET && errorLessThan(groups[i], groups[i].defErrorMargin)) {
-				movementTimer = resetTimer();
-				continue;
+			if (groups[i].moving==TARGET && errorLessThan(&groups[i], groups[i].waitErrorMargin)) {
+					movementTimer = resetTimer();
+					continue;
 			}
 		}
-
 		EndTimeSlice();
 	}
+
+	for (int i=0; i<numGroups; i++)	//wait for maneuvers and durational movement to finish
+		while (groups[i].moving!=TARGET && groups[i].moving!=NO)
+			EndTimeSlice();
+}
+
+void waitForMovementToFinish(bool *waitForGroups, int timeout=DEF_WAIT_TIMEOUT) {
+	motorGroup groups[DEF_WAIT_LIST_LEN];
+	int j = 0;
+
+	for (int i=0; i<DEF_WAIT_LIST_LEN; i++)
+		if (waitForGroups[i])
+			groups[j++] = defGroupWaitList[i];
+
+	waitForMovementToFinish(timeout, j, groups);
 }
 
 void waitForMovementToFinish(int timeout, motorGroup *group) {
