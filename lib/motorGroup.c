@@ -8,7 +8,7 @@ enum controlType { NONE, BUTTON, JOYSTICK };
 enum automovementType { NO, TARGET, MANEUVER, DURATION };
 
 typedef struct {
-	tMotor motors[12];
+	tMotor motors[10];
 	int numMotors;
 	controlType controlType;
 	bool controlActive;
@@ -49,6 +49,9 @@ typedef struct {
 	tSensors encoder, potentiometer;
 } motorGroup;
 
+#define DEF_WAIT_LIST_LEN 1
+motorGroup defGroupWaitList[DEF_WAIT_LIST_LEN];
+
 //#region initialization
 void configureButtonInput(motorGroup *group, TVexJoysticks posBtn, TVexJoysticks negBtn, int stillSpeed=0, int upPower=127, int downPower=-127) {
 	group->controlType = BUTTON;
@@ -80,7 +83,7 @@ void configureRamping(motorGroup *group, int maxAcc100ms) {
 }
 
 void initializeGroup(motorGroup *group, int numMotors, tMotor *motors, TVexJoysticks posBtn=Ch1, TVexJoysticks negBtn=Ch1, int stillSpeed=0, int upPower=127, int downPower=-127) {
-	group->numMotors = limit(numMotors, 0, 12);
+	group->numMotors = limit(numMotors, 0, 10);
 
 	for (int i=0; i<group->numMotors; i++)
 		group->motors[i] = motors[i];
@@ -318,6 +321,25 @@ void moveForDuration(motorGroup *group, int power, int duration, bool runConcurr
 	}
 }
 	//#endsubregion
+
+void waitForMovementToFinish(int timeout, int numGroups=DEF_WAIT_LIST_LEN, motorGroup *groups=defGroupWaitList) {	//that's right, nested pointers                                   (help me)
+	long movementTimer = resetTimer();
+
+	while (time(movementTimer) < timeout) {
+		for (int i=0; i<numGroups; i++) {
+			if (groups[i].moving=TARGET && errorLessThan(groups[i], groups[i].defErrorMargin)) {
+				movementTimer = resetTimer();
+				continue;
+			}
+		}
+
+		EndTimeSlice();
+	}
+}
+
+void waitForMovementToFinish(int timeout, motorGroup *group) {
+	waitForMovementToFinish(timeout, 1, group);
+}
 //#endregion
 
 //#region user input

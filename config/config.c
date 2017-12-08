@@ -152,6 +152,8 @@ void initializeStructs() {
 	attachEncoder(drive, RIGHT_ENC, RIGHT, R_ENC_REVERSED, 4.0, 2.0);
 	attachGyro(drive, HYRO);
 
+	defGroupWaitList = { lift }
+
 	//lift
   initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors);
 	configureButtonInput(lift, liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
