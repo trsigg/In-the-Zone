@@ -18,17 +18,6 @@ void handleEncoderCorrection() {
 }
 //#endregion
 
-void waitForLiftingToFinish(bool waitForFB=true, bool waitForLift=true, int timeout=100, float fbMargin=100/FB_CORR_FCTR, float liftMargin=75/L_CORR_FCTR) {
-	long movementTimer = resetTimer();
-
-	while (time(movementTimer) < timeout) {
-		if (!(errorLessThan(lift, liftMargin)
-		    	&& (FB_SENSOR<0 || errorLessThan(fourBar, fbMargin)&&FB_SENSOR<=0)))
-			movementTimer = resetTimer();
-		EndTimeSlice();
-	}
-}
-
 void executeLiftManeuvers(bool autoStillSpeed=true) {
 	handleEncoderCorrection();
 

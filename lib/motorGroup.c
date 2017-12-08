@@ -41,7 +41,8 @@ typedef struct {
 	int moveDuration;
 		//targeting
 	PID posPID;	//PID controller which maintains position
-	int waitErrorMargin;
+	int waitErrorMargin, autoSSmargin;	//error margin used for
+	bool autoStillSpeeding;
 		//sensors
 	bool hasEncoder, hasPotentiometer;
 	bool encoderReversed, potentiometerReversed;
@@ -94,7 +95,9 @@ void initializeGroup(motorGroup *group, int numMotors, tMotor *motors, TVexJoyst
 
 	group->moving = NO;
 }
+//#endregion
 
+//#region still speeds
 void configurePosDependentStillSpeed(motorGroup *group, int switchPos, int stillSpeed=0) {	//motor will have stillSpeed power when below switchPos, -stillSpeed power when above switchPos
 	if (stillSpeed!=0) group->stillSpeed = stillSpeed;
 	group->stillSpeedType = 1;
@@ -104,6 +107,14 @@ void configurePosDependentStillSpeed(motorGroup *group, int switchPos, int still
 void configureBtnDependentStillSpeed(motorGroup *group, int stillSpeed=0) {
 	if (stillSpeed!=0) group->stillSpeed = stillSpeed;
 	group->stillSpeedType = 2;
+}
+
+void calcStillSpeed(motorGroup *group) {
+	return group->stillSpeed * (group->stillSpeedType==0 ?
+												      1 :
+												      (group->stillSpeedType==1 ?
+													      (getPosition(group)>group->stillSpeedSwitchPos ? 1 : -1) :
+													      (group->stillSpeedReversed ? -1 : 1)));	//I'm feeling like some functional programming today. Can you tell?
 }
 //#endregion
 
@@ -227,7 +238,10 @@ void executeAutomovement(motorGroup *group, int debugStartCol=-1) {
 	switch (group->moving) {
 		case TARGET:
 			if (group->posPID.kP != 0)
-				setPower(group, PID_runtime(group->posPID, getPosition(group), debugStartCol));
+				if (group->autoStillSpeeding && errorLessThan(group, group->autoSSmargin))
+					setPower(group, calcStillSpeed(group));	//TODO: what to do with buttonDependent still speeds? (urgent)
+				else
+					setPower(group, PID_runtime(group->posPID, getPosition(group), debugStartCol));
 			break;
 
 		case MANEUVER:
@@ -258,27 +272,34 @@ int moveTowardPosition(motorGroup *group, int position, int power=127) {
 }
 
 	//#subregion targeting
-	void initializeTargetingPID(motorGroup *group, float kP, float kI, float kD, int errorMargin, int minSampleTime=10, int integralMax=127) {
-		initializePID(group->posPID, 0, kP, kI, kD, minSampleTime, integralMax);
-	}
+void initializeTargetingPID(motorGroup *group, float kP, float kI, float kD, int errorMargin=100, int minSampleTime=10, int integralMax=127) {
+	initializePID(group->posPID, 0, kP, kI, kD, minSampleTime, integralMax);
+	group->waitErrorMargin = errorMargin;
+	group->autoStillSpeeding = false;
+}
 
-	void setTargetingPIDconsts(motorGroup *group, float kP, float kI, float kD) {
-		changeGains(group->posPID, kP, kI, kD);
-	}
+void setTargetingPIDconsts(motorGroup *group, float kP, float kI, float kD) {
+	changeGains(group->posPID, kP, kI, kD);
+}
 
-	void setTargetPosition(motorGroup *group, int position, bool resetIntegral=true) {
-		changeTarget(group->posPID, position, resetIntegral);
-		group->moving = TARGET;
-	}
+void configureAutoStillSpeed(motorGroup *group, int margin) {
+	group->autoSSmargin = margin;
+	group->autoStillSpeeding = true;
+}
 
-	void stopTargeting(motorGroup *group) {
-		if(group->moving == TARGET)
-			group->moving = NO;
-	}
+void setTargetPosition(motorGroup *group, int position, bool resetIntegral=true) {
+	changeTarget(group->posPID, position, resetIntegral);
+	group->moving = TARGET;
+}
 
-	bool errorLessThan(motorGroup *group, int errorMargin) {	//returns true if PID error is less than specified margin
-		return fabs(group->posPID.target - getPosition(group)) < errorMargin;
-	}
+void stopTargeting(motorGroup *group) {
+	if(group->moving == TARGET)
+		group->moving = NO;
+}
+
+bool errorLessThan(motorGroup *group, int errorMargin) {	//returns true if PID error is less than specified margin
+	return fabs(group->posPID.target - getPosition(group)) < errorMargin;
+}
 	//#endsubregion
 
 	//#subregion maneuvers
@@ -306,13 +327,7 @@ void moveForDuration(motorGroup *group, int power, int duration, bool runConcurr
 	group->moveDuration = duration;
 	group->moving = DURATION;
 
-	group->endPower = endPower>127 ?
-	                    (group->stillSpeed * (group->stillSpeedType==0 ?
-		                                         1 :
-																					   (group->stillSpeedType==1 ?
-																						   (getPosition(group)>group->stillSpeedSwitchPos ? 1 : -1) :
-																							 (power>0 ? 1 : -1)))) :
-											endPower;	//I'm feeling like some functional programming today. Can you tell?
+	group->endPower = (endPower>127 ? calcStillSpeed(group) : endPower);	//TODO: adjust for btnDep (urgent)
 
 	setPower(group, power);
 
