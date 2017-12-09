@@ -95,7 +95,7 @@ void driveAndGoal(int dist, bool in, bool stackCone=false, bool quadRamp=false, 
 	else
 		driveStraight(dist, true);
 
-	while (goalDirection != 0) EndTimeSlice();
+	waitForMovementToFinish(goalIntake);
 
 	if (stackCone) stackNewCone();
 

@@ -21,7 +21,8 @@ void initializeRampHandler(rampHandler *ramper, rampType type, float target, flo
 float rampRuntime(rampHandler *ramper, float input) {
   if (ramper->algorithm == PD) {
     return PID_runtime(ramper->pd, input);
-  } else {
+  }
+  else {
     return quadraticRampRuntime(ramper->quadRamp, input);
   }
 }

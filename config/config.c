@@ -118,6 +118,7 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 	//#endsubregion
 	//#subregion measurements
 #define CONE_HEIGHT 4.0
+#define L_OFFSET    2.0
 #define GOAL_TO_MID_DIST 17.5
 	//#endsubregion
 	//#subregion still speeds
@@ -132,7 +133,7 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define MAX_NUM_CONES      14
 	//#endsubregion
 	//#subregion timing
-//#define FB_MOVE_DURATION      750
+#define FB_MOVE_DURATION      500
 #define GOAL_INTAKE_DURATION  1500
 #define GOAL_OUTTAKE_DURATION 1750
 	//#endsubregion
@@ -145,14 +146,16 @@ motorGroup goalIntake;
 motorGroup lift;
 motorGroup fourBar;
 
+motorGroup groupWaitList[DEF_WAIT_LIST_LEN] = { lift, fourBar, goalIntake };
+
 void initializeStructs() {
+	arrayCopy(groupWaitList, defGroupWaitList, DEF_WAIT_LIST_LEN);
+
   //drive
 	initializeDrive(drive, NUM_LEFT_MOTORS, leftMotors, NUM_RIGHT_MOTORS, rightMotors, true);
 	attachEncoder(drive, LEFT_ENC, LEFT, L_ENC_REVERSED);
 	attachEncoder(drive, RIGHT_ENC, RIGHT, R_ENC_REVERSED, 4.0, 2.0);
 	attachGyro(drive, HYRO);
-
-	defGroupWaitList[0] = lift;	//BECAUSE ROBOTC IS STUPID
 
 	//lift
   initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors);

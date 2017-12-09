@@ -217,7 +217,7 @@ void driveStraightRuntime() {
 	//track timeout states
 	if (driveEncoderVal(autoDrive) >= driveData.minSpeed)
 		driveData.movementTimer = resetTimer();
-	if (driveData.ramper.algorithm==PD && abs(driveData.totalDist - driveData.distance) > driveData.error)
+	if (driveData.ramper.algorithm==PD && fabs(driveData.totalDist - driveData.distance) > driveData.error)
 		driveData.pdTimer = resetTimer();
 
 	resetDriveEncoders(autoDrive);
@@ -274,17 +274,18 @@ task driveStraightTask() {
 void setCorrectionType(correctionType type) {
 	if (type==GYRO && autoDrive.hasGyro) {
 		driveData.correctionType = GYRO;
-		while (abs(gyroVal(autoDrive)) > 10) resetGyro(autoDrive); //I'm horrible, I know
+		while (fabs(gyroVal(autoDrive)) > 10) resetGyro(autoDrive); //I'm horrible, I know
 	} else if (type==ENCODER && autoDrive.leftDrive.hasEncoder && autoDrive.rightDrive.hasEncoder) {
 		driveData.correctionType = ENCODER;
-	} else {
+	}
+	else {
 		driveData.correctionType = NONE;
 	}
 }
 
 void driveStraight(float distance, bool runAsTask=driveDefaults.runAsTask, float in1=driveDefaults.rampConst1, float in2=driveDefaults.rampConst2, float in3=driveDefaults.rampConst3, float in4=driveDefaults.rampConst4, float in5=driveDefaults.rampConst5, bool usePID=driveDefaults.usePID, float kP=driveDefaults.kP_c, float kI=driveDefaults.kI_c, float kD=driveDefaults.kD_c, correctionType correctionType=driveDefaults.defCorrectionType, float minSpeed=driveDefaults.minSpeed, int movementTimeout=driveDefaults.movementTimeout, int waitAtEnd=driveDefaults.waitAtEnd) { //for PD, in1=kP, in2=kI, in3=kD, in4=error, in5=pd timeout; for quad ramping, in1=initial, in2=maximum, in3=final, in4=brakePower, and in5=brakeDuration
 	//initialize variables
-	driveData.distance = abs(distance);
+	driveData.distance = fabs(distance);
 	driveData.direction = sgn(distance);
 	driveData.rawValue = driveDefaults.rawValue;
 	driveData.sampleTime = driveDefaults.sampleTime;
@@ -316,7 +317,8 @@ void driveStraight(float distance, bool runAsTask=driveDefaults.runAsTask, float
 		if (driveData.correctionType == NONE) {
 			setCorrectionType(GYRO);
 		}
-	} else {
+	}
+	else {
 		setCorrectionType(correctionType);
 	}
 
@@ -327,7 +329,8 @@ void driveStraight(float distance, bool runAsTask=driveDefaults.runAsTask, float
 
 	if (runAsTask) {
 		startTask(driveStraightTask);
-	} else { //runs as function
+	}
+	else { //runs as function
 		while (!drivingComplete()) {
 			driveStraightRuntime();
 			wait1Msec(driveData.sampleTime);

@@ -21,28 +21,17 @@ void handleEncoderCorrection() {
 void executeLiftManeuvers(bool autoStillSpeed=true) {
 	handleEncoderCorrection();
 
-	if (autoStillSpeed && errorLessThan(lift, L_AUTO_SS_MARGIN/L_CORR_FCTR) && lift.moving==TARGET && lift.posPID.target<=liftPos[L_FIELD])
-		setPower(lift, LIFT_STILL_SPEED * (lift.posPID.target<=liftPos[L_FIELD] ? -1 : 1));
-	else
-		executeAutomovement(lift, debugParameters[0]);
-
-	if (FB_SENSOR >= 0) {
-		if (autoStillSpeed && errorLessThan(fourBar, FB_AUTO_SS_MARGIN/FB_CORR_FCTR) && fourBar.moving==TARGET)
-			setPower(fourBar, FB_STILL_SPEED);	//TODO: pos dependent?
-		else
-			executeAutomovement(fourBar, debugParameters[2]);
-	}
+	executeAutomovement(lift, debugParameters[0]);
+	executeAutomovement(fourBar, debugParameters[2]);
 }
 
 void stopLiftTargeting() {
-	stopTargeting(lift);
-	stopTargeting(fourBar);
-	setPower(lift, 0);
-	setPower(fourBar, 0);	//TODO: only when sensor attached?
+	stopAutomovement(lift);
+	stopAutomovement(fourBar);
 }
 
 //#region lift
-void setLiftPIDmode(bool up) {	//up is true for upward movement consts, false for downward movement ones.
+void setLiftPIDmode(bool up) {	//up is true for upward movement consts, false for downward movement ones
 	if (up)
 		setTargetingPIDconsts(lift, 0.35*L_CORR_FCTR, 0.005*L_CORR_FCTR, 0.7*L_CORR_FCTR);	//0.37, 0.002, 1.6
 	else
@@ -69,8 +58,8 @@ void setLiftState(liftState state) {
 //#endregion
 
 //#region four bar
-void setFbPIDmode(bool up) {	//up is true for upward movement consts, false for downward movement ones.
-	if (up)
+void setFbPIDmode(bool high) {	//high is true for targets above FB_SAFE
+	if (high)
 		setTargetingPIDconsts(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 1.3*FB_CORR_FCTR);	//0.37, 0.002, 1.6
 	else
 		setTargetingPIDconsts(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 1.3*FB_CORR_FCTR);
@@ -78,7 +67,7 @@ void setFbPIDmode(bool up) {	//up is true for upward movement consts, false for 
 
 void setFbTargetAndPID(int target, bool resetIntegral=true) {	//sets four bar target and adjusts PID consts
 	if (MULTIPLE_PIDs) {
-		if (getPosition(fourBar) < target)
+		if (target > fbPos[FB_SAFE])
 			setFbPIDmode(true);
 		else
 			setFbPIDmode(false);
@@ -93,11 +82,23 @@ void setFbState(fbState state) {
 	else
 		setFbTargetAndPID(fbPos[state]);
 }
+
+void moveFourBar(bool up, bool runConcurrently=true) {
+	moveForDuration(fourBar, 127*(up ? 1 : -1), FB_MOVE_DURATION, runConcurrently);
+}
 //#endregion
 
-void moveLiftToSafePos(bool wait=true) {	//TODO: fb?
-	setLiftTargetAndPID(liftPos[L_SAFE] + 100/L_CORR_FCTR);
-	setFbState(FB_SAFE);
+void moveLiftToSafePos(bool wait=true) {
+	if (getPosition(lift) < liftPos[L_SAFE]) {
+		setLiftTargetAndPID(liftPos[L_SAFE] + 100/L_CORR_FCTR);
+	}
+	else {	//passively hold lift up
+		stopAutomovement(lift);
+		lift.stillSpeedReversed = false;
+	}
+
+	if (FB_SENSOR >= 0)
+		setFbState(FB_SAFE);
 
 	if (wait)	//TODO: ensure fb in correct position?
 		while (getPosition(lift) < liftPos[L_SAFE])

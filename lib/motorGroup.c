@@ -3,7 +3,7 @@
 #include "timer.c"
 
 #define DEF_WAIT_TIMEOUT 100
-#define DEF_WAIT_LIST_LEN 1
+#define DEF_WAIT_LIST_LEN 3
 
 enum controlType { NONE, BUTTON, JOYSTICK };
 enum automovementType { NO, TARGET, MANEUVER, DURATION };
@@ -17,7 +17,7 @@ typedef struct {
 	//button control
 	int upPower, downPower, stillSpeed;
 		//complex still speeds
-	int stillSpeedSwitchPos, stillSpeedType;	//stillSpeedType is 0 for regular, 1 for posDependent, and 2 for buttonDependent
+	int stillSpeedSwitchPos, stillSpeedType;	//stillSpeedType is 0 for regular, 1 for posDependent, and 2 for buttonDependent	TODO: change to enum?
 	bool stillSpeedReversed;
 	//joystick control
 	int deadband; //range of motor values around 0 for which motors are not engaged
@@ -32,7 +32,7 @@ typedef struct {
 	int maxPowerAtAbs, defPowerAtAbs; //maximum power at absolute position (pushing down from minimum or up from maximum) and default power if this is exceeded
 	//automovement
 	automovementType moving;
-	int endPower;	//both maneuver and duration
+	int movePower, endPower;	//both maneuver and duration
 	long maneuverTimer;
 		//execute maneuver
 	int targetPos, maneuverTimeout;
@@ -97,27 +97,6 @@ void initializeGroup(motorGroup *group, int numMotors, tMotor *motors, TVexJoyst
 }
 //#endregion
 
-//#region still speeds
-void configurePosDependentStillSpeed(motorGroup *group, int switchPos, int stillSpeed=0) {	//motor will have stillSpeed power when below switchPos, -stillSpeed power when above switchPos
-	if (stillSpeed!=0) group->stillSpeed = stillSpeed;
-	group->stillSpeedType = 1;
-	group->stillSpeedSwitchPos = switchPos;
-}
-
-void configureBtnDependentStillSpeed(motorGroup *group, int stillSpeed=0) {
-	if (stillSpeed!=0) group->stillSpeed = stillSpeed;
-	group->stillSpeedType = 2;
-}
-
-void calcStillSpeed(motorGroup *group) {
-	return group->stillSpeed * (group->stillSpeedType==0 ?
-												      1 :
-												      (group->stillSpeedType==1 ?
-													      (getPosition(group)>group->stillSpeedSwitchPos ? 1 : -1) :
-													      (group->stillSpeedReversed ? -1 : 1)));	//I'm feeling like some functional programming today. Can you tell?
-}
-//#endregion
-
 //#region sensors
 void addSensor(motorGroup *group, tSensors sensor, bool reversed=false, bool setAsDefault=true) {
 	switch (SensorType[sensor]) {
@@ -137,10 +116,12 @@ void addSensor(motorGroup *group, tSensors sensor, bool reversed=false, bool set
 	}
 }
 
-int encoderVal(motorGroup *group) {
+int encoderVal(motorGroup *group, bool useCorrection=true) {
 	if (group->hasEncoder) {
-		return SensorValue[group->encoder] * (group->encoderReversed ?  -1 : 1);
-	} else {
+		return SensorValue[group->encoder] * (group->encoderReversed ?  -1 : 1)
+		        - (group->encCorrectionActive && useCorrection ? group->maxDisp : 0);
+	}
+	else {
 		return 0;
 	}
 }
@@ -148,16 +129,18 @@ int encoderVal(motorGroup *group) {
 int potentiometerVal(motorGroup *group) {
 	if (group->hasPotentiometer) {
 		return (group->potentiometerReversed ? 4096-SensorValue[group->potentiometer] : SensorValue[group->potentiometer]);
-	} else {
+	}
+	else {
 		return 0;
 	}
 }
 
-int getPosition(motorGroup *group) {
+int getPosition(motorGroup *group, bool useEncCorrection=true) {
 	if (group->hasPotentiometer && group->hasEncoder) {
-		return group->potentiometerDefault ? potentiometerVal(group) : encoderVal(group);
-	} else {
-		return (group->hasEncoder ? encoderVal(group) : potentiometerVal(group));
+		return group->potentiometerDefault ? potentiometerVal(group) : encoderVal(group, useEncCorrection);
+	}
+	else {
+		return (group->hasEncoder ? encoderVal(group, useEncCorrection) : potentiometerVal(group));
 	}
 }
 
@@ -174,16 +157,47 @@ void configureEncoderCorrection(motorGroup *group, int max) {
 
 void correctEncVal(motorGroup *group) {
 	if (group->encCorrectionActive) {
-		int encVal = encoderVal(group);
+		int encVal = encoderVal(group, false);
 
-		if (encVal < group->maxDisp) {
+		if (encVal <= group->maxDisp) {
 			resetEncoder(group);
-			group->maxDisp = 0;
+			group->maxDisp -= encVal;
 		}
 		else if ((encVal - group->encMax) > group->maxDisp) {
 			group->maxDisp = encVal - group->encMax;
 		}
 	}
+}
+//#endregion
+
+//#region still speeds
+void configurePosDependentStillSpeed(motorGroup *group, int switchPos, int stillSpeed=0) {	//motor will have stillSpeed power when below switchPos, -stillSpeed power when above switchPos
+	if (stillSpeed!=0) group->stillSpeed = stillSpeed;
+	group->stillSpeedType = 1;
+	group->stillSpeedSwitchPos = switchPos;
+}
+
+void configureBtnDependentStillSpeed(motorGroup *group, int stillSpeed=0) {
+	if (stillSpeed!=0) group->stillSpeed = stillSpeed;
+	group->stillSpeedType = 2;
+}
+
+int calcStillSpeed(motorGroup *group, bool posForBtnSS=true) {
+	bool reversed;
+
+	switch (group->stillSpeedType) {
+		case 0:
+			reversed = false;
+			break;
+		case 1:
+			reversed = (getPosition(group) > group->stillSpeedSwitchPos);
+			break;
+		case 2:
+			reversed = posForBtnSS;
+			break;
+	}
+
+	return group->stillSpeed * (reversed ? -1 : 1);
 }
 //#endregion
 
@@ -233,43 +247,8 @@ int getPower(motorGroup *group) {
 }
 //#endregion
 
-//#region position movement
-void executeAutomovement(motorGroup *group, int debugStartCol=-1) {
-	switch (group->moving) {
-		case TARGET:
-			if (group->posPID.kP != 0)
-				if (group->autoStillSpeeding && errorLessThan(group, group->autoSSmargin))
-					setPower(group, calcStillSpeed(group));	//TODO: what to do with buttonDependent still speeds? (urgent)
-				else
-					setPower(group, PID_runtime(group->posPID, getPosition(group), debugStartCol));
-			break;
-
-		case MANEUVER:
-			if (group->forward == (getPosition(group) < group->targetPos)) {
-				group->maneuverTimer = resetTimer();
-			}
-			else if (time(group->maneuverTimer) > group->maneuverTimeout) {
-				setPower(group, group->endPower);
-				group->moving = NO;
-			}
-			break;
-
-		case DURATION:
-			if (time(group->maneuverTimer) > group->maneuverTimeout) {
-				setPower(group, group->endPower);
-				group->moving = NO;
-			}
-			break;
-	}
-}
-
-void stopAutomovement(motorGroup *group) {
-	group->moving = NO;
-}
-
-int moveTowardPosition(motorGroup *group, int position, int power=127) {
-	return setPower(group, power * sgn(position - getPosition(group)));
-}
+//#region automovement
+int executeAutomovement(motorGroup *group, int debugStartCol=-1);	//just a forward declaration
 
 	//#subregion targeting
 void initializeTargetingPID(motorGroup *group, float kP, float kI, float kD, int errorMargin=100, int minSampleTime=10, int integralMax=127) {
@@ -292,11 +271,6 @@ void setTargetPosition(motorGroup *group, int position, bool resetIntegral=true)
 	group->moving = TARGET;
 }
 
-void stopTargeting(motorGroup *group) {
-	if(group->moving == TARGET)
-		group->moving = NO;
-}
-
 bool errorLessThan(motorGroup *group, int errorMargin) {	//returns true if PID error is less than specified margin
 	return fabs(group->posPID.target - getPosition(group)) < errorMargin;
 }
@@ -305,13 +279,14 @@ bool errorLessThan(motorGroup *group, int errorMargin) {	//returns true if PID e
 	//#subregion maneuvers
 void createManeuver(motorGroup *group, int position, bool runConcurrently=true, int endPower=0, int movePower=127, int timeout=10) {
 	group->targetPos = position;
-	group->endPower = endPower;
 	group->forward = group->targetPos > getPosition(group);
+	group->movePower = abs(movePower) * (group->forward ? 1 : -1);
+	group->endPower = endPower;
 	group->maneuverTimeout = timeout;
 	group->maneuverTimer = resetTimer();
 	group->moving = MANEUVER;
 
-	setPower(group, abs(movePower) * (group->forward ? 1 : -1));
+	setPower(group, group->movePower);
 
 	if (runConcurrently) {
 		while (group->moving == MANEUVER) {
@@ -323,13 +298,13 @@ void createManeuver(motorGroup *group, int position, bool runConcurrently=true, 
 	//#endsubregion
 
 	//#subregion durational movement
-void moveForDuration(motorGroup *group, int power, int duration, bool runConcurrently=true, int endPower=128) {	//if endPower>127, will finish with group.stillSpeed
+void moveForDuration(motorGroup *group, int power, int duration, bool runConcurrently=true, int endPower=128) {	//if endPower>127, will finish with stillSpeed
+	group->movePower = power;
 	group->moveDuration = duration;
 	group->moving = DURATION;
+	group->endPower = (endPower>127 ? calcStillSpeed(group, power>0) : endPower);
 
-	group->endPower = (endPower>127 ? calcStillSpeed(group) : endPower);	//TODO: adjust for btnDep (urgent)
-
-	setPower(group, power);
+	setPower(group, group->movePower);
 
 	if (runConcurrently) {
 		wait1Msec(duration);
@@ -338,6 +313,7 @@ void moveForDuration(motorGroup *group, int power, int duration, bool runConcurr
 }
 	//#endsubregion
 
+	//#subregion waiting
 void waitForMovementToFinish(int timeout=DEF_WAIT_TIMEOUT, int numGroups=DEF_WAIT_LIST_LEN, motorGroup *groups=defGroupWaitList) {	//that's right, nested pointers                                   (help me)
 	long movementTimer = resetTimer();
 
@@ -367,8 +343,53 @@ void waitForMovementToFinish(bool *waitForGroups, int timeout=DEF_WAIT_TIMEOUT) 
 	waitForMovementToFinish(timeout, j, groups);
 }
 
-void waitForMovementToFinish(int timeout, motorGroup *group) {
+void waitForMovementToFinish(motorGroup *group, int timeout=DEF_WAIT_TIMEOUT) {
 	waitForMovementToFinish(timeout, 1, group);
+}
+	//#endsubregion
+
+int executeAutomovement(motorGroup *group, int debugStartCol) {
+	switch (group->moving) {
+		case TARGET:
+			if (group->posPID.kP != 0)
+				if (group->autoStillSpeeding && errorLessThan(group, group->autoSSmargin))
+					setPower(group, calcStillSpeed(group, group->posPID.integral>0));	//haxx! (srsly tho, find a better test than integral)
+				else
+					setPower(group, PID_runtime(group->posPID, getPosition(group), debugStartCol));
+			break;
+
+		case MANEUVER:
+			if (group->forward == (getPosition(group) < group->targetPos)) {
+				group->maneuverTimer = resetTimer();
+				setPower(group, group->movePower);
+			}
+			else if (time(group->maneuverTimer) > group->maneuverTimeout) {
+				setPower(group, group->endPower);
+				group->moving = NO;
+			}
+			break;
+
+		case DURATION:
+			if (time(group->maneuverTimer) > group->maneuverTimeout) {
+				setPower(group, group->endPower);
+				group->moving = NO;
+			}
+			else {
+				setPower(group, group->movePower);
+			}
+			break;
+	}
+
+	return getPower(group);	//TODO: be better
+}
+
+void stopAutomovement(motorGroup *group) {
+	group->moving = NO;
+	setPower(group, 0);
+}
+
+int moveTowardPosition(motorGroup *group, int position, int power=127) {
+	return setPower(group, power * sgn(position - getPosition(group)));
 }
 //#endregion
 
@@ -381,18 +402,20 @@ int handleButtonInput(motorGroup *group) {
 			group->stillSpeedReversed = false;
 
 		return group->upPower;
-	} else if (vexRT[group->negInput] == 1) {
+	}
+	else if (vexRT[group->negInput] == 1) {
 		group->moving = NO;
 
 		if (group->stillSpeedType == 2)
 			group->stillSpeedReversed = true;
 
 		return group->downPower;
-	} else {
+	}
+	else {	//TODO: executeAutomovement?
 		if (group->stillSpeedType == 1)
 			group->stillSpeedReversed = getPosition(group) > group->stillSpeedSwitchPos;
 
-		return group->stillSpeed * (group->stillSpeedReversed ? -1 : 1);	//TODO: executeAutomovement?
+		return group->stillSpeed * (group->stillSpeedReversed ? -1 : 1);
 	}
 }
 
@@ -419,7 +442,8 @@ int handleJoystickInput(motorGroup *group) {
 					return (power>currentPower ? currentPower+maxDiff : currentPower-maxDiff);
 				}
 			}
-		} else {
+		}
+		else {
 			return currentPower;
 		}
 	}

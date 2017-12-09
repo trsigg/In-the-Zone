@@ -18,7 +18,8 @@ bool newlyPressed(TVexJoysticks button, bool startTrackingIfPressed=true) {
 	if (!tracking[button - Btn5D] && vexRT[button]==1) {
 		if (startTrackingIfPressed) startTracking(button);
 		return true;
-	} else {
+	}
+	else {
 		return false;
 	}
 }
