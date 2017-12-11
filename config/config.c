@@ -19,7 +19,7 @@ int debugParameters[] = { 0, 7, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, 
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 650,   900,     1190,   750,        1300,   1195,   2160 };
+	int liftPos[] = { 1400,  1400,    1560,   1375,       1910,   1915,   2985 };
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 500,      750,     1500,  1500 };
@@ -79,8 +79,8 @@ int debugParameters[] = { 0, 7, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, 
 	//#endsubregion
 
 	//#subregion top four bar
-#define fbInBtn         Btn6U
-#define fbOutBtn        Btn6D
+#define fbInBtn           Btn6U
+#define fbOutBtn          Btn6D
 	//#endsubregion
 
 	//#subregion lift
@@ -94,7 +94,7 @@ int debugParameters[] = { 0, 7, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, 
 	//#endsubregion
 
 	//#subregion autostacking control
-#define stackBtn          Btn6U
+#define stackBtn          Btn8U
 #define toggleFieldingBtn Btn8R
 		//#subsubregion cone count adjustment (all with shift)
 #define resetBtn          Btn8R
@@ -167,7 +167,7 @@ void initializeStructs() {
 
 	//mobile goal intake
 	initializeGroup(goalIntake, NUM_GOAL_MOTORS, goalMotors);
-	configureButtonInput(goalIntake, goalOuttakeBtn, goalIntakeBtn);
+	configureButtonInput(goalIntake, goalIntakeBtn, goalOuttakeBtn);
 	configureBtnDependentStillSpeed(goalIntake, GOAL_STILL_SPEED);
 
 	//top four bar
