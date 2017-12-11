@@ -8,7 +8,7 @@
 //#endregion
 
 //#region autopositioning
-bool movingToMax = false;	//true if lifting up to MAX_POS
+bool movingToMax = false;	//true if lifting up to MAX_POS - TODO: fb down after going to def?
 //#endregion
 
 void pre_auton() {

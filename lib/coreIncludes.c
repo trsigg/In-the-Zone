@@ -33,6 +33,10 @@ void arrayCopy(void* source, void* destination, int elements) {
 		destination[i] = source[i];
 }
 
+float copysign(float sign, float magnitude) {
+	return sgn(sign) * fabs(magnitude);
+}
+
 float tan(float x) {
 	return sin(x)/cos(x);
 }

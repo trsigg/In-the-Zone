@@ -46,11 +46,11 @@ void initializeAutoMovement() {
 	turnDefaults.reversed = false;
 	turnDefaults.usePID = true;
 	turnDefaults.waitAtEnd = 100;
-	turnDefaults.rampConst1 = 5;    // initialPower  / kP
+	turnDefaults.rampConst1 = 5;     // initialPower  / kP
 	turnDefaults.rampConst2 = 0.01; // maxPower      / kI
-	turnDefaults.rampConst3 = 15;	  // finalPower    / kD
-	turnDefaults.rampConst4 = 0.06; // brakeDuration / pd acceptable error (proportion of target)
-	turnDefaults.rampConst5 = 500;	// brakePower    / pd timeout
+	turnDefaults.rampConst3 = 15;	 // finalPower    / kD
+	turnDefaults.rampConst4 = 0.06;  // brakeDuration / pd acceptable error (proportion of target)
+	turnDefaults.rampConst5 = 500;	 // brakePower    / pd timeout
 
 	//driving
 	driveDefaults.defCorrectionType = AUTO;
@@ -65,7 +65,7 @@ void initializeAutoMovement() {
 	driveDefaults.rampConst3 = 50;
 	driveDefaults.rampConst4 = 0.1;
 	driveDefaults.rampConst5 = 250;
-	driveDefaults.kP_c = .55;
+	driveDefaults.kP_c = 0.55;
 	driveDefaults.kI_c = 0.007;
 	driveDefaults.kD_c = 0.15;
 	driveDefaults.minSpeed = 1;	//TODO: is not being assigned correctly

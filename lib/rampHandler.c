@@ -18,9 +18,9 @@ void initializeRampHandler(rampHandler *ramper, rampType type, float target, flo
     initializeQuadraticRamp(ramper->quadRamp, target, in1, in2, in3);
 }
 
-float rampRuntime(rampHandler *ramper, float input) {
+float rampRuntime(rampHandler *ramper, float input, int debugStartCol=-1) {
   if (ramper->algorithm == PD) {
-    return PID_runtime(ramper->pd, input);
+    return PID_runtime(ramper->pd, input, debugStartCol);
   }
   else {
     return quadraticRampRuntime(ramper->quadRamp, input);

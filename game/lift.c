@@ -18,7 +18,7 @@ void handleEncoderCorrection() {
 }
 //#endregion
 
-void executeLiftManeuvers(bool autoStillSpeed=true) {
+void executeLiftManeuvers(bool autoStillSpeed=true) {	//TODO: argument doesn't do anything right now
 	handleEncoderCorrection();
 
 	executeAutomovement(lift, debugParameters[0]);
@@ -32,10 +32,11 @@ void stopLiftTargeting() {
 
 //#region lift
 void setLiftPIDmode(bool up) {	//up is true for upward movement consts, false for downward movement ones
-	if (up)
-		setTargetingPIDconsts(lift, 0.35*L_CORR_FCTR, 0.005*L_CORR_FCTR, 0.7*L_CORR_FCTR);	//0.37, 0.002, 1.6
-	else
-		setTargetingPIDconsts(lift, 0.35*L_CORR_FCTR, 0.005*L_CORR_FCTR, 0.7*L_CORR_FCTR);
+	if (MULTIPLE_PIDs)
+		if (up)
+			setTargetingPIDconsts(lift, 0.35*L_CORR_FCTR, 0.005*L_CORR_FCTR, 0.7*L_CORR_FCTR);	//0.37, 0.002, 1.6
+		else
+			setTargetingPIDconsts(lift, 0.35*L_CORR_FCTR, 0.005*L_CORR_FCTR, 0.7*L_CORR_FCTR);
 }
 
 void setLiftTargetAndPID(int target, bool resetIntegral=true) {	//sets lift target and adjusts PID consts
@@ -59,10 +60,11 @@ void setLiftState(liftState state) {
 
 //#region four bar
 void setFbPIDmode(bool high) {	//high is true for targets above FB_SAFE
-	if (high)
-		setTargetingPIDconsts(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 1.3*FB_CORR_FCTR);	//0.37, 0.002, 1.6
-	else
-		setTargetingPIDconsts(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 1.3*FB_CORR_FCTR);
+	if (MULTIPLE_PIDs)
+		if (high)
+			setTargetingPIDconsts(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 1.3*FB_CORR_FCTR);	//0.37, 0.002, 1.6
+		else
+			setTargetingPIDconsts(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 1.3*FB_CORR_FCTR);
 }
 
 void setFbTargetAndPID(int target, bool resetIntegral=true) {	//sets four bar target and adjusts PID consts

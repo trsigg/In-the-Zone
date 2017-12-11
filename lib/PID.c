@@ -4,6 +4,7 @@ typedef struct {
 		int minSampleTime; //minimum time between sampling input in milliseconds
 		float integralMax; //minimum and maximum error value which will be added to integral
 		bool hasMax;
+		bool useTimeCorrection;
 		float output; //can be used to refer to most recent output
 		//internal variables
 		long lastUpdated;
@@ -11,7 +12,7 @@ typedef struct {
 		float prevError;
 } PID;
 
-void initializePID(PID *pid, float target, float kP, float kI, float kD, int minSampleTime=30, float integralMax=0) {
+void initializePID(PID *pid, float target, float kP, float kI, float kD, bool useTimeCorrection=true, int minSampleTime=30, float integralMax=0) {
 	pid->kP = kP;
 	pid->kI = kI;
 	pid->kD = kD;
@@ -19,6 +20,7 @@ void initializePID(PID *pid, float target, float kP, float kI, float kD, int min
 	pid->minSampleTime = minSampleTime;
 	pid->hasMax = integralMax!=0;
 	pid->integralMax = integralMax;
+	pid->useTimeCorrection = useTimeCorrection;
 	pid->integral = 0;
 	pid->prevError = 0;
 }
@@ -49,18 +51,22 @@ float PID_runtime(PID *pid, float input, int debugStartCol=-1) {
 		pid->lastUpdated = now;
 
 		float error = pid->target - input;
+		int timeCorrectionFctr = (pid->useTimeCorrection ? elapsed : 1);
 
-		if (!pid->hasMax || pid->output<pid->integralMax)
-			pid->integral += pid->kI*error;
+		if (!pid->hasMax || fabs(pid->output)<pid->integralMax)
+			pid->integral += pid->kI * error * timeCorrectionFctr;	//kI factored in here to avoid problems when resetting gain values
 
-		pid->output = pid->kP*error + pid->integral + pid->kD*(error - pid->prevError);	//kI factored in above (to avoid problems when resetting gain values)
+		float p = pid->kP * error;
+		float d = pid->kD * (error - pid->prevError) / timeCorrectionFctr;
+
+		pid->output = p + pid->integral + d;
 
 		if (debugStartCol >= 0) {
 			datalogAddValueWithTimeStamp(debugStartCol, error);
 			datalogAddValueWithTimeStamp(debugStartCol+1, pid->output);
-			datalogAddValueWithTimeStamp(debugStartCol+2, pid->kP*error);
+			datalogAddValueWithTimeStamp(debugStartCol+2, p);
 			datalogAddValueWithTimeStamp(debugStartCol+3, pid->integral);
-			datalogAddValueWithTimeStamp(debugStartCol+4, pid->kD*(error - pid->prevError));
+			datalogAddValueWithTimeStamp(debugStartCol+4, d);
 			datalogAddValueWithTimeStamp(debugStartCol+5, pid->target);
 			datalogAddValueWithTimeStamp(debugStartCol+6, input);
 		}

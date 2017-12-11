@@ -8,8 +8,8 @@
 #define HAS_SPEAKER    true
 
 	//#subregion testing - TODO: change parameter scheme
-#define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID)
-int debugParameters[] = { 0, 7, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol }
+#define TESTING 1	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID)
+int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol }
 	//#endsubregion
 //#endregion
 
@@ -19,7 +19,7 @@ int debugParameters[] = { 0, 7, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, 
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1400,  1400,    1560,   1375,       1910,   1915,   2985 };
+	int liftPos[] = { 1425,  1430,    1560,   1420,       1910,   1915,   2985 };
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 500,      750,     1500,  1500 };
@@ -161,7 +161,8 @@ void initializeStructs() {
   initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors);
 	configureButtonInput(lift, liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
 	configureBtnDependentStillSpeed(lift);
-	initializeTargetingPID(lift, 0.25*L_CORR_FCTR, 0.01*L_CORR_FCTR, 5*L_CORR_FCTR, 100/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
+	initializeTargetingPID(lift, 0.5*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 30*L_CORR_FCTR, 100/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
+	configureAutoStillSpeed(lift, 50);
 	addSensor(lift, LIFT_SENSOR, L_SENS_REVERSED);
 	if (LIFT_SENSOR>=dgtl1) configureEncoderCorrection(lift, liftPos[L_MAX]);
 
@@ -176,7 +177,7 @@ void initializeStructs() {
 	configureBtnDependentStillSpeed(fourBar, FB_STILL_SPEED);
 
 	if (FB_SENSOR >= 0) {
-		initializeTargetingPID(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 1.3*FB_CORR_FCTR, 100/FB_CORR_FCTR);
+		initializeTargetingPID(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 13*FB_CORR_FCTR, 100/FB_CORR_FCTR);
 		addSensor(fourBar, FB_SENSOR, FB_SENS_REVERSED);
 		if (FB_SENSOR>=dgtl1) configureEncoderCorrection(fourBar, fbPos[FB_MAX]);
 	}

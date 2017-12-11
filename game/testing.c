@@ -8,7 +8,7 @@ void logSensorVals() {
 
 //#region PID testing
 #define NUM_INPUTS 4
-int targets[NUM_INPUTS] = { 0, 0, 0, 1 };	//lift, driveStraight, turn, lift PID mode (up=1)
+int targets[NUM_INPUTS] = { 0, 0, 0, 0 };	//lift, driveStraight, turn, lift PID mode (up=1)
 bool abort = false;
 bool end = false;
 
@@ -27,7 +27,8 @@ void handlePIDinput(int index) {
 			turn(input);
 			playSound(soundLowBuzz);
 		case 3:
-			setLiftPIDmode(input == 1);
+			if (MULTIPLE_PIDs)
+				setLiftPIDmode(input == 1);
 			break;
 	}
 }

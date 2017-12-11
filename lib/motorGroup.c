@@ -251,8 +251,8 @@ int getPower(motorGroup *group) {
 int executeAutomovement(motorGroup *group, int debugStartCol=-1);	//just a forward declaration
 
 	//#subregion targeting
-void initializeTargetingPID(motorGroup *group, float kP, float kI, float kD, int errorMargin=100, int minSampleTime=10, int integralMax=127) {
-	initializePID(group->posPID, 0, kP, kI, kD, minSampleTime, integralMax);
+void initializeTargetingPID(motorGroup *group, float kP, float kI, float kD, int errorMargin=100, int minSampleTime=10, bool useTimeCorrection=true, int integralMax=127) {	//TODO: integralMax DOES NOT WORK with autoStillSpeeding
+	initializePID(group->posPID, 0, kP, kI, kD, useTimeCorrection, minSampleTime, integralMax);
 	group->waitErrorMargin = errorMargin;
 	group->autoStillSpeeding = false;
 }
@@ -351,11 +351,12 @@ void waitForMovementToFinish(motorGroup *group, int timeout=DEF_WAIT_TIMEOUT) {
 int executeAutomovement(motorGroup *group, int debugStartCol) {
 	switch (group->moving) {
 		case TARGET:
-			if (group->posPID.kP != 0)
-				if (group->autoStillSpeeding && errorLessThan(group, group->autoSSmargin))
-					setPower(group, calcStillSpeed(group, group->posPID.integral>0));	//haxx! (srsly tho, find a better test than integral)
-				else
-					setPower(group, PID_runtime(group->posPID, getPosition(group), debugStartCol));
+			if (group->posPID.kP != 0) {
+				int powerLimit = (group->autoStillSpeeding && errorLessThan(group, group->autoSSmargin) ? group->stillSpeed : 127);	//limit power if autoStillSpeeding conditions are met
+				group->posPID.integralMax = powerLimit;
+				int PIDpower = PID_runtime(group->posPID, getPosition(group), debugStartCol);
+				setPower(group, copysign(PIDpower, limit(fabs(PIDpower), 0, powerLimit)));
+			}
 			break;
 
 		case MANEUVER:
