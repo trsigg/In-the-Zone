@@ -3,7 +3,7 @@
 #include "timer.c"
 
 #define DEF_WAIT_TIMEOUT 100
-#define DEF_WAIT_LIST_LEN 3
+#define NUM_GROUPS       3
 
 enum controlType { NONE, BUTTON, JOYSTICK };
 enum automovementType { NO, TARGET, MANEUVER, DURATION };
@@ -52,7 +52,7 @@ typedef struct {
 	tSensors encoder, potentiometer;
 } motorGroup;
 
-motorGroup defGroupWaitList[DEF_WAIT_LIST_LEN];
+motorGroup groups[NUM_GROUPS];
 
 //#region initialization
 void configureButtonInput(motorGroup *group, TVexJoysticks posBtn, TVexJoysticks negBtn, int stillSpeed=0, int upPower=127, int downPower=-127) {
@@ -252,7 +252,7 @@ int executeAutomovement(motorGroup *group, int debugStartCol=-1);	//just a forwa
 
 	//#subregion targeting
 void initializeTargetingPID(motorGroup *group, float kP, float kI, float kD, int errorMargin=100, int minSampleTime=10, bool useTimeCorrection=true, int integralMax=127) {	//TODO: integralMax DOES NOT WORK with autoStillSpeeding
-	initializePID(group->posPID, 0, kP, kI, kD, useTimeCorrection, minSampleTime, integralMax);
+	initializePID(group->posPID, 0, kP, kI, kD, minSampleTime, useTimeCorrection, integralMax);
 	group->waitErrorMargin = errorMargin;
 	group->autoStillSpeeding = false;
 }
@@ -314,12 +314,12 @@ void moveForDuration(motorGroup *group, int power, int duration, bool runConcurr
 	//#endsubregion
 
 	//#subregion waiting
-void waitForMovementToFinish(int timeout=DEF_WAIT_TIMEOUT, int numGroups=DEF_WAIT_LIST_LEN, motorGroup *groups=defGroupWaitList) {	//that's right, nested pointers                                   (help me)
+void waitForMovementToFinish(int timeout=DEF_WAIT_TIMEOUT, int numGroups=NUM_GROUPS, motorGroup *groupList=groups) {	//that's right, nested pointers                                   (help me)
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {	//wait for targeting to stabilize
 		for (int i=0; i<numGroups; i++) {
-			if (groups[i].moving==TARGET && errorLessThan(&groups[i], groups[i].waitErrorMargin)) {
+			if (groupList[i].moving==TARGET && errorLessThan(&groupList[i], &groupList[i]->waitErrorMargin)) {
 					movementTimer = resetTimer();
 					continue;
 			}
@@ -333,12 +333,12 @@ void waitForMovementToFinish(int timeout=DEF_WAIT_TIMEOUT, int numGroups=DEF_WAI
 }
 
 void waitForMovementToFinish(bool *waitForGroups, int timeout=DEF_WAIT_TIMEOUT) {
-	motorGroup groups[DEF_WAIT_LIST_LEN];
+	motorGroup groupList[NUM_GROUPS];
 	int j = 0;
 
-	for (int i=0; i<DEF_WAIT_LIST_LEN; i++)
+	for (int i=0; i<NUM_GROUPS; i++)
 		if (waitForGroups[i])
-			groups[j++] = defGroupWaitList[i];
+			groupList[j++] = groups[i];
 
 	waitForMovementToFinish(timeout, j, groups);
 }

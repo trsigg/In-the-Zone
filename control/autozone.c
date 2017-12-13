@@ -1,7 +1,7 @@
 //#region setup
 #pragma platform(VEX2)
 #pragma competitionControl(Competition)
-#include "Vex_Competition_Includes.c"
+#include "Vex_Competition_Includes.c"	//TODO: main testing
 #include "..\lib\buttonTracker.c"
 #include "..\game\autonomous.c"
 #include "..\game\testing.c"
@@ -12,15 +12,19 @@ bool movingToMax = false;	//true if lifting up to MAX_POS - TODO: fb down after 
 //#endregion
 
 void pre_auton() {
-	bStopTasksBetweenModes = true;
+	bStopTasksBetweenModes = true;	//TODO: main testing
 
 	initializeStructs();
+
 	initializeAutoMovement();
+	driveDefaults.debugStartCol = debugParameters[4];
+	turnDefaults.debugStartCol = debugParameters[5];
+
 	if (HAS_SPEAKER)
 		initializeAudio();
 }
 
-task autonomous() {
+task autonomous() {	//TODO: main testing
 	prepareForAuton();
 	handleTesting();
 
@@ -64,7 +68,7 @@ void handleAutopositioningInput(bool shift) {
 		}
 	}
 
-	if (movingToMax && errorLessThan(lift, 100)) {
+	if (movingToMax && errorLessThan(groups[LIFT], 100)) {
 		if (FB_SENSOR >= 0)
 			setFbState(STACK);
 		else
@@ -75,10 +79,10 @@ void handleAutopositioningInput(bool shift) {
 }
 
 void handleGoalIntakeInput() {
-	int goalPower = takeInput(goalIntake, false);
+	int goalPower = takeInput(groups[GOAL], false);
 
-	if (getPosition(lift)>liftPos[L_SAFE] || goalPower<=GOAL_STILL_SPEED)
-		setPower(goalIntake, goalPower);
+	if (getPosition(groups[LIFT])>liftPos[L_SAFE] || goalPower<=GOAL_STILL_SPEED)
+		setPower(groups[GOAL], goalPower);
 }
 
 void handleLiftInput(bool shift) {
@@ -90,8 +94,8 @@ void handleLiftInput(bool shift) {
 		else {
 			handleAutopositioningInput(shift);
 
-			takeInput(fourBar, fourBar.moving==NO); //will only set power if not maintaining a position
-			takeInput(lift, lift.moving==NO);       //if there is input, activelyMaintaining will be set to false and normal control will resume
+			takeInput(groups[FB], groups[FB].moving==NO); //will only set power if not maintaining a position
+			takeInput(groups[LIFT], groups[LIFT].moving==NO);       //if there is input, activelyMaintaining will be set to false and normal control will resume
 		}
 	}
 

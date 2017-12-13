@@ -95,7 +95,7 @@ void driveAndGoal(int dist, bool in, bool stackCone=false, bool quadRamp=false, 
 	else
 		driveStraight(dist, true);
 
-	waitForMovementToFinish(goalIntake);
+	waitForMovementToFinish(groups[GOAL]);
 
 	if (stackCone) stackNewCone();
 
@@ -239,7 +239,7 @@ task sideGoalTask() {
 
 	driveStraight(50, true);
 
-	while (getPosition(lift) < liftPos[L_SAFE]) EndTimeSlice();
+	while (getPosition(groups[LIFT]) < liftPos[L_SAFE]) EndTimeSlice();
 	setPower(coneIntake, INTAKE_STILL_SPEED);
 
 	while (driveData.isDriving) EndTimeSlice();

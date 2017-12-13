@@ -2,7 +2,7 @@
 
 void logSensorVals() {
 	if (debugParameters[1] >= 0)
-		datalogAddValueWithTimeStamp(debugParameters[1], getPosition(lift));
+		datalogAddValueWithTimeStamp(debugParameters[1], getPosition(groups[LIFT]));
 }
 
 
@@ -12,12 +12,20 @@ int targets[NUM_INPUTS] = { 0, 0, 0, 0 };	//lift, driveStraight, turn, lift PID 
 bool abort = false;
 bool end = false;
 
+task temp() {
+	while (true)
+		executeLiftManeuvers();
+}
+
 void handlePIDinput(int index) {
 	int input = targets[index];
 
 	switch (index) {
 		case 0:
-			setTargetPosition(lift, input);
+			setTargetPosition(groups[LIFT], input);
+			startTask(temp);
+			waitForMovementToFinish(groups[LIFT]);
+			playSound(soundLowBuzz);
 			break;
 		case 1:
 			driveStraight(input);
@@ -63,7 +71,15 @@ void testPIDs() {
 }
 //#endregion
 
+//#region misc test
+void miscTest() {
+
+}
+//#endregion
+
 void handleTesting() {
 	if (TESTING>0 && TESTING<=2)
 		testPIDs();
+	else if (TESTING == 3)
+		miscTest();
 }

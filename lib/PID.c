@@ -12,7 +12,7 @@ typedef struct {
 		float prevError;
 } PID;
 
-void initializePID(PID *pid, float target, float kP, float kI, float kD, bool useTimeCorrection=true, int minSampleTime=30, float integralMax=0) {
+void initializePID(PID *pid, float target, float kP, float kI, float kD, int minSampleTime=10, bool useTimeCorrection=true, float integralMax=0) {
 	pid->kP = kP;
 	pid->kI = kI;
 	pid->kD = kD;
@@ -22,7 +22,7 @@ void initializePID(PID *pid, float target, float kP, float kI, float kD, bool us
 	pid->integralMax = integralMax;
 	pid->useTimeCorrection = useTimeCorrection;
 	pid->integral = 0;
-	pid->prevError = 0;
+	pid->lastUpdated = 0;	//indicates that PID hasn't yet been evaluated
 }
 
 void changeTarget(PID *pid, float target, int resetIntegral=true) {
@@ -53,11 +53,15 @@ float PID_runtime(PID *pid, float input, int debugStartCol=-1) {
 		float error = pid->target - input;
 		int timeCorrectionFctr = (pid->useTimeCorrection ? elapsed : 1);
 
-		if (!pid->hasMax || fabs(pid->output)<pid->integralMax)
-			pid->integral += pid->kI * error * timeCorrectionFctr;	//kI factored in here to avoid problems when resetting gain values
+		float p = pid->kP * error;	//proportional contribution
+		float d = 0.1;								//derivative contribution
 
-		float p = pid->kP * error;
-		float d = pid->kD * (error - pid->prevError) / timeCorrectionFctr;
+		if (pid->lastUpdated != 0) {
+			if (!pid->hasMax || fabs(pid->output)<pid->integralMax || sgn(pid->kI*error)!=sgn(pid->output))	//TODO: better limiting
+				pid->integral += pid->kI * error * timeCorrectionFctr;	//kI factored in here to avoid problems when changing gain values
+
+			d = pid->kD * (error - pid->prevError) / timeCorrectionFctr;
+		}
 
 		pid->output = p + pid->integral + d;
 
