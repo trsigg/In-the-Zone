@@ -68,7 +68,7 @@ void handleAutopositioningInput(bool shift) {
 		}
 	}
 
-	if (movingToMax && errorLessThan(groups[LIFT], 100)) {
+	if (movingToMax && errorLessThan(lift, 100)) {
 		if (FB_SENSOR >= 0)
 			setFbState(STACK);
 		else
@@ -79,10 +79,10 @@ void handleAutopositioningInput(bool shift) {
 }
 
 void handleGoalIntakeInput() {
-	int goalPower = takeInput(groups[GOAL], false);
+	int goalPower = takeInput(goalIntake, false);
 
-	if (getPosition(groups[LIFT])>liftPos[L_SAFE] || goalPower<=GOAL_STILL_SPEED)
-		setPower(groups[GOAL], goalPower);
+	if (getPosition(lift)>liftPos[L_SAFE] || goalPower<=GOAL_STILL_SPEED)
+		setPower(goalIntake, goalPower);
 }
 
 void handleLiftInput(bool shift) {
@@ -94,8 +94,8 @@ void handleLiftInput(bool shift) {
 		else {
 			handleAutopositioningInput(shift);
 
-			takeInput(groups[FB], groups[FB].moving==NO); //will only set power if not maintaining a position
-			takeInput(groups[LIFT], groups[LIFT].moving==NO);       //if there is input, activelyMaintaining will be set to false and normal control will resume
+			takeInput(fourBar, fourBar.moving==NO); //will only set power if not maintaining a position
+			takeInput(lift, lift.moving==NO);       //if there is input, activelyMaintaining will be set to false and normal control will resume
 		}
 	}
 

@@ -2,7 +2,7 @@
 
 void logSensorVals() {
 	if (debugParameters[1] >= 0)
-		datalogAddValueWithTimeStamp(debugParameters[1], getPosition(groups[LIFT]));
+		datalogAddValueWithTimeStamp(debugParameters[1], getPosition(lift));
 }
 
 
@@ -22,10 +22,10 @@ void handlePIDinput(int index) {
 
 	switch (index) {
 		case 0:
-			setTargetPosition(groups[LIFT], input);
-			startTask(temp);
-			waitForMovementToFinish(groups[LIFT]);
-			playSound(soundLowBuzz);
+			setTargetPosition(lift, input);
+			/*startTask(temp);
+			waitForMovementToFinish(lift);
+			playSound(soundLowBuzz);*/
 			break;
 		case 1:
 			driveStraight(input);

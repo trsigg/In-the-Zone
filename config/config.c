@@ -142,9 +142,15 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 
 #include "..\lib\pd_autoMove.c" //for drive declaration
 
-enum groupNames { LIFT, FB, GOAL };
+motorGroup goalIntake;
+motorGroup lift;
+motorGroup fourBar;
+
+motorGroup groupWaitList[DEF_WAIT_LIST_LEN] = { lift, fourBar, goalIntake };
 
 void initializeStructs() {
+	arrayCopy(groupWaitList, defGroupWaitList, DEF_WAIT_LIST_LEN);
+
   //drive
 	initializeDrive(drive, NUM_LEFT_MOTORS, leftMotors, NUM_RIGHT_MOTORS, rightMotors, true);
 	attachEncoder(drive, LEFT_ENC, LEFT, L_ENC_REVERSED);
@@ -152,27 +158,27 @@ void initializeStructs() {
 	attachGyro(drive, HYRO);
 
 	//lift
-  initializeGroup(groups[LIFT], NUM_LIFT_MOTORS, liftMotors);
-	configureButtonInput(groups[LIFT], liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
-	configureBtnDependentStillSpeed(groups[LIFT]);
-	initializeTargetingPID(groups[LIFT], 0.7*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 70*L_CORR_FCTR, 100/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
-	configureAutoStillSpeed(groups[LIFT], 50);
-	addSensor(groups[LIFT], LIFT_SENSOR, L_SENS_REVERSED);
-	if (LIFT_SENSOR>=dgtl1) configureEncoderCorrection(groups[LIFT], liftPos[L_MAX]);
+  initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors);
+	configureButtonInput(lift, liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
+	configureBtnDependentStillSpeed(lift);
+	initializeTargetingPID(lift, 0.7*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 70*L_CORR_FCTR, 100/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
+	configureAutoStillSpeed(lift, 50);
+	addSensor(lift, LIFT_SENSOR, L_SENS_REVERSED);
+	if (LIFT_SENSOR>=dgtl1) configureEncoderCorrection(lift, liftPos[L_MAX]);
 
 	//mobile goal intake
-	initializeGroup(groups[GOAL], NUM_GOAL_MOTORS, goalMotors);
-	configureButtonInput(groups[GOAL], goalIntakeBtn, goalOuttakeBtn);
-	configureBtnDependentStillSpeed(groups[GOAL], GOAL_STILL_SPEED);
+	initializeGroup(goalIntake, NUM_GOAL_MOTORS, goalMotors);
+	configureButtonInput(goalIntake, goalIntakeBtn, goalOuttakeBtn);
+	configureBtnDependentStillSpeed(goalIntake, GOAL_STILL_SPEED);
 
 	//top four bar
-	initializeGroup(groups[FB], NUM_FB_MOTORS, fourBarMotors);
-	configureButtonInput(groups[FB], fbInBtn, fbOutBtn);
-	configureBtnDependentStillSpeed(groups[FB], FB_STILL_SPEED);
+	initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors);
+	configureButtonInput(fourBar, fbInBtn, fbOutBtn);
+	configureBtnDependentStillSpeed(fourBar, FB_STILL_SPEED);
 
 	if (FB_SENSOR >= 0) {
-		initializeTargetingPID(groups[FB], 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 13*FB_CORR_FCTR, 100/FB_CORR_FCTR);
-		addSensor(groups[FB], FB_SENSOR, FB_SENS_REVERSED);
-		if (FB_SENSOR>=dgtl1) configureEncoderCorrection(groups[FB], fbPos[FB_MAX]);
+		initializeTargetingPID(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 13*FB_CORR_FCTR, 100/FB_CORR_FCTR);
+		addSensor(fourBar, FB_SENSOR, FB_SENS_REVERSED);
+		if (FB_SENSOR>=dgtl1) configureEncoderCorrection(fourBar, fbPos[FB_MAX]);
 	}
 }

@@ -2,8 +2,8 @@
 #include "PID.c"
 #include "timer.c"
 
-#define DEF_WAIT_TIMEOUT 100
-#define NUM_GROUPS       3
+#define DEF_WAIT_TIMEOUT  100
+#define DEF_WAIT_LIST_LEN 3
 
 enum controlType { NONE, BUTTON, JOYSTICK };
 enum automovementType { NO, TARGET, MANEUVER, DURATION };
@@ -52,7 +52,7 @@ typedef struct {
 	tSensors encoder, potentiometer;
 } motorGroup;
 
-motorGroup groups[NUM_GROUPS];
+motorGroup defGroupWaitList[DEF_WAIT_LIST_LEN];
 
 //#region initialization
 void configureButtonInput(motorGroup *group, TVexJoysticks posBtn, TVexJoysticks negBtn, int stillSpeed=0, int upPower=127, int downPower=-127) {
@@ -314,12 +314,12 @@ void moveForDuration(motorGroup *group, int power, int duration, bool runConcurr
 	//#endsubregion
 
 	//#subregion waiting
-void waitForMovementToFinish(int timeout=DEF_WAIT_TIMEOUT, int numGroups=NUM_GROUPS, motorGroup *groupList=groups) {	//that's right, nested pointers                                   (help me)
+void waitForMovementToFinish(int timeout=DEF_WAIT_TIMEOUT, int numGroups=DEF_WAIT_LIST_LEN, motorGroup* groups=defGroupWaitList) {	//that's right, nested pointers                                   (help me)
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {	//wait for targeting to stabilize
 		for (int i=0; i<numGroups; i++) {
-			if (groupList[i].moving==TARGET && errorLessThan(&groupList[i], &groupList[i]->waitErrorMargin)) {
+			if (groups[i].moving==TARGET && errorLessThan(&groups[i], &groups[i]->waitErrorMargin)) {
 					movementTimer = resetTimer();
 					continue;
 			}
@@ -333,12 +333,12 @@ void waitForMovementToFinish(int timeout=DEF_WAIT_TIMEOUT, int numGroups=NUM_GRO
 }
 
 void waitForMovementToFinish(bool *waitForGroups, int timeout=DEF_WAIT_TIMEOUT) {
-	motorGroup groupList[NUM_GROUPS];
+	motorGroup groups[DEF_WAIT_LIST_LEN];
 	int j = 0;
 
-	for (int i=0; i<NUM_GROUPS; i++)
+	for (int i=0; i<DEF_WAIT_LIST_LEN; i++)
 		if (waitForGroups[i])
-			groupList[j++] = groups[i];
+			groups[j++] = defGroupWaitList[i];
 
 	waitForMovementToFinish(timeout, j, groups);
 }

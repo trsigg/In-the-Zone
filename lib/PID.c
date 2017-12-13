@@ -54,7 +54,7 @@ float PID_runtime(PID *pid, float input, int debugStartCol=-1) {
 		int timeCorrectionFctr = (pid->useTimeCorrection ? elapsed : 1);
 
 		float p = pid->kP * error;	//proportional contribution
-		float d = 0.1;								//derivative contribution
+		float d = 0;								//derivative contribution
 
 		if (pid->lastUpdated != 0) {
 			if (!pid->hasMax || fabs(pid->output)<pid->integralMax || sgn(pid->kI*error)!=sgn(pid->output))	//TODO: better limiting
