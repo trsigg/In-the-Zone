@@ -9,7 +9,7 @@
 
 	//#subregion testing - TODO: change parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
-int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol }
+int debugParameters[] = { -1, -1, -1, -1, -1, 0 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol }
 	//#endsubregion
 //#endregion
 
@@ -19,7 +19,7 @@ int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSe
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1425,  1430,    1700,   1430,       1910,   1915,   2985 };	//SAFE previously 1560
+	int liftPos[] = { 1425,  1430,    1700,   1420,       1910,   1915,   2985 };	//SAFE previously 1560
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 500,      750,     1500,  1500 };
@@ -166,11 +166,11 @@ void initializeStructs() {
 	if (LIFT_SENSOR>=dgtl1) configureEncoderCorrection(lift, liftPos[L_MAX]);
 
 	//mobile goal intake
-	initializeGroup(goalIntake, NUM_GOAL_MOTORS, goalMotors, goalIntakeBtn, goalOuttakeBtn);
+	initializeGroup(goalIntake, NUM_GOAL_MOTORS, goalMotors, goalIntakeBtn, goalOuttakeBtn, GOAL_STILL_SPEED);
 	configureBtnDependentStillSpeed(goalIntake);
 
 	//top four bar
-	initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors, fbInBtn, fbOutBtn, FB_STILL_SPEED, 90);
+	initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors, fbInBtn, fbOutBtn, FB_STILL_SPEED);
 	configureBtnDependentStillSpeed(fourBar);
 
 	if (FB_SENSOR >= 0) {

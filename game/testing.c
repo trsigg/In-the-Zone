@@ -8,6 +8,7 @@ void logSensorVals() {
 
 //#region PID testing
 #define NUM_INPUTS 8
+int debugOut;
 int targets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0 };	//lift, driveStraight, turn, lift PID mode (up=1), goalIntake state (in=1), stack nth cone, move fb (in=1), misc
 bool abort = false;
 bool end = false;
@@ -56,6 +57,8 @@ void handlePIDinput(int index) {
 void testPIDs() {
 	int prevTargets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	//arrayCopy(targets, prevTargets, NUM_INPUTS);
+
+	debugOut = SensorScale[HYRO];	//temp
 
 	while (!end) {
 		for (int i=0; i<NUM_INPUTS; i++) {

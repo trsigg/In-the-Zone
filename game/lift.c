@@ -105,7 +105,7 @@ void moveLiftToSafePos(bool wait=true) {
 		lift.stillSpeedReversed = false;
 	}
 
-	if (FB_SENSOR >= 0)	//TODO: make this its own fn
+	if (FB_SENSOR >= 0)
 		setFbState(FB_SAFE);
 	else
 		moveFourBar(true);

@@ -7,7 +7,7 @@ void prepareForAuton() {
 	resetLiftEncoders();
 	stopLiftTargeting();
 	startTask(autoStacking);
-	setPower(fourBar, FB_STILL_SPEED)
+	setPower(fourBar, FB_STILL_SPEED);
 	numCones = 0;
 }
 //#endregion
@@ -232,6 +232,12 @@ task altSkillz() {
 	middleGoal(false, true);
 
 	turnDriveTurn(-90, 25 /*TODO: const (like goalToMid)*/);
+
+
+}
+
+task defensiveAuton() {
+	driveForDuration(7000);
 }
 
 task sideGoalTask() {
