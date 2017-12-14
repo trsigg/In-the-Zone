@@ -55,10 +55,12 @@ void updateEncoderConfig(parallel_drive *drive) {
 	if (drive->leftDrive.hasEncoder) {
 		if (drive->rightDrive.hasEncoder) {
 			drive->encoderConfig = AVERAGE;
-		} else {
+		}
+	else {
 			drive->encoderConfig = LEFT;
 		}
-	} else {
+	}
+	else {
 		drive->encoderConfig = RIGHT; //safe assuming nothig but attachEncoder functions call this
 	}
 }
@@ -66,7 +68,8 @@ void updateEncoderConfig(parallel_drive *drive) {
 void attachEncoder(parallel_drive *drive, tSensors encoder, encoderConfig side, bool reversed=false, float wheelDiameter=3.25, float gearRatio=1) {
 	if (side == LEFT) {
 		addSensor(drive->leftDrive, encoder, reversed);
-	} else {
+	}
+	else {
 		addSensor(drive->rightDrive, encoder, reversed);
 	}
 
@@ -98,7 +101,8 @@ float driveEncoderVal(parallel_drive *drive, encoderConfig side=UNASSIGNED, bool
 	if (side == AVERAGE) {
 		if (absolute) {
 			return (fabs(driveEncoderVal(drive, LEFT, rawValue)) + fabs(driveEncoderVal(drive, RIGHT, rawValue))) / 2;
-		} else {
+		}
+	else {
 			return (driveEncoderVal(drive, LEFT, rawValue) + driveEncoderVal(drive, RIGHT, rawValue)) / 2;
 		}
 	} else if (side == LEFT) {
@@ -177,7 +181,8 @@ void updatePosition(parallel_drive *drive) {
 			drive->position.x += r * (sin(drive->position.theta + phi) - sin(drive->position.theta));
 			drive->position.y += r * (cos(drive->position.theta) - cos(drive->position.theta + phi));
 			drive->position.theta = (drive->gyroCorrection==NONE ? drive->position.theta+phi : angle);
-		} else {
+		}
+	else {
 			drive->position.x += leftDist * cos(drive->position.theta);
 			drive->position.y += leftDist * sin(drive->position.theta);
 		}
@@ -223,7 +228,8 @@ float calculateWidth(parallel_drive *drive, int duration=10000, int sampleTime=2
 			}
 		}
 		return totalWidth / samples;
-	} else {
+	}
+	else {
 		return 0;
 	}
 }

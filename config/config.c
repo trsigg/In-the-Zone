@@ -8,8 +8,8 @@
 #define HAS_SPEAKER    true
 
 	//#subregion testing - TODO: change parameter scheme
-#define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID)
-int debugParameters[] = { 0, 7, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol }
+#define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
+int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol }
 	//#endsubregion
 //#endregion
 
@@ -19,7 +19,7 @@ int debugParameters[] = { 0, 7, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, 
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 650,   900,     1190,   750,        1300,   1195,   2160 };
+	int liftPos[] = { 1425,  1430,    1700,   1430,       1910,   1915,   2985 };	//SAFE previously 1560
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 500,      750,     1500,  1500 };
@@ -45,7 +45,7 @@ int debugParameters[] = { 0, 7, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, 
 	//#subregion sensors
 	#define L_SENS_REVERSED  false	//lift	- TODO: automatically determine sensor type based on digital or analog port
 	#define FB_SENS_REVERSED false	//four bar
-	#define L_ENC_REVERSED   true	//drive
+	#define L_ENC_REVERSED   false	//drive
 	#define R_ENC_REVERSED   true
 
 	#define HYRO        in1
@@ -58,7 +58,7 @@ int debugParameters[] = { 0, 7, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, 
 	#define LEFT_LINE   in1	//not currently attached
 	#define BACK_LINE   in1
 	#define RIGHT_LINE  in1
-	//#define FB_SENSOR   in1
+	#define FB_SENSOR   -1	//-1 if not attached
 	//#endsubregion
 
 	//#subregion measurements
@@ -79,8 +79,8 @@ int debugParameters[] = { 0, 7, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, 
 	//#endsubregion
 
 	//#subregion top four bar
-#define fbInBtn         Btn6U
-#define fbOutBtn        Btn6D
+#define fbInBtn           Btn6U
+#define fbOutBtn          Btn6D
 	//#endsubregion
 
 	//#subregion lift
@@ -94,7 +94,7 @@ int debugParameters[] = { 0, 7, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, 
 	//#endsubregion
 
 	//#subregion autostacking control
-#define stackBtn          Btn6U
+#define stackBtn          Btn8U
 #define toggleFieldingBtn Btn8R
 		//#subsubregion cone count adjustment (all with shift)
 #define resetBtn          Btn8R
@@ -118,6 +118,7 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 	//#endsubregion
 	//#subregion measurements
 #define CONE_HEIGHT 4.0
+#define L_OFFSET    2.0
 #define GOAL_TO_MID_DIST 17.5
 	//#endsubregion
 	//#subregion still speeds
@@ -132,7 +133,7 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define MAX_NUM_CONES      14
 	//#endsubregion
 	//#subregion timing
-//#define FB_MOVE_DURATION      750
+#define FB_MOVE_DURATION      500
 #define GOAL_INTAKE_DURATION  1500
 #define GOAL_OUTTAKE_DURATION 1750
 	//#endsubregion
@@ -145,34 +146,36 @@ motorGroup goalIntake;
 motorGroup lift;
 motorGroup fourBar;
 
+//motorGroup groupWaitList[DEF_WAIT_LIST_LEN] = { lift, fourBar, goalIntake };
+
 void initializeStructs() {
+	//arrayCopy(groupWaitList, defGroupWaitList, DEF_WAIT_LIST_LEN);
+
   //drive
 	initializeDrive(drive, NUM_LEFT_MOTORS, leftMotors, NUM_RIGHT_MOTORS, rightMotors, true);
 	attachEncoder(drive, LEFT_ENC, LEFT, L_ENC_REVERSED);
-	attachEncoder(drive, RIGHT_ENC, RIGHT, R_ENC_REVERSED, 4.0, 2.0);
+	attachEncoder(drive, RIGHT_ENC, RIGHT, R_ENC_REVERSED, 4.0);
 	attachGyro(drive, HYRO);
 
 	//lift
-  initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors);
-	configureButtonInput(lift, liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
+  initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors, liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
 	configureBtnDependentStillSpeed(lift);
-	initializeTargetingPID(lift, 0.25*L_CORR_FCTR, 0.01*L_CORR_FCTR, 5*L_CORR_FCTR, 10);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
+	initializeTargetingPID(lift, 0.7*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 70*L_CORR_FCTR, 100/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
+	configureAutoStillSpeed(lift, 50);
 	addSensor(lift, LIFT_SENSOR, L_SENS_REVERSED);
 	if (LIFT_SENSOR>=dgtl1) configureEncoderCorrection(lift, liftPos[L_MAX]);
 
 	//mobile goal intake
-	initializeGroup(goalIntake, NUM_GOAL_MOTORS, goalMotors);
-	configureButtonInput(goalIntake, goalOuttakeBtn, goalIntakeBtn);
-	configureBtnDependentStillSpeed(goalIntake, GOAL_STILL_SPEED);
+	initializeGroup(goalIntake, NUM_GOAL_MOTORS, goalMotors, goalIntakeBtn, goalOuttakeBtn);
+	configureBtnDependentStillSpeed(goalIntake);
 
 	//top four bar
-	initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors);
-	configureButtonInput(fourBar, fbInBtn, fbOutBtn);
-	configureBtnDependentStillSpeed(fourBar, FB_STILL_SPEED);
+	initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors, fbInBtn, fbOutBtn, FB_STILL_SPEED, 90);
+	configureBtnDependentStillSpeed(fourBar);
 
-	#ifdef FB_SENSOR
-		initializeTargetingPID(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 1.3*FB_CORR_FCTR, 10);
+	if (FB_SENSOR >= 0) {
+		initializeTargetingPID(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 13*FB_CORR_FCTR, 100/FB_CORR_FCTR);
 		addSensor(fourBar, FB_SENSOR, FB_SENS_REVERSED);
 		if (FB_SENSOR>=dgtl1) configureEncoderCorrection(fourBar, fbPos[FB_MAX]);
-	#endif
+	}
 }

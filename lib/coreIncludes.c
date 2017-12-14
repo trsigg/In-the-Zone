@@ -28,9 +28,13 @@ float convertAngle(float angle, angleType output, angleType input=RAW) {
 	return angle;
 }
 
-void arrayCopy(int* source, int* destination, int elements) {
+void arrayCopy(void* source, void* destination, int elements) {
 	for (int i=0; i<elements; i++)
 		destination[i] = source[i];
+}
+
+float copysign(float sign, float magnitude) {
+	return sgn(sign) * fabs(magnitude);
 }
 
 float tan(float x) {

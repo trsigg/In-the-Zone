@@ -32,7 +32,8 @@ void setDrivePowerByVector(holonomicDrive *drive, float x, float y) { //sets mot
 		//Input transformed from joystick circle to velocity square. If you want more detail ask Tynan. Sorry.
 		squareX = sgn(x) / (abs(y/x) + 1);
 		squareY = squareX * y/x;
-	} else {
+	}
+	else {
 		squareX = 0;
 		squareY = sgn(y);
 	}
@@ -54,7 +55,8 @@ void driveRuntime(holonomicDrive *drive) {
 
 	if (abs(x) > drive->deadBand || abs(y) > drive->deadBand) {
 		setDrivePowerByVector(drive, x, y);
-	} else {
+	}
+	else {
 		int turnPower = vexRT[ drive->turnInput ];
 
 		setDrivePower(drive, -turnPower, turnPower, false);

@@ -1,26 +1,41 @@
+//#define RUN_AUTON_AS_MAIN
+
 //#region setup
 #pragma platform(VEX2)
 #pragma competitionControl(Competition)
-#include "Vex_Competition_Includes.c"
 #include "..\lib\buttonTracker.c"
 #include "..\game\autonomous.c"
 #include "..\game\testing.c"
+
+#ifndef RUN_AUTON_AS_MAIN
+	#include "Vex_Competition_Includes.c"
+#endif
 //#endregion
 
 //#region autopositioning
-bool movingToMax = false;	//true if lifting up to MAX_POS
+bool movingToMax = false;	//true if lifting up to MAX_POS - TODO: fb down after going to def?
 //#endregion
 
 void pre_auton() {
-	bStopTasksBetweenModes = true;
+	#ifndef RUN_AUTON_AS_MAIN
+		bStopTasksBetweenModes = true;
+	#endif
 
 	initializeStructs();
+
 	initializeAutoMovement();
+	driveDefaults.debugStartCol = debugParameters[4];
+	turnDefaults.debugStartCol = debugParameters[5];
+
 	if (HAS_SPEAKER)
 		initializeAudio();
 }
 
+#ifdef RUN_AUTON_AS_MAIN
+task main() {
+#else
 task autonomous() {
+#endif
 	prepareForAuton();
 	handleTesting();
 
@@ -33,7 +48,7 @@ task autonomous() {
 	}
 
 	while (true) {
-		executeLiftManeuvers();
+		executeManeuvers();
 		logSensorVals();
 		EndTimeSlice();
 	}
@@ -65,7 +80,11 @@ void handleAutopositioningInput(bool shift) {
 	}
 
 	if (movingToMax && errorLessThan(lift, 100)) {
-		setFbState(STACK);
+		if (FB_SENSOR >= 0)
+			setFbState(STACK);
+		else
+			moveFourBar(true);
+
 		movingToMax = false;
 	}
 }
@@ -73,7 +92,7 @@ void handleAutopositioningInput(bool shift) {
 void handleGoalIntakeInput() {
 	int goalPower = takeInput(goalIntake, false);
 
-	if (getPosition(lift)>liftPos[L_SAFE] || goalPower<=GOAL_STILL_SPEED)
+	if (getPosition(lift)>liftPos[L_SAFE] || abs(goalPower)<=GOAL_STILL_SPEED)
 		setPower(goalIntake, goalPower);
 }
 
@@ -86,12 +105,12 @@ void handleLiftInput(bool shift) {
 		else {
 			handleAutopositioningInput(shift);
 
-			takeInput(fourBar, !fourBar.activelyMaintining); //will only set power if not maintaining a position
-			takeInput(lift, !lift.activelyMaintining);       //if there is input, activelyMaintaining will be set to false and normal control will resume
+			takeInput(fourBar, fourBar.moving==NO); //will only set power if not maintaining a position
+			takeInput(lift, lift.moving==NO);       //if there is input, activelyMaintaining will be set to false and normal control will resume
 		}
 	}
 
-	executeLiftManeuvers();
+	executeManeuvers();
 }
 
 task usercontrol() {

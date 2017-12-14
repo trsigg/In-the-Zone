@@ -7,6 +7,7 @@ void prepareForAuton() {
 	resetLiftEncoders();
 	stopLiftTargeting();
 	startTask(autoStacking);
+	setPower(fourBar, FB_STILL_SPEED)
 	numCones = 0;
 }
 //#endregion
@@ -95,7 +96,7 @@ void driveAndGoal(int dist, bool in, bool stackCone=false, bool quadRamp=false, 
 	else
 		driveStraight(dist, true);
 
-	while (goalDirection != 0) EndTimeSlice();
+	waitForMovementToFinish(goalIntake);
 
 	if (stackCone) stackNewCone();
 
@@ -106,7 +107,7 @@ void driveAndGoal(int dist, bool in, bool stackCone=false, bool quadRamp=false, 
 //#region routine portions
 void scoreGoal(bool retract=true, bool twentyPt=true) {	//lined up to 10pt bar -> behind 10pt bar (TODO: make retract 2nd arg)
 	if (twentyPt)
-		driveForDuration(1000, 127, 20);
+		driveForDuration(1500, 127, 20);
 	else
 		driveForDuration(750, 60, 15);
 
@@ -120,8 +121,11 @@ void scoreGoal(bool retract=true, bool twentyPt=true) {	//lined up to 10pt bar -
 }
 
 void sideGoal(bool retract=true, bool twentyPt=true, bool middle=true) {	//touching bar, aligned with goal -> behind 10pt bar
+	if (lift.posPID.target<liftPos[L_SAFE] || lift.moving!=TARGET)
+		moveLiftToSafePos();
+
 	//pick up side goal
-	driveAndGoal(15, false, false, true, true);
+	driveAndGoal(15, false, false, true);
 	driveStraight(30);
 
 	//position robot so it is ready to outtake goal into 20pt zone
@@ -129,7 +133,7 @@ void sideGoal(bool retract=true, bool twentyPt=true, bool middle=true) {	//touch
 
 	moveLiftToSafePos();
 
-	turn(-45);
+	turn(-45);	//turnDriveTurn?
 	driveStraight(middle ? -23 : -10);
 	turn(-90);
 
