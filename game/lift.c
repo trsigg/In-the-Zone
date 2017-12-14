@@ -18,11 +18,17 @@ void handleEncoderCorrection() {
 }
 //#endregion
 
-void executeLiftManeuvers(bool autoStillSpeed=true) {	//TODO: argument doesn't do anything right now
+void executeManeuvers(bool autoStillSpeed=true) {	//TODO: argument doesn't do anything right now
 	handleEncoderCorrection();
 
 	executeAutomovement(lift, debugParameters[0]);
 	executeAutomovement(fourBar, debugParameters[2]);
+	executeAutomovement(goalIntake);	//I know, this isn't really part of the lift... (TODO: reposition)
+}
+
+void waitForLiftingToFinish(int timeout=100) {	//TODO: delete as soon as possible
+	waitForMovementToFinish(lift, timeout);
+	waitForMovementToFinish(fourBar);
 }
 
 void stopLiftTargeting() {
@@ -99,8 +105,10 @@ void moveLiftToSafePos(bool wait=true) {
 		lift.stillSpeedReversed = false;
 	}
 
-	if (FB_SENSOR >= 0)
+	if (FB_SENSOR >= 0)	//TODO: make this its own fn
 		setFbState(FB_SAFE);
+	else
+		moveFourBar(true);
 
 	if (wait)	//TODO: ensure fb in correct position?
 		while (getPosition(lift) < liftPos[L_SAFE])

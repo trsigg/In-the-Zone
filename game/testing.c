@@ -7,14 +7,14 @@ void logSensorVals() {
 
 
 //#region PID testing
-#define NUM_INPUTS 4
-int targets[NUM_INPUTS] = { 0, 0, 0, 0 };	//lift, driveStraight, turn, lift PID mode (up=1)
+#define NUM_INPUTS 8
+int targets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0 };	//lift, driveStraight, turn, lift PID mode (up=1), goalIntake state (in=1), stack nth cone, move fb (in=1), misc
 bool abort = false;
 bool end = false;
 
 task temp() {
 	while (true)
-		executeLiftManeuvers();
+		executeManeuvers();
 }
 
 void handlePIDinput(int index) {
@@ -38,11 +38,23 @@ void handlePIDinput(int index) {
 			if (MULTIPLE_PIDs)
 				setLiftPIDmode(input == 1);
 			break;
+		case 4:
+			moveGoalIntake(input == 1);
+			break;
+		case 5:
+			numCones = input - 1;
+			stackNewCone();
+			break;
+		case 6:
+			moveFourBar(input == 1);
+			break;
+		case 7:
+			SensorScale[HYRO] = input;
 	}
 }
 
 void testPIDs() {
-	int prevTargets[NUM_INPUTS] = { 0, 0, 0, 0 };
+	int prevTargets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	//arrayCopy(targets, prevTargets, NUM_INPUTS);
 
 	while (!end) {
@@ -56,6 +68,7 @@ void testPIDs() {
 		logSensorVals();
 
 		if (abort) {
+			stacking = false;
 			stopLiftTargeting();
 
 			driveData.isDriving = false;
@@ -66,7 +79,7 @@ void testPIDs() {
 			abort = false;
 		}
 
-		executeLiftManeuvers(TESTING == 1);
+		executeManeuvers(TESTING == 1);
 	}
 }
 //#endregion

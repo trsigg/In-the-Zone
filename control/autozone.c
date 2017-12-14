@@ -1,10 +1,15 @@
+//#define RUN_AUTON_AS_MAIN
+
 //#region setup
 #pragma platform(VEX2)
 #pragma competitionControl(Competition)
-#include "Vex_Competition_Includes.c"	//TODO: main testing
 #include "..\lib\buttonTracker.c"
 #include "..\game\autonomous.c"
 #include "..\game\testing.c"
+
+#ifndef RUN_AUTON_AS_MAIN
+	#include "Vex_Competition_Includes.c"
+#endif
 //#endregion
 
 //#region autopositioning
@@ -12,7 +17,9 @@ bool movingToMax = false;	//true if lifting up to MAX_POS - TODO: fb down after 
 //#endregion
 
 void pre_auton() {
-	bStopTasksBetweenModes = true;	//TODO: main testing
+	#ifndef RUN_AUTON_AS_MAIN
+		bStopTasksBetweenModes = true;
+	#endif
 
 	initializeStructs();
 
@@ -24,7 +31,11 @@ void pre_auton() {
 		initializeAudio();
 }
 
-task autonomous() {	//TODO: main testing
+#ifdef RUN_AUTON_AS_MAIN
+task main() {
+#else
+task autonomous() {
+#endif
 	prepareForAuton();
 	handleTesting();
 
@@ -37,7 +48,7 @@ task autonomous() {	//TODO: main testing
 	}
 
 	while (true) {
-		executeLiftManeuvers();
+		executeManeuvers();
 		logSensorVals();
 		EndTimeSlice();
 	}
@@ -81,7 +92,7 @@ void handleAutopositioningInput(bool shift) {
 void handleGoalIntakeInput() {
 	int goalPower = takeInput(goalIntake, false);
 
-	if (getPosition(lift)>liftPos[L_SAFE] || goalPower<=GOAL_STILL_SPEED)
+	if (getPosition(lift)>liftPos[L_SAFE] || abs(goalPower)<=GOAL_STILL_SPEED)
 		setPower(goalIntake, goalPower);
 }
 
@@ -99,7 +110,7 @@ void handleLiftInput(bool shift) {
 		}
 	}
 
-	executeLiftManeuvers();
+	executeManeuvers();
 }
 
 task usercontrol() {

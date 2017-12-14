@@ -3,7 +3,7 @@
 #include "timer.c"
 
 #define DEF_WAIT_TIMEOUT  100
-#define DEF_WAIT_LIST_LEN 3
+#define DEF_WAIT_LIST_LEN 1
 
 enum controlType { NONE, BUTTON, JOYSTICK };
 enum automovementType { NO, TARGET, MANEUVER, DURATION };
@@ -193,7 +193,7 @@ int calcStillSpeed(motorGroup *group, bool posForBtnSS=true) {
 			reversed = (getPosition(group) > group->stillSpeedSwitchPos);
 			break;
 		case 2:
-			reversed = posForBtnSS;
+			reversed = !posForBtnSS;
 			break;
 	}
 
@@ -302,13 +302,15 @@ void moveForDuration(motorGroup *group, int power, int duration, bool runConcurr
 	group->movePower = power;
 	group->moveDuration = duration;
 	group->moving = DURATION;
+	group->maneuverTimer = resetTimer();
 	group->endPower = (endPower>127 ? calcStillSpeed(group, power>0) : endPower);
 
 	setPower(group, group->movePower);
 
-	if (runConcurrently) {
+	if (!runConcurrently) {
 		wait1Msec(duration);
 		setPower(group, group->endPower);
+		group->moving = NO;
 	}
 }
 	//#endsubregion
@@ -321,7 +323,7 @@ void waitForMovementToFinish(int timeout=DEF_WAIT_TIMEOUT, int numGroups=DEF_WAI
 		for (int i=0; i<numGroups; i++) {
 			if (groups[i].moving==TARGET && errorLessThan(&groups[i], &groups[i]->waitErrorMargin)) {
 					movementTimer = resetTimer();
-					continue;
+					continue;	//TODO: ??
 			}
 		}
 		EndTimeSlice();
@@ -343,8 +345,20 @@ void waitForMovementToFinish(bool *waitForGroups, int timeout=DEF_WAIT_TIMEOUT) 
 	waitForMovementToFinish(timeout, j, groups);
 }
 
-void waitForMovementToFinish(motorGroup *group, int timeout=DEF_WAIT_TIMEOUT) {
+/*void waitForMovementToFinish(motorGroup *group, int timeout=DEF_WAIT_TIMEOUT) {
 	waitForMovementToFinish(timeout, 1, group);
+}*/
+void waitForMovementToFinish(motorGroup *group, int timeout=DEF_WAIT_TIMEOUT) {	//TODO: delete this as soon as possible
+	long movementTimer = resetTimer();
+
+	while (time(movementTimer) < timeout) {	//wait for targeting to stabilize
+		if (group->moving==TARGET && errorLessThan(group, group->waitErrorMargin))
+				movementTimer = resetTimer();
+
+		EndTimeSlice();
+	}
+
+	while (group->moving!=TARGET && group->moving!=NO) EndTimeSlice();
 }
 	//#endsubregion
 
@@ -371,7 +385,7 @@ int executeAutomovement(motorGroup *group, int debugStartCol) {
 			break;
 
 		case DURATION:
-			if (time(group->maneuverTimer) > group->maneuverTimeout) {
+			if (time(group->maneuverTimer) > group->moveDuration) {
 				setPower(group, group->endPower);
 				group->moving = NO;
 			}
