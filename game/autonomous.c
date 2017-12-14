@@ -79,6 +79,10 @@ void driveForDuration(int duration, int beginPower=127, int endPower=0) {
 	setDrivePower(drive, endPower, endPower);
 }
 
+void alignToBar(bool forward=true) {
+	driveForDuration(1250, 40, 15);
+}
+
 void turnDriveTurn(int angle, int dist, int angle2=0) {
 	turn(angle);
 	driveStraight(dist);
@@ -105,22 +109,23 @@ void driveAndGoal(int dist, bool in, bool stackCone=false, bool quadRamp=false, 
 //#endregion
 
 //#region routine portions
-void scoreGoal(bool retract=true, bool twentyPt=true) {	//lined up to 10pt bar -> behind 10pt bar (TODO: make retract 2nd arg)
+void scoreGoal(bool twentyPt=true, bool retract=true) {	//behind 10pt bar -> lined up with 10pt bar
 	if (twentyPt)
-		driveForDuration(1500, 127, 20);
+		driveForDuration(1500, 127, 20);	//drive over bar
 	else
-		driveForDuration(750, 60, 15);
+		alignToBar();
 
 	moveGoalIntake(false);	//extend goal intake
 
 	driveForDuration(250);	//push goal to back of zone
-	driveStraight(twentyPt ? -17 : -7);
+	driveStraight(twentyPt ? -25 : -7);	//back out
 
 	numCones = 0;
 	if (retract) moveGoalIntake(true);	//retract goal intake
 }
 
-void sideGoal(bool retract=true, bool twentyPt=true, bool middle=true) {	//touching bar, aligned with goal -> behind 10pt bar
+void sideGoal(bool twentyPt=true, bool middle=false, bool reversed=false, bool retract=true) {	//touching bar, aligned with goal -> lined up with 10pt bar (TODO: aligned w/ tape)
+	int direction = (reversed ? -1 : 1);
 	if (lift.posPID.target<liftPos[L_SAFE] || lift.moving!=TARGET)
 		moveLiftToSafePos();
 
@@ -128,48 +133,48 @@ void sideGoal(bool retract=true, bool twentyPt=true, bool middle=true) {	//touch
 	driveAndGoal(15, false, false, true);
 	driveStraight(30);
 
-	//position robot so it is ready to outtake goal into 20pt zone
+	//position robot facing middle of 10pt bar
 	driveAndGoal(-42, true, true);
 
 	moveLiftToSafePos();
 
-	turn(-45);	//turnDriveTurn?
-	driveStraight(middle ? -23 : -10);
-	turn(-90);
+	turn(-direction * 45);	//turnDriveTurn?
+	driveStraight(middle||twentyPt ? -23 : -10);
+	turn(-direction * 90);
 
-	scoreGoal(retract, twentyPt);
+	scoreGoal(twentyPt, retract);
 }
 
-void middleGoal(bool left, bool twentyPt, bool center=true) {		//aligned with goal -> aligned with tape (approx)
+void middleGoal(bool left, bool twentyPt=true, bool center=false) {		//aligned with goal -> aligned with tape (approx)
 	int direction = (left ? 1 : -1);
 
-	moveGoalIntake(false);
+	moveGoalIntake(false);	//TODO: check if intake is out?
 
 	driveStraight(40);
 
 	driveAndGoal(-30, true);
 	if (twentyPt) stackNewCone();	//preload
 
-	if (center) {
+	if (center || twentyPt) {
 		turn(-90 * direction);
 		driveStraight(-15);
 		turn(-100 * direction);
 	}
 	else {
 		turn(-180);
-		driveForDuration(1250, 40);	//align to 10pt bar
+		//driveForDuration(1250, 40);	//align to 10pt bar
 	}
 
 	while (stacking && twentyPt) EndTimeSlice();
 
 	moveLiftToSafePos();
-	scoreGoal(true, twentyPt);
+	scoreGoal(twentyPt);
 
-	if (twentyPt) {
-		/*driveForDuration(750, -127);	//back out of 20pt zone
-		wait1Msec(750);*/
+	/*if (twentyPt) {
+		driveForDuration(750, -127);	//back out of 20pt zone
+		wait1Msec(750);
 		driveForDuration(1250, 40);	//align against 10pt bar
-	}
+	}*/
 	//alignToLine(-60);	//align to tape (TODO: rename fn?)
 	driveStraight(-7);
 }
@@ -179,18 +184,18 @@ void middleGoal(bool left, bool twentyPt, bool center=true) {		//aligned with go
 task skillz() {
 	turnDefaults.reversed = false;
 
-	middleGoal(true, true);	//near left middle goal
+	middleGoal(true);	//near left middle goal to 20Pt zone
 
 	turnDriveTurn(-95, GOAL_TO_MID_DIST);	//TODO: turnToLine() (& similar below)
 
-	middleGoal(false, false, false);	//near right middle goal
+	middleGoal(false, false);	//near right middle goal to right 10pt
 
 	/*turn(-90);
 	driveStraight(15);
 	turn(-90);*/
 	turnDriveTurn(-150, 5, -30);
 
-	//far right middle goal
+	//far right middle goal to 20pt
 	driveStraight(60);	//push aside cones
 	driveAndGoal(-GOAL_TO_MID_DIST, false);
 
@@ -202,14 +207,14 @@ task skillz() {
 
 	scoreGoal();
 
+	//far left middle goal to left 10pt
 	turnDriveTurn(-90, GOAL_TO_MID_DIST);
 
-	middleGoal(false, false, false);
+	middleGoal(false, false);
 
 	turnDriveTurn(-90, 20, -45);
 
-	turnDefaults.reversed = true;
-	sideGoal(true, false, false);
+	sideGoal(false, false, true);	//far left side goal to left 10pt
 
 	/*turnDefaults.reversed = true;	//TODO: unreverse
 
@@ -229,7 +234,7 @@ task skillz() {
 task altSkillz() {
 	turnDefaults.reversed = false;
 
-	middleGoal(false, true);
+	middleGoal(false);
 
 	turnDriveTurn(-90, 25 /*TODO: const (like goalToMid)*/);
 
@@ -278,3 +283,11 @@ task sideGoalTask() {
 	numCones = 0;*/
 }
 //#endregion
+
+task autonUpdateTask() {
+	while (true) {
+		executeManeuvers();
+		logSensorVals();
+		EndTimeSlice();
+	}
+}

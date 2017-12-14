@@ -1,5 +1,3 @@
-//#define RUN_AUTON_AS_MAIN
-
 //#region setup
 #pragma platform(VEX2)
 #pragma competitionControl(Competition)
@@ -38,19 +36,14 @@ task autonomous() {
 #endif
 	prepareForAuton();
 	handleTesting();
+	startTask(autonUpdateTask);
 
 	if (SKILLZ_MODE) {
 		startTask(skillz);
 	}
 	else {
-		turnDefaults.reversed = SensorValue[SIDE_POT]<1830;	//TODO: put this val in config
-		startTask(sideGoalTask);
-	}
-
-	while (true) {
-		executeManeuvers();
-		logSensorVals();
-		EndTimeSlice();
+		turnDefaults.reversed = SensorValue[SIDE_POT]<1820;	//TODO: put this val in config
+		sideGoal(SensorValue[MODE_POT]<1885);
 	}
 }
 

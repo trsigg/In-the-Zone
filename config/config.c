@@ -1,4 +1,5 @@
 #define E_TEAM
+//#define RUN_AUTON_AS_MAIN
 
 
 //#region options
