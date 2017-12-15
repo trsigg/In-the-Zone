@@ -118,8 +118,8 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define B_LINE_THRESHOLD 2870
 	//#endsubregion
 	//#subregion measurements
-#define CONE_HEIGHT 4.0
-#define L_OFFSET    2.0
+#define CONE_HEIGHT 3
+#define L_OFFSET    1.5
 #define GOAL_TO_MID_DIST 17.5
 	//#endsubregion
 	//#subregion still speeds
@@ -162,7 +162,7 @@ void initializeStructs() {
   initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors, liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
 	configureBtnDependentStillSpeed(lift);
 	initializeTargetingPID(lift, 0.7*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 70*L_CORR_FCTR, 100/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
-	configureAutoStillSpeed(lift, 50);
+	configureAutoStillSpeed(lift, 25);
 	addSensor(lift, LIFT_SENSOR, L_SENS_REVERSED);
 	if (LIFT_SENSOR>=dgtl1) configureEncoderCorrection(lift, liftPos[L_MAX]);
 

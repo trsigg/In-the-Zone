@@ -321,7 +321,7 @@ void waitForMovementToFinish(int timeout=DEF_WAIT_TIMEOUT, int numGroups=DEF_WAI
 
 	while (time(movementTimer) < timeout) {	//wait for targeting to stabilize
 		for (int i=0; i<numGroups; i++) {
-			if (groups[i].moving==TARGET && errorLessThan(&groups[i], &groups[i]->waitErrorMargin)) {
+			if (groups[i].moving==TARGET && !errorLessThan(&groups[i], &groups[i]->waitErrorMargin)) {
 					movementTimer = resetTimer();
 					continue;	//TODO: ??
 			}
@@ -352,7 +352,7 @@ void waitForMovementToFinish(motorGroup *group, int timeout=DEF_WAIT_TIMEOUT) {	
 	long movementTimer = resetTimer();
 
 	while (time(movementTimer) < timeout) {	//wait for targeting to stabilize
-		if (group->moving==TARGET && errorLessThan(group, group->waitErrorMargin))
+		if (group->moving==TARGET && !errorLessThan(group, group->waitErrorMargin))
 				movementTimer = resetTimer();
 
 		EndTimeSlice();

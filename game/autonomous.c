@@ -80,7 +80,7 @@ void driveForDuration(int duration, int beginPower=127, int endPower=0) {
 }
 
 void alignToBar(bool forward=true) {
-	driveForDuration(1250, 40, 15);
+	driveForDuration(750, 40, 15);
 }
 
 void turnDriveTurn(int angle, int dist, int angle2=0) {
@@ -104,7 +104,7 @@ void driveAndGoal(int dist, bool in, bool stackCone=false, bool quadRamp=false, 
 
 	if (stackCone) stackNewCone();
 
-	while (driveData.isDriving || (stacking && stackCone)) EndTimeSlice();
+	while (driveData.isDriving /*|| (stacking && stackCone)*/) EndTimeSlice();
 }
 //#endregion
 
@@ -117,7 +117,7 @@ void scoreGoal(bool twentyPt=true, bool retract=true) {	//behind 10pt bar -> lin
 
 	moveGoalIntake(false);	//extend goal intake
 
-	driveForDuration(250);	//push goal to back of zone
+	if (twentyPt) driveForDuration(250);	//push goal to back of zone
 	driveStraight(twentyPt ? -25 : -7);	//back out
 
 	numCones = 0;
@@ -136,11 +136,12 @@ void sideGoal(bool twentyPt=true, bool middle=false, bool reversed=false, bool r
 	//position robot facing middle of 10pt bar
 	driveAndGoal(-42, true, true);
 
-	moveLiftToSafePos();
-
 	turn(-direction * 45);	//turnDriveTurn?
-	driveStraight(middle||twentyPt ? -23 : -10);
-	turn(-direction * 90);
+	driveStraight(middle||twentyPt ? -27 : -10);
+	turn(-direction * 100);
+
+	while (stacking) EndTimeSlice();
+	moveLiftToSafePos();
 
 	scoreGoal(twentyPt, retract);
 }

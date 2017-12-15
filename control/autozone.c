@@ -91,7 +91,7 @@ void handleGoalIntakeInput() {
 
 void handleLiftInput(bool shift) {
 	if (!stacking) {
-		if (vexRT[stackBtn] == 1) {
+		if (!shift && vexRT[stackBtn]==1) {
 			movingToMax = false;
 			stackNewCone();
 		}
