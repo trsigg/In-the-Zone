@@ -20,6 +20,7 @@ typedef struct {
 	int debugStartCol;
 	int sampleTime;
 	int waitAtEnd;
+	int minErrorMargin;	//minimum possible error margin 	(TODO: find another system?)
 	float rampConst1, rampConst2, rampConst3, rampConst4, rampConst5; // initialPower/kP, maxPower/kI, finalPower/kD, brakeDuration/pd acceptable error, brakePower/pd timeout
 } turnDefsStruct;
 
@@ -33,6 +34,7 @@ typedef struct {
 	int waitAtEnd;
 	int sampleTime;
 	int debugStartCol;
+	int minErrorMargin;
 	float rampConst1, rampConst2, rampConst3, rampConst4, rampConst5;	//same as in turnDefsStruct
 	float kP_c, kI_c, kD_c; //correction PID constants
 	float minSpeed;
@@ -51,6 +53,7 @@ void initializeAutoMovement() {
 	turnDefaults.debugStartCol = -1;
 	turnDefaults.sampleTime = 30;
 	turnDefaults.waitAtEnd = 100;
+	turnDefaults.minErrorMargin = 2;
 	turnDefaults.rampConst1 = 4;    // initialPower  / kP
 	turnDefaults.rampConst2 = 0.01; // maxPower      / kI
 	turnDefaults.rampConst3 = 16;	  // finalPower    / kD
@@ -66,6 +69,7 @@ void initializeAutoMovement() {
 	driveDefaults.sampleTime = 50;
 	driveDefaults.usePID = true;
 	driveDefaults.debugStartCol = -1;
+	driveDefaults.minErrorMargin = 1;
 	driveDefaults.rampConst1 = 10;	//same as above
 	driveDefaults.rampConst2 = 0.1;
 	driveDefaults.rampConst3 = 50;
@@ -153,7 +157,7 @@ void turn(float angle, bool runAsTask=turnDefaults.runAsTask, float in1=turnDefa
 
 	if (usePID) {
 		initializeRampHandler(turnData.ramper, PD, formattedAngle, in1, in2, in3, 0, false);	//temp
-		turnData.error = in4 * formattedAngle;	//TODO: add lower limit
+		turnData.error = max(in4*formattedAngle, turnDefaults.minErrorMargin);	//TODO: add lower limit
 		turnData.pdTimeout = in5;
 		turnData.pdTimer = resetTimer();
 		turnData.finalDelay = waitAtEnd;
@@ -308,7 +312,7 @@ void driveStraight(float distance, bool runAsTask=driveDefaults.runAsTask, float
 
 	if (usePID) {
 		initializeRampHandler(driveData.ramper, PD, driveData.distance, in1, in2, in3, 0, false);	//temp false
-		driveData.error = in4 * driveData.distance;	//TODO: add lower limit
+		driveData.error = max(in4*driveData.distance, driveDefaults.minErrorMargin);
 		driveData.pdTimeout = in5;
 		driveData.pdTimer = resetTimer();
 		driveData.finalDelay = waitAtEnd;

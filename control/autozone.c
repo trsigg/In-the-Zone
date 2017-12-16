@@ -3,7 +3,7 @@
 #pragma competitionControl(Competition)
 #include "..\lib\buttonTracker.c"
 #include "..\game\autonomous.c"
-#include "..\game\testing.c"
+
 
 #ifndef RUN_AUTON_AS_MAIN
 	#include "Vex_Competition_Includes.c"
@@ -38,12 +38,27 @@ task autonomous() {
 	handleTesting();
 	startTask(autonUpdateTask);
 
+	int sidePos = SensorValue[SIDE_POT];
+	int modePos = SensorValue[MODE_POT];
+
+	turnDefaults.reversed = sidePos < 1820;	//TODO: put this val in config
+
 	if (SKILLZ_MODE) {
 		startTask(skillz);
 	}
-	else {
-		turnDefaults.reversed = SensorValue[SIDE_POT]<1820;	//TODO: put this val in config
-		sideGoal(SensorValue[MODE_POT]<1885);
+	else if (1270<sidePos && sidePos<2400) {	//passive (does nothing)
+		//...
+	}
+	else if (modePos < 3490) {	//side goal
+		sideGoal(modePos<375, false, false, false);
+
+		if (375<modePos && modePos<1960) {	//drive back through cones
+			turnDriveTurn(90, 10, 90);
+			driveStraight(60);
+		}
+	}
+	else {	//defensive
+		driveForDuration(5000, -127);
 	}
 }
 
@@ -87,6 +102,8 @@ void handleGoalIntakeInput() {
 
 	if (getPosition(lift)>liftPos[L_SAFE] || abs(goalPower)<=GOAL_STILL_SPEED)
 		setPower(goalIntake, goalPower);
+	else
+		maybeLiftToSafePos(false);
 }
 
 void handleLiftInput(bool shift) {
@@ -108,6 +125,7 @@ void handleLiftInput(bool shift) {
 
 task usercontrol() {
 	stopLiftTargeting();
+	moveLiftToSafePos(false);
 
 	startTask(autoStacking);
 

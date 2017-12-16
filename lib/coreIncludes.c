@@ -37,6 +37,14 @@ float copysign(float sign, float magnitude) {
 	return sgn(sign) * fabs(magnitude);
 }
 
+float min(float val1, float val2) {
+	return (val1>val2 ? val2 : val1);
+}
+
+float max(float val1, float val2) {
+	return (val1>val2 ? val1 : val2);
+}
+
 float tan(float x) {
 	return sin(x)/cos(x);
 }

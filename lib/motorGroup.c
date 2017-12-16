@@ -277,7 +277,7 @@ bool errorLessThan(motorGroup *group, int errorMargin) {	//returns true if PID e
 	//#endsubregion
 
 	//#subregion maneuvers
-void createManeuver(motorGroup *group, int position, bool runConcurrently=true, int endPower=0, int movePower=127, int timeout=10) {
+void createManeuver(motorGroup *group, int position, bool runConcurrently=true, int endPower=0, int movePower=127, int timeout=10) {	//TODO: auto-determine endPower as in moveForDuration
 	group->targetPos = position;
 	group->forward = group->targetPos > getPosition(group);
 	group->movePower = abs(movePower) * (group->forward ? 1 : -1);

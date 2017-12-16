@@ -10,7 +10,7 @@
 
 	//#subregion testing - TODO: change parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
-int debugParameters[] = { -1, -1, -1, -1, -1, 0 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol }
+int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol }
 	//#endsubregion
 //#endregion
 
@@ -20,7 +20,7 @@ int debugParameters[] = { -1, -1, -1, -1, -1, 0 };	//{ liftDebugStartCol, liftSe
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1425,  1430,    1700,   1420,       1910,   1915,   2985 };	//SAFE previously 1560
+	int liftPos[] = { 1415,  1415,    1700,   1410,       1910,   1915,   2985 };	//SAFE previously 1560
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 500,      750,     1500,  1500 };
@@ -120,14 +120,15 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 	//#subregion measurements
 #define CONE_HEIGHT 3
 #define L_OFFSET    1.5
-#define GOAL_TO_MID_DIST 17.5
+#define GOAL_TO_MID_DIST 19
+#define BAR_TO_LINE_DIST 9
 	//#endsubregion
 	//#subregion still speeds
-#define LIFT_STILL_SPEED   15
-#define L_AUTO_SS_MARGIN   50
-#define FB_STILL_SPEED     10
-#define FB_AUTO_SS_MARGIN  50
-#define GOAL_STILL_SPEED   15
+#define LIFT_STILL_SPEED  15
+#define L_AUTO_SS_MARGIN  50
+#define FB_STILL_SPEED    20
+#define FB_AUTO_SS_MARGIN 50
+#define GOAL_STILL_SPEED  15
 	//#endsubregion
 	//#subregion cone counts
 #define APATHY_CONES       0 //number of cones for which lift does not move
@@ -151,6 +152,7 @@ motorGroup fourBar;
 
 void initializeStructs() {
 	//arrayCopy(groupWaitList, defGroupWaitList, DEF_WAIT_LIST_LEN);
+	SensorScale[gyro] = 145;
 
   //drive
 	initializeDrive(drive, NUM_LEFT_MOTORS, leftMotors, NUM_RIGHT_MOTORS, rightMotors, true);
@@ -161,18 +163,26 @@ void initializeStructs() {
 	//lift
   initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors, liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
 	configureBtnDependentStillSpeed(lift);
-	initializeTargetingPID(lift, 0.7*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 70*L_CORR_FCTR, 100/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
+	initializeTargetingPID(lift, 0.7*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 70*L_CORR_FCTR, 50/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
 	configureAutoStillSpeed(lift, 25);
 	addSensor(lift, LIFT_SENSOR, L_SENS_REVERSED);
 	if (LIFT_SENSOR>=dgtl1) configureEncoderCorrection(lift, liftPos[L_MAX]);
 
 	//mobile goal intake
-	initializeGroup(goalIntake, NUM_GOAL_MOTORS, goalMotors, goalIntakeBtn, goalOuttakeBtn, GOAL_STILL_SPEED);
-	configureBtnDependentStillSpeed(goalIntake);
+	initializeGroup(goalIntake, NUM_GOAL_MOTORS, goalMotors);
+	if (SKILLZ_MODE)
+		configureButtonInput(goalIntake, fbOutBtn, fbInBtn);
+	else
+		configureButtonInput(goalIntake, goalIntakeBtn, goalOuttakeBtn);
+	configureBtnDependentStillSpeed(goalIntake, GOAL_STILL_SPEED);
 
 	//top four bar
-	initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors, fbInBtn, fbOutBtn, FB_STILL_SPEED);
-	configureBtnDependentStillSpeed(fourBar);
+	initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors);
+	if (SKILLZ_MODE)
+		configureButtonInput(fourBar, goalIntakeBtn, goalOuttakeBtn);
+	else
+		configureButtonInput(fourBar, fbInBtn, fbOutBtn);
+	configureBtnDependentStillSpeed(fourBar, FB_STILL_SPEED);
 
 	if (FB_SENSOR >= 0) {
 		initializeTargetingPID(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 13*FB_CORR_FCTR, 100/FB_CORR_FCTR);
