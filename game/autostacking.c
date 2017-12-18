@@ -48,7 +48,8 @@ task autoStacking() {
 			lift.stillSpeedReversed = false;
 		}
 		else {
-			setLiftState(L_DEF);
+			stopAutomovement(lift);
+			setPower(lift, -90);
 
 			wait1Msec(250); //while (getPosition(lift) > liftRelease) EndTimeSlice();
 			if (FB_SENSOR >= 0)
@@ -57,10 +58,16 @@ task autoStacking() {
 				moveFourBar(false);
 
 			waitForMovementToFinish(fourBar);
+			setLiftState(L_DEF);
 		}
 
 		stacking = false;
 		numCones++;
 		speakNum(numCones);
+
+		/*if (FB_SENSOR >= 0)
+			setFbState(FB_DEF);
+		else
+			moveFourBar(true);*/
 	}
 }

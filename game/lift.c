@@ -92,6 +92,7 @@ void setFbState(fbState state) {
 }
 
 void moveFourBar(bool up, bool runConcurrently=true) {
+	fourBar.stillSpeedReversed = !up;
 	moveForDuration(fourBar, 127*(up ? 1 : -1), FB_MOVE_DURATION, runConcurrently);
 }
 //#endregion

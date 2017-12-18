@@ -4,6 +4,7 @@
 
 //#region options
 #define SKILLZ_MODE    false
+#define ANTI_MARK      false
 #define MULTIPLE_PIDs  false //if lift uses different PID consts for movement in different locations or directions
 #define HOLD_LAST_CONE true	//if lift stays up after stacking last cone
 #define HAS_SPEAKER    true
@@ -44,7 +45,7 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	//#endsubregion
 
 	//#subregion sensors
-	#define L_SENS_REVERSED  false	//lift	- TODO: automatically determine sensor type based on digital or analog port
+	#define L_SENS_REVERSED  false	//lift
 	#define FB_SENS_REVERSED false	//four bar
 	#define L_ENC_REVERSED   false	//drive
 	#define R_ENC_REVERSED   true
@@ -118,8 +119,8 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define B_LINE_THRESHOLD 2870
 	//#endsubregion
 	//#subregion measurements
-#define CONE_HEIGHT 3
-#define L_OFFSET    1.5
+#define CONE_HEIGHT 3.5
+#define L_OFFSET    2.0
 #define GOAL_TO_MID_DIST 19
 #define BAR_TO_LINE_DIST 9
 	//#endsubregion
@@ -152,7 +153,7 @@ motorGroup fourBar;
 
 void initializeStructs() {
 	//arrayCopy(groupWaitList, defGroupWaitList, DEF_WAIT_LIST_LEN);
-	SensorScale[gyro] = 145;
+	SensorScale[HYRO] = 145;
 
   //drive
 	initializeDrive(drive, NUM_LEFT_MOTORS, leftMotors, NUM_RIGHT_MOTORS, rightMotors, true);

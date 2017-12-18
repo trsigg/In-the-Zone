@@ -58,7 +58,10 @@ task autonomous() {
 		}
 	}
 	else {	//defensive
-		driveForDuration(5000, -127);
+		if (ANTI_MARK)
+			startTask(antiMark);
+		else
+			driveForDuration(2000, 127);
 	}
 }
 
@@ -125,7 +128,7 @@ void handleLiftInput(bool shift) {
 
 task usercontrol() {
 	stopLiftTargeting();
-	moveLiftToSafePos(false);
+	if (SKILLZ_MODE) moveLiftToSafePos(false);
 
 	startTask(autoStacking);
 
