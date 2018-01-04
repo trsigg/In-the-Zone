@@ -98,7 +98,7 @@ void moveFourBar(bool up, bool runConcurrently=true) {
 //#endregion
 
 void moveLiftToSafePos(bool wait=true) {
-	if (getPosition(lift) < liftPos[L_SAFE]) {
+	if (getPosition(lift)<liftPos[L_SAFE] || (lift.moving==TARGET && lift.posPID.target>liftPos[L_SAFE])) {
 		setLiftTargetAndPID(liftPos[L_SAFE] + 100/L_CORR_FCTR);
 	}
 	else {	//passively hold lift up

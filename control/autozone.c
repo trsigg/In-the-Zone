@@ -106,7 +106,7 @@ void handleGoalIntakeInput() {
 	if (getPosition(lift)>liftPos[L_SAFE] || abs(goalPower)<=GOAL_STILL_SPEED)
 		setPower(goalIntake, goalPower);
 	else
-		maybeLiftToSafePos(false);
+		moveLiftToSafePos(false);
 }
 
 void handleLiftInput(bool shift) {

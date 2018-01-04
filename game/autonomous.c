@@ -14,11 +14,6 @@ void prepareForAuton() {
 //#endregion
 
 //#region complex maneuvers
-void maybeLiftToSafePos(bool wait=true) {	//TODO: put in moveGoalIntake?
-	if (lift.posPID.target<liftPos[L_SAFE] || lift.moving!=TARGET)
-		moveLiftToSafePos(wait);
-}
-
 void alignToLine(int power=60, int brakePower=10, int brakeDuration=250) {	//brakepower is absolute value (sign automatically determined)
 	long leftTimer, rightTimer;
 	setDrivePower(drive, power, power);
@@ -97,7 +92,7 @@ void turnDriveTurn(int angle, int dist, int angle2=0) {
 }
 
 void driveAndGoal(int dist, bool in, bool stackCone=false, bool quadRamp=false, int intakeDelay=500) {
-	maybeLiftToSafePos();
+	moveLiftToSafePos();
 	moveGoalIntake(in, true);
 
 	if (in)
@@ -146,7 +141,7 @@ void scoreGoal(bool twentyPt=true, bool align=true) {	//behind 10pt bar -> align
 
 void sideGoal(bool twentyPt=true, bool middle=false, bool reversed=false, bool align=true) {	//touching bar, aligned with goal -> aligned with tape (approx)
 	int direction = (reversed ? -1 : 1);
-	maybeLiftToSafePos();
+	moveLiftToSafePos();
 
 	//pick up side goal
 	driveAndGoal(15, false, false, true);
@@ -168,7 +163,7 @@ void sideGoal(bool twentyPt=true, bool middle=false, bool reversed=false, bool a
 void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=true) { //aligned with goal -> aligned with tape (approx)
 	int direction = (left ? 1 : -1);                                                   //if twentyPt and middle are true, assumes starting from bar (not tape)
 
-	maybeLiftToSafePos();
+	moveLiftToSafePos();
 	moveGoalIntake(false);	//TODO: check if intake is out?
 
 	driveStraight(35 /*- (twentyPt&&middle ? 0 : BAR_TO_LINE_DIST)*/);
@@ -231,20 +226,6 @@ task skillz() {
 	turnDriveTurn(-90, 20, -45);
 
 	sideGoal(false, false, true);	//far left side goal to left 10pt
-
-	/*turnDefaults.reversed = true;	//TODO: unreverse
-
-	sideGoal();
-
-	driveForDuration(1000, -127);	//back over poles
-	driveForDuration(750, 60);	//run into pole to align
-
-	driveStraight(-1);
-	turn(-45);
-	driveStraight(27);
-	turn(-90);
-
-	driveAndGoal(30, false);*/
 }
 
 task altSkillz() {

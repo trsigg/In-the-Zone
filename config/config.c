@@ -111,8 +111,8 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 #define RAD_TO_POT   880.1    //conversion factor between radians and potentiometer values
 #define L_GEAR_RATIO 5	//gear ratio between lift bar angle and sensors
 #define RAD_TO_ENC   (180 / PI) //conversion factor between radians and encoder values
-const float RAD_TO_LIFT = (LIFT_SENSOR>=dgtl1 ? RAD_TO_ENC*L_GEAR_RATIO : RAD_TO_POT);
-const float L_CORR_FCTR = (LIFT_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_LIFT : 1);
+const float RAD_TO_LIFT =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_ENC*L_GEAR_RATIO : RAD_TO_POT);
+const float L_CORR_FCTR =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_LIFT : 1);
 const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define R_LINE_THRESHOLD 2960
 #define L_LINE_THRESHOLD 3060
