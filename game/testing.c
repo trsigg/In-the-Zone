@@ -10,7 +10,7 @@ void logSensorVals() {
 #define NUM_INPUTS 8
 int debugOut;
 int targets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0 };	/*0-lift, 1-driveStraight, 2-turn, 3-lift PID mode (up=1),
-                                                        4-goalIntake state (in=1), 5-stack nth cone, 6-move fb (in=1), 7-gyro scale*/
+                                                        4-goalIntake maneuver target, 5-stack nth cone, 6-move fb (in=1), 7-gyro scale*/
 bool abort = false;
 bool end = false;
 
@@ -33,7 +33,8 @@ void handlePIDinput(int index) {
 				setLiftPIDmode(input == 1);
 			break;
 		case 4:
-			moveGoalIntake(input == 1);
+			createManeuver(goalIntake, input);
+			//moveGoalIntake(input == 1);
 			break;
 		case 5:
 			numCones = input - 1;

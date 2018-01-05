@@ -25,6 +25,9 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 500,      750,     1500,  1500 };
+
+	enum goalState  { OUT, MID, IN };
+	int goalPos[] = { 15,  700, 2400 };
 	//#endsubregion
 
 	//#subregion motors
@@ -54,6 +57,7 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	#define SIDE_POT    in2
 	#define MODE_POT    in3
 	#define LIFT_SENSOR in4
+	#define GOAL_SENSOR in5
 	#define LEFT_ENC    dgtl1
 	#define RIGHT_ENC   dgtl3
 
@@ -176,6 +180,7 @@ void initializeStructs() {
 	else
 		configureButtonInput(goalIntake, goalIntakeBtn, goalOuttakeBtn);
 	configureBtnDependentStillSpeed(goalIntake, GOAL_STILL_SPEED);
+	addSensor(goalIntake, GOAL_SENSOR);
 
 	//top four bar
 	initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors);
