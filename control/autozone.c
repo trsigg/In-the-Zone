@@ -41,23 +41,22 @@ task autonomous() {
 	int sidePos = SensorValue[SIDE_POT];
 	int modePos = SensorValue[MODE_POT];
 
-	turnDefaults.reversed = sidePos < 1820;	//TODO: put this val in config
+	turnDefaults.reversed = sidePos < SIDE_SWITCH_POS;	//TODO: put this val in config
+	variant = abs(sidePos - SIDE_SWITCH_POS) < 1100;
 
 	if (SKILLZ_MODE) {
 		startTask(skillz);
 	}
-	else if (1270<sidePos && sidePos<2400) {	//passive (does nothing)
-		//...
-	}
-	else if (modePos < 3490) {	//side goal
-		sideGoal(modePos<375, false, false, false);
+	else if (modePos < 2030) {	//side goal
+		bool twentyPt = modePos<450;
+		sideGoal(twentyPt, false, false, false);
 
-		if (375<modePos && modePos<1960) {	//drive back through cones
-			turnDriveTurn(90, 10, 90);
+		if (variant) {	//drive to other side
+			turnDriveTurn(90, (twentyPt ? 28 : 12), 90);
 			driveStraight(60);
 		}
 	}
-	else {	//defensive
+	else if (modePos < 3340) {	//defensive
 		if (ANTI_MARK)
 			startTask(antiMark);
 		else

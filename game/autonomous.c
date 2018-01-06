@@ -3,6 +3,8 @@
 #include "testing.c"
 
 
+bool variant = false;
+
 //#region perparation
 void prepareForAuton() {
 	resetLiftEncoders();
@@ -80,9 +82,9 @@ void driveForDuration(int duration, int beginPower=127, int endPower=0) {
 	setDrivePower(drive, endPower, endPower);
 }
 
-void alignToBar(bool forward=true, int duration=750) {
+void alignToBar(bool forward=true, int duration=600) {
 	int direction = (forward ? 1 : -1);
-	driveForDuration(duration, 30*direction, 15*direction);
+	driveForDuration(duration, 35*direction, 15*direction);
 }
 
 void turnDriveTurn(int angle, int dist, int angle2=0) {
@@ -95,7 +97,7 @@ void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp
 	moveLiftToSafePos();
 	moveGoalIntake(state, true);
 
-	if (state != OUT)
+	if (state!=OUT && dist<0)
 		wait1Msec(intakeDelay);
 
 	if (quadRamp)
@@ -179,7 +181,7 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=tru
 
 	if (middle || twentyPt) {
 		turn(-90 * direction);
-		driveStraight(-GOAL_TO_MID_DIST-3);
+		driveStraight(-GOAL_TO_MID_DIST);
 		turn(-90 * direction);
 	}
 	else {
@@ -200,14 +202,14 @@ task skillz() {
 
 	middleGoal(true, true, true);	//near left middle goal to 20Pt zone
 
-	moveGoalIntake(OUT, true);
 	turnDriveTurn(-90, GOAL_TO_MID_DIST-1, -90);	//TODO: turnToLine() (& similar below)
+	moveGoalIntake(OUT);
 	//alignToBar(false, 1000);
 
 	middleGoal(false, false, false, false);	//near right middle goal to right 10pt
 
-	turn(-175);
-	moveGoalIntake(OUT);
+	turn(-180);
+	moveGoalIntake(OUT, true);
 	alignToBar(false, 1500);
 
 	//far right middle goal to 20pt
@@ -217,7 +219,7 @@ task skillz() {
 
 	driveStraight(25);*/
 
-	driveAndGoal(20/*43*/, IN);
+	driveAndGoal(35/*43*/, IN);
 
 	turnDriveTurn(-90, GOAL_TO_MID_DIST-5);
 
