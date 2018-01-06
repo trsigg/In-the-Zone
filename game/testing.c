@@ -37,8 +37,10 @@ void handlePIDinput(int index) {
 			//moveGoalIntake(input == 1);
 			break;
 		case 5:
-			numCones = input - 1;
-			stackNewCone();
+			if (input > 0) {
+				numCones = input - 1;
+				stackNewCone();
+			}
 			break;
 		case 6:
 			moveFourBar(input == 1);

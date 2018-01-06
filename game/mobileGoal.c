@@ -10,6 +10,10 @@ void moveGoalIntake(goalState state, bool runConcurrently=false) {
   }
 }
 
+bool isMobileGoalLoaded() {
+  return SensorValue[GOAL_FOLLOWER] < GOAL_FOLL_THRESH;
+}
+
 /*void moveGoalIntake(bool in, bool runConcurrently=false, bool checkPos=true) {
   int goalPos = getPosition(goalIntake);
   if (!checkPos || (goalPos<10 && in || goalPos>0 && !in))

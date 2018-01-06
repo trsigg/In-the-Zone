@@ -3,6 +3,7 @@
 #pragma config(Sensor, in3,    modePot,        sensorPotentiometer)
 #pragma config(Sensor, in4,    liftSensor,     sensorPotentiometer)
 #pragma config(Sensor, in5,    goalSensor,     sensorPotentiometer)
+#pragma config(Sensor, in6,    goalFollower,   sensorLineFollower)
 #pragma config(Sensor, dgtl1,  leftEnc,        sensorQuadEncoder)
 #pragma config(Sensor, dgtl3,  rightEnc,       sensorQuadEncoder)
 #pragma config(Motor,  port1,           fb1,           tmotorVex393_HBridge, openLoop, reversed)

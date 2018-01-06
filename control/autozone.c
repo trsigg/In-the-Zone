@@ -42,7 +42,7 @@ task autonomous() {
 	int modePos = SensorValue[MODE_POT];
 
 	turnDefaults.reversed = sidePos < SIDE_SWITCH_POS;	//TODO: put this val in config
-	variant = abs(sidePos - SIDE_SWITCH_POS) < 1100;
+	variant = abs(sidePos - SIDE_SWITCH_POS) < 1400;
 
 	if (SKILLZ_MODE) {
 		startTask(skillz);
@@ -57,11 +57,13 @@ task autonomous() {
 		}
 	}
 	else if (modePos < 3340) {	//defensive
-		if (ANTI_MARK)
+		if (variant)
 			startTask(antiMark);
 		else
 			driveForDuration(2000, 127);
 	}
+
+	while (true) EndTimeSlice();
 }
 
 //#region usercontrol

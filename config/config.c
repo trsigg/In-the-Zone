@@ -4,10 +4,11 @@
 
 //#region options
 #define SKILLZ_MODE    false
-#define ANTI_MARK      false
+#define ANTI_MARK      1
 #define MULTIPLE_PIDs  false //if lift uses different PID consts for movement in different locations or directions
 #define HOLD_LAST_CONE true	//if lift stays up after stacking last cone
 #define HAS_SPEAKER    true
+#define USE_ENC_CORR   false
 
 	//#subregion testing - TODO: change parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
@@ -21,13 +22,13 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1380,  1400,    1700,   1550,       1910,   1915,   2985 };	//SAFE previously 1560
+	int liftPos[] = { 1420,  1420,    1700,   1500,       1910,   1915,   2985 };	//SAFE previously 1560
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 500,      750,     1500,  1500 };
 
 	enum goalState  { OUT, MID, IN };
-	int goalPos[] = { 15,  700, 2400 };
+	int goalPos[] = { 15,  600, 2400 };
 	//#endsubregion
 
 	//#subregion motors
@@ -53,13 +54,14 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	#define L_ENC_REVERSED   false	//drive
 	#define R_ENC_REVERSED   true
 
-	#define HYRO        in1
-	#define SIDE_POT    in2
-	#define MODE_POT    in3
-	#define LIFT_SENSOR in4
-	#define GOAL_SENSOR in5
-	#define LEFT_ENC    dgtl1
-	#define RIGHT_ENC   dgtl3
+	#define HYRO          in1
+	#define SIDE_POT      in2
+	#define MODE_POT      in3
+	#define LIFT_SENSOR   in4
+	#define GOAL_SENSOR   in5
+	#define GOAL_FOLLOWER in6
+	#define LEFT_ENC      dgtl1
+	#define RIGHT_ENC     dgtl3
 
 	#define LEFT_LINE   in1	//not currently attached
 	#define BACK_LINE   in1
@@ -119,6 +121,7 @@ const float RAD_TO_LIFT =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_ENC*L_GEAR_RATIO : RAD_T
 const float L_CORR_FCTR =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_LIFT : 1);
 const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define SIDE_SWITCH_POS  1780	//middle of sidePos
+#define GOAL_FOLL_THRESH 3005
 #define R_LINE_THRESHOLD 2960
 #define L_LINE_THRESHOLD 3060
 #define B_LINE_THRESHOLD 2870

@@ -49,9 +49,9 @@ task autoStacking() {
 		}
 		else {
 			stopAutomovement(lift);
-			setPower(lift, -90);
+			setPower(lift, -127);
 
-			wait1Msec(250); //while (getPosition(lift) > liftRelease) EndTimeSlice();
+			wait1Msec(150); //while (getPosition(lift) > liftRelease) EndTimeSlice();
 			if (FB_SENSOR >= 0)
 				setFbState(FB_DEF);
 			else
