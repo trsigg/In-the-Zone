@@ -62,6 +62,7 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	#define GOAL_FOLLOWER in6
 	#define LEFT_ENC      dgtl1
 	#define RIGHT_ENC     dgtl3
+	#define FRONT_SONAR   dgtl6
 
 	#define LEFT_LINE   in1	//not currently attached
 	#define BACK_LINE   in1

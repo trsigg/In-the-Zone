@@ -6,6 +6,7 @@
 #pragma config(Sensor, in6,    goalFollower,   sensorLineFollower)
 #pragma config(Sensor, dgtl1,  leftEnc,        sensorQuadEncoder)
 #pragma config(Sensor, dgtl3,  rightEnc,       sensorQuadEncoder)
+#pragma config(Sensor, dgtl6,  frontSonar,     sensorSONAR_mm)
 #pragma config(Motor,  port1,           fb1,           tmotorVex393_HBridge, openLoop, reversed)
 #pragma config(Motor,  port2,           lift1,         tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           goal1,         tmotorVex393_MC29, openLoop)

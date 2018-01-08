@@ -83,6 +83,19 @@ void turnQuicklyToLine(bool clockwise, bool parallelToLine) {
 	turnToLine(parallelToLine, 40*direction);
 }
 
+void driveToSonarDist(int dist, int power=30, int brakePower=10, int brakeDuration=150) {
+	setDrivePower(drive, power, power);
+	while (SensorValue[FRONT_SONAR] > dist) EndTimeSlice();
+	setDrivePower(drive, -brakePower, -brakePower);
+	wait1Msec(brakeDuration);
+	setDrivePower(drive, 0, 0);
+}
+
+void driveAndSonar(int driveDist, int sonarDist, int power=30, int brakePower=10, int brakeDuration=150) {
+	driveStraight(driveDist);
+	driveToSonarDist(sonarDist, power, brakePower, brakeDuration);
+}
+
 void driveForDuration(int duration, int beginPower=127, int endPower=0) {
 	setDrivePower(drive, beginPower, beginPower);
 	wait1Msec(duration);
