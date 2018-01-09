@@ -7,11 +7,12 @@ void logSensorVals() {
 
 
 //#region PID testing
-#define NUM_INPUTS 8
+#define NUM_INPUTS 9
 long testingTimer;
 int debugOut;
-int targets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0 };	/*0-lift, 1-driveStraight, 2-turn, 3-lift PID mode (up=1),
-                                                        4-goalIntake maneuver target, 5-stack nth cone, 6-move fb (in=1), 7-gyro scale*/
+int targets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };	/*0-lift, 1-driveStraight, 2-turn, 3-lift PID mode (up=1),
+                                                            4-goalIntake maneuver target, 5-stack nth cone, 6-move fb (in=1),
+																														7-gyro scale, 8-drive maxAcc100ms*/
 bool wait = false; //TODO: fix for lift maneuvers
 bool abort = false;
 bool end = false;
@@ -57,6 +58,10 @@ void handlePIDinput(int index) {
 			break;
 		case 7:
 			SensorScale[HYRO] = input;
+			break;
+		case 8:
+			configureRamping(drive, input);
+			break;
 	}
 
 	if (wait && timedManeuver) {
@@ -66,7 +71,7 @@ void handlePIDinput(int index) {
 }
 
 void testPIDs() {
-	int prevTargets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	int prevTargets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };	//TODO: fill automatically
 
 	debugOut = SensorScale[HYRO];
 

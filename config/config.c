@@ -11,7 +11,7 @@
 #define USE_ENC_CORR   false
 
 	//#subregion testing - TODO: change parameter scheme
-#define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
+#define TESTING 1	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
 int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol }
 	//#endsubregion
 //#endregion
@@ -165,7 +165,7 @@ void initializeStructs() {
 	SensorScale[HYRO] = 145;
 
   //drive
-	initializeDrive(drive, NUM_LEFT_MOTORS, leftMotors, NUM_RIGHT_MOTORS, rightMotors, true);
+	initializeDrive(drive, NUM_LEFT_MOTORS, leftMotors, NUM_RIGHT_MOTORS, rightMotors, true, 40);
 	attachEncoder(drive, LEFT_ENC, LEFT, L_ENC_REVERSED);
 	attachEncoder(drive, RIGHT_ENC, RIGHT, R_ENC_REVERSED, 4.0);
 	attachGyro(drive, HYRO);
