@@ -121,7 +121,7 @@ void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp
 		wait1Msec(intakeDelay);
 
 	if (quadRamp)
-		driveStraight(dist, true, 30, 120, -20, 250, 20, false);
+		driveStraight(dist, true, false, 30, 120, -20, 250, 20, false);
 	else
 		driveStraight(dist, true);
 

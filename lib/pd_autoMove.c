@@ -26,16 +26,18 @@ typedef struct {
 
 typedef struct {
 	correctionType defCorrectionType;
+	distUnits defTargetUnits;
 	bool runAsTask;
-	bool rawValue;
 	bool usePID;
+	bool useUltrasonic;
 	int brakeDuration;
 	int movementTimeout;
 	int waitAtEnd;
 	int sampleTime;
 	int debugStartCol;
 	int minErrorMargin;
-	float rampConst1, rampConst2, rampConst3, rampConst4, rampConst5;	//same as in turnDefsStruct
+	float encRampConst1, encRampConst2, encRampConst3, encRampConst4, encRampConst5;	//same as in turnDefsStruct, for encoder driving
+	float sonRampConst1, sonRampConst2, sonRampConst3, sonRampConst4, sonRampConst5;	//same as in turnDefsStruct, for sonar driving
 	float kP_c, kI_c, kD_c; //correction PID constants
 	float minSpeed;
 } driveDefsStruct;
@@ -62,6 +64,7 @@ void initializeAutoMovement() {
 
 	//driving
 	driveDefaults.defCorrectionType = AUTO;
+	driveDefaults.defTargetUnits = INCH;
 	driveDefaults.runAsTask = false;
 	driveDefaults.rawValue = false;
 	driveDefaults.movementTimeout = 500;
@@ -73,7 +76,7 @@ void initializeAutoMovement() {
 	driveDefaults.rampConst1 = 10;	//same as above
 	driveDefaults.rampConst2 = 0.1;
 	driveDefaults.rampConst3 = 50;
-	driveDefaults.rampConst4 = 0.1;
+	driveDefaults.rampConst4 = 0.1;	//absolute value if using sonar
 	driveDefaults.rampConst5 = 100;
 	driveDefaults.kP_c = 0.55;
 	driveDefaults.kI_c = 0.007;
@@ -186,6 +189,7 @@ void turn(float angle, bool runAsTask=turnDefaults.runAsTask, float in1=turnDefa
 //#region driveStraight
 typedef struct {
 	float distance;
+	bool useUltrasonic;	//whether to use ultrasonic or encoders to
 	bool rawValue; //whether distance is measured in encoder clicks or inches
 	float minSpeed; //minimum speed during maneuver to prevent timeout (distance per 100ms)
 	float error;	//allowable deviation from target value
@@ -196,6 +200,7 @@ typedef struct {
 	int brakeDelay; //maximum duration of braking at end of turn
 	int brakePower; // motor power during braking
 	correctionType correctionType; //which sensor inputs are used for correction
+	distUnits targetUnits;	//units of target dist
 	bool isDriving; //whether driving action is being executed (true if driving, false othrewise)
 	//interal variables
 	PID pid;
@@ -207,6 +212,13 @@ typedef struct {
 } driveStruct;
 
 driveStruct driveData;
+
+float driveProgress() {
+	if (driveData.useUltrasonic)
+		return ultrasonicVal(autoDrive, driveData.targetUnits);
+	else
+		return driveData.totalDist;
+}
 
 bool drivingComplete() {
 	if (!driveData.isDriving)
@@ -229,7 +241,7 @@ void driveStraightRuntime() {
 	//track timeout states
 	if (driveEncoderVal(autoDrive) >= driveData.minSpeed)
 		driveData.movementTimer = resetTimer();
-	if (driveData.ramper.algorithm==PD && fabs(driveData.totalDist - driveData.distance) > driveData.error)
+	if (driveData.ramper.algorithm==PD && fabs(driveProgress() - driveData.distance) > driveData.error)
 		driveData.pdTimer = resetTimer();
 
 	resetDriveEncoders(autoDrive);
@@ -248,7 +260,7 @@ void driveStraightRuntime() {
 			error = 0;
 	}
 
-	int power = rampRuntime(driveData.ramper, driveData.totalDist, driveDefaults.debugStartCol);
+	int power = rampRuntime(driveData.ramper, driveProgress(), driveDefaults.debugStartCol);
 
 	float correctionPercent = 1 + PID_runtime(driveData.pid, error) * sgn(power);	//sgn(target?)
 	float rightPower = power * correctionPercent;
@@ -295,35 +307,42 @@ void setCorrectionType(correctionType type) {
 	}
 }
 
-void driveStraight(float distance, bool runAsTask=driveDefaults.runAsTask, float in1=driveDefaults.rampConst1, float in2=driveDefaults.rampConst2, float in3=driveDefaults.rampConst3, float in4=driveDefaults.rampConst4, float in5=driveDefaults.rampConst5, bool usePID=driveDefaults.usePID, float kP=driveDefaults.kP_c, float kI=driveDefaults.kI_c, float kD=driveDefaults.kD_c, correctionType correctionType=driveDefaults.defCorrectionType, float minSpeed=driveDefaults.minSpeed, int movementTimeout=driveDefaults.movementTimeout, int waitAtEnd=driveDefaults.waitAtEnd) { //for PD, in1=kP, in2=kI, in3=kD, in4=error, in5=pd timeout; for quad ramping, in1=initial, in2=maximum, in3=final, in4=brakePower, and in5=brakeDuration
+void driveStraight(float distance, bool runAsTask=driveDefaults.runAsTask, bool useUltrasonic=false, float in1=driveDefaults.encRampConst1, float in2=driveDefaults.encRampConst2, float in3=driveDefaults.encRampConst3, float in4=driveDefaults.encRampConst4, float in5=driveDefaults.encRampConst5, distUnits units=INCH, bool usePID=driveDefaults.usePID, bool useCorrection=driveDefaults.kP_c!=0, float minSpeed=driveDefaults.minSpeed, int movementTimeout=driveDefaults.movementTimeout) { //for PD, in1=kP, in2=kI, in3=kD, in4=error, in5=pd timeout; for quad ramping, in1=initial, in2=maximum, in3=final, in4=brakePower, and in5=brakeDuration
 	//initialize variables
 	driveData.distance = fabs(distance);
-	driveData.direction = sgn(distance);
+	driveData.direction = sgn(distance) * (useUltrasonic ? -1 : 1);
 	driveData.rawValue = driveDefaults.rawValue;
 	driveData.sampleTime = driveDefaults.sampleTime;
 	driveData.minSpeed = minSpeed * driveData.sampleTime / 1000;
 	driveData.movementTimeout = movementTimeout;
 	driveData.isDriving = true;
-	initializePID(driveData.pid, 0, kP, kI, kD, 0, false);	//PIDs have 0 sample time because sample delay is taken care of in main loop - temp false
+	initializePID(driveData.pid, 0, driveDefaults.kP_c, driveDefaults.kI_c, driveDefaults.kD_c, 0, false);	//PIDs have 0 sample time because sample delay is taken care of in main loop - temp false
 
 	driveData.leftDist = 0;
 	driveData.rightDist = 0;
 	driveData.totalDist = 0;
 
 	if (usePID) {
-		initializeRampHandler(driveData.ramper, PD, driveData.distance, in1, in2, in3, 0, false);	//temp false
-		driveData.error = max(in4*driveData.distance, driveDefaults.minErrorMargin);
+		initializeRampHandler(driveData.ramper, PD, driveData.distance, in1, in2, in3, 0, false);	//temp false TODO: time correction
 		driveData.pdTimeout = in5;
 		driveData.pdTimer = resetTimer();
-		driveData.finalDelay = waitAtEnd;
+		driveData.finalDelay = driveDefaults.waitAtEnd;
+
+		if (useUltrasonic)
+			driveData.error = in4;
+		else
+			driveData.error = max(in4*driveData.distance, driveDefaults.minErrorMargin);
 	}
 	else {
 		initializeRampHandler(driveData.ramper, QUAD, driveData.distance, in1, in2, in3);
 		driveData.brakeDelay = limit(in5, 0, waitAtEnd);
-		driveData.finalDelay = waitAtEnd - in5;
+		driveData.finalDelay = max(driveDefaults.waitAtEnd-in5, 0);
 	}
 
-	if (correctionType == AUTO) {
+	if (!useCorrection) {
+		setCorrectionType(NONE);
+	}
+	else if (driveDefaults.defCorrectionType == AUTO) {
 		setCorrectionType(ENCODER);
 
 		if (driveData.correctionType == NONE) {
@@ -349,5 +368,9 @@ void driveStraight(float distance, bool runAsTask=driveDefaults.runAsTask, float
 		}
 		driveStraightEnd();
 	}
+}
+
+void driveStraightSonar(float dist, bool runAsTask=false, distUnits units=) {
+
 }
 //#endregion
