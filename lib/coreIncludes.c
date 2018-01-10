@@ -1,4 +1,5 @@
-enum angleType { DEGREES, RADIANS, RAW };
+enum angleType { DEGREES, RADIANS, RAW_ANGLE };
+enum distUnits { INCH, CM, MM, RAW_DIST };
 
 int limit(float input, float min, float max) {
 	if (input <= max && input >= min) {
@@ -9,23 +10,57 @@ int limit(float input, float min, float max) {
 	}
 }
 
-float convertAngle(float angle, angleType output, angleType input=RAW) {
+float convertAngle(float angle, angleType output, angleType input=RAW_ANGLE) {
 	if (input != output) {
-		//convert input to RAW
-		if (input == DEGREES) {
-			angle *= 10;
-		} else if (input == RADIANS) {
-			angle *= 1800 / PI;
+		//convert input to RAW_ANGLE
+
+		switch (input) {
+			case DEGREES:
+				angles *= 10;
+				break;
+			case RADIANS:
+				angle *= 1800 / PI;
+				break;
 		}
 
-		if (output == DEGREES) {
-			angle /= 10;
-		} else if (output == RADIANS) {
-			angle *= PI / 1800;
+		//final conversion
+		switch (output) {
+			case DEGREES:
+				angle /= 10;
+				break;
+			case RADIANS:
+				angle *= PI / 1800;
+				break;
 		}
 	}
 
 	return angle;
+}
+
+float convertDist(float dist, distUnits output, distUnits input=INCH) {
+	if (input != output) {
+		//convert input to MM
+		switch (input) {
+			case CM:
+				dist *= 10;
+				break;
+			case INCH:
+				dist *= 25.4;
+				break;
+		}
+
+		//final conversion
+		switch (output) {
+			case CM:
+				dist /= 10;
+				break;
+			case INCH:
+				dist /= 25.4;
+				break;
+		}
+	}
+
+	return dist;
 }
 
 void arrayCopy(void* source, void* destination, int elements) {

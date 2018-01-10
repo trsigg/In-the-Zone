@@ -85,7 +85,7 @@ void turnQuicklyToLine(bool clockwise, bool parallelToLine) {
 
 void driveToSonarDist(int dist, int power=30, int brakePower=10, int brakeDuration=150) {
 	setDrivePower(drive, power, power);
-	while (SensorValue[FRONT_SONAR] > dist) EndTimeSlice();
+	while (SensorValue[FRONT_SONAR]>dist || SensorValue[FRONT_SONAR]==-1) EndTimeSlice();
 	setDrivePower(drive, -brakePower, -brakePower);
 	wait1Msec(brakeDuration);
 	setDrivePower(drive, 0, 0);

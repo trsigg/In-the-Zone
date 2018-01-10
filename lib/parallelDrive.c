@@ -26,6 +26,9 @@ typedef struct {
 	float angleOffset; //amount added to gyro values to obtain absolute angle
 	float encCoeff; //coefficients used to translate encoder values to distance traveled
 	tSensors gyro;
+	bool hasUltrasonic;
+	distUnits ultrasonicUnits;
+	tSensors ultrasonic;
 } parallel_drive;
 
 
@@ -86,6 +89,26 @@ void attachGyro(parallel_drive *drive, tSensors gyro, bool reversed=true, gyroCo
 	if (setAbsAngle) drive->angleOffset = drive->position.theta - SensorValue[gyro];
 }
 
+void attachUltrasonic(parallel_drive *drive, tSensors ultrasonic) {
+	drive->hasUltrasonic = true;
+	drive->ultrasonic = ultrasonic;
+
+	switch (SensorType[ultrasonic]) {
+		case sensorSONAR_mm:
+			drive->ultrasonicUnits = MM;
+			break;
+		case sensorSONAR_cm:
+			drive->ultrasonicUnits = CM;
+			break;
+		case sensorSONAR_inch:
+			drive->ultrasonicUnits = INCH;
+			break;
+		case sensorSONAR_raw:
+			drive->ultrasonicUnits = RAW_DIST;
+			break;
+	}
+}
+
 void setEncoderConfig(parallel_drive *drive, encoderConfig config) {
 	drive->encoderConfig = config;
 }
@@ -93,22 +116,28 @@ void setEncoderConfig(parallel_drive *drive, encoderConfig config) {
 
 
 //#region sensor access
-float driveEncoderVal(parallel_drive *drive, encoderConfig side=UNASSIGNED, bool rawValue=false, bool absolute=true) {
+float driveEncoderVal(parallel_drive *drive, encoderConfig side=UNASSIGNED, distUnits units=INCH, bool absolute=true) {
 	if (side == UNASSIGNED) {
 		side = drive->encoderConfig;
 	}
 
 	if (side == AVERAGE) {
 		if (absolute) {
-			return (fabs(driveEncoderVal(drive, LEFT, rawValue)) + fabs(driveEncoderVal(drive, RIGHT, rawValue))) / 2;
+			return (fabs(driveEncoderVal(drive, LEFT, units)) + fabs(driveEncoderVal(drive, RIGHT, units))) / 2;
 		}
+		else {
+			return (driveEncoderVal(drive, LEFT, units) + driveEncoderVal(drive, RIGHT, units)) / 2;
+		}
+	} else if (side == UNASSIGNED) {
+		return 0;
+	}
 	else {
-			return (driveEncoderVal(drive, LEFT, rawValue) + driveEncoderVal(drive, RIGHT, rawValue)) / 2;
-		}
-	} else if (side == LEFT) {
-		return encoderVal(drive->leftDrive) * (rawValue ? 1 : drive->encCoeff);
-	} else if (side == RIGHT) {
-		return encoderVal(drive->rightDrive) * (rawValue ? 1 : drive->encCoeff);
+		float encVal = encoderVal(side==LEFT ? drive->leftDrive : drive->rightDrive);
+		
+		if (units == RAW)
+			return encVal;
+		else
+			return convertDist(encVal * drive->encCoeff, units, INCH);
 	}
 
 	return 0;
@@ -134,7 +163,7 @@ float gyroVal(parallel_drive *drive, angleType format=DEGREES) {
 void resetGyro(parallel_drive *drive, float resetVal=0, angleType format=DEGREES, bool setAbsAngle=true) {
 	if (setAbsAngle) drive->angleOffset += gyroVal(drive);
 
-	SensorValue[drive->gyro] = (int)(convertAngle(resetVal, RAW, format));
+	SensorValue[drive->gyro] = (int)(convertAngle(resetVal, RAW_ANGLE, format));
 
 	if (setAbsAngle) drive->angleOffset -= gyroVal(drive); //I could include this two lines up, except this function doesn't usually work as expected
 }
@@ -144,7 +173,14 @@ float absAngle(parallel_drive *drive, angleType format=DEGREES) {
 }
 
 void resetAbsAngle(parallel_drive *drive, float angle=0, angleType format=DEGREES) {
-	drive->angleOffset = convertAngle(angle, RAW, format) - gyroVal(drive, RAW);
+	drive->angleOffset = convertAngle(angle, RAW_ANGLE, format) - gyroVal(drive, RAW_ANGLE);
+}
+
+void ultrasonicVal(parallel_drive *drive, distUnits units=INCH) {
+	if (drive->hasUltrasonic)
+		return convertDist(SensorValue[ultrasonic], units, drive->ultrasonicUnits);
+	else
+		return 0;
 }
 //#endregion
 
@@ -223,7 +259,7 @@ float calculateWidth(parallel_drive *drive, int duration=10000, int sampleTime=2
 				resetGyro(drive);
 				wait1Msec(sampleTime);
 
-				totalWidth += driveEncoderVal(drive) * 3600 / (PI * fabs(gyroVal(drive, RAW)));
+				totalWidth += driveEncoderVal(drive) * 3600 / (PI * fabs(gyroVal(drive, RAW_ANGLE)));
 				samples++;
 			}
 		}
