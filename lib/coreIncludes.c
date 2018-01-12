@@ -16,7 +16,7 @@ float convertAngle(float angle, angleType output, angleType input=RAW_ANGLE) {
 
 		switch (input) {
 			case DEGREES:
-				angles *= 10;
+				angle *= 10;
 				break;
 			case RADIANS:
 				angle *= 1800 / PI;

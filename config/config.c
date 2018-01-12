@@ -8,11 +8,11 @@
 #define MULTIPLE_PIDs  false //if lift uses different PID consts for movement in different locations or directions
 #define HOLD_LAST_CONE true	//if lift stays up after stacking last cone
 #define HAS_SPEAKER    true
-#define USE_ENC_CORR   false
+#define USE_ENC_CORR   true
 
 	//#subregion testing - TODO: change parameter scheme
-#define TESTING 1	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
-int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol }
+#define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
+int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol }
 	//#endsubregion
 //#endregion
 
@@ -168,6 +168,7 @@ void initializeStructs() {
 	initializeDrive(drive, NUM_LEFT_MOTORS, leftMotors, NUM_RIGHT_MOTORS, rightMotors, true, 40);
 	attachEncoder(drive, LEFT_ENC, LEFT, L_ENC_REVERSED);
 	attachEncoder(drive, RIGHT_ENC, RIGHT, R_ENC_REVERSED, 4.0);
+	attachUltrasonic(drive, FRONT_SONAR)
 	attachGyro(drive, HYRO);
 
 	//lift

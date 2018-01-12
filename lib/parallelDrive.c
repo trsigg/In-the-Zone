@@ -94,16 +94,16 @@ void attachUltrasonic(parallel_drive *drive, tSensors ultrasonic) {
 	drive->ultrasonic = ultrasonic;
 
 	switch (SensorType[ultrasonic]) {
-		case sensorSONAR_mm:
+		case sensorSONAR_TwoPins_mm:
 			drive->ultrasonicUnits = MM;
 			break;
-		case sensorSONAR_cm:
+		case sensorSONAR_TwoPins_cm:
 			drive->ultrasonicUnits = CM;
 			break;
-		case sensorSONAR_inch:
+		case sensorSONAR_TwoPins_inch:
 			drive->ultrasonicUnits = INCH;
 			break;
-		case sensorSONAR_raw:
+		case sensorSONAR_TwoPins_raw:
 			drive->ultrasonicUnits = RAW_DIST;
 			break;
 	}
@@ -128,13 +128,15 @@ float driveEncoderVal(parallel_drive *drive, encoderConfig side=UNASSIGNED, dist
 		else {
 			return (driveEncoderVal(drive, LEFT, units) + driveEncoderVal(drive, RIGHT, units)) / 2;
 		}
-	} else if (side == UNASSIGNED) {
-		return 0;
 	}
-	else {
-		float encVal = encoderVal(side==LEFT ? drive->leftDrive : drive->rightDrive);
-		
-		if (units == RAW)
+	else {	//assumes that encoderConfig!=UNASSIGNED
+		float encVal;
+		if (side == LEFT)	//don't use ternary here! It doesn't work. For reasons.
+			encVal = encoderVal(drive->leftDrive);
+		else
+			encVal = encoderVal(drive->rightDrive);
+
+		if (units == RAW_DIST)
 			return encVal;
 		else
 			return convertDist(encVal * drive->encCoeff, units, INCH);
@@ -176,9 +178,9 @@ void resetAbsAngle(parallel_drive *drive, float angle=0, angleType format=DEGREE
 	drive->angleOffset = convertAngle(angle, RAW_ANGLE, format) - gyroVal(drive, RAW_ANGLE);
 }
 
-void ultrasonicVal(parallel_drive *drive, distUnits units=INCH) {
+float ultrasonicVal(parallel_drive *drive, distUnits units=INCH) {
 	if (drive->hasUltrasonic)
-		return convertDist(SensorValue[ultrasonic], units, drive->ultrasonicUnits);
+		return convertDist(SensorValue[drive->ultrasonic], units, drive->ultrasonicUnits);
 	else
 		return 0;
 }

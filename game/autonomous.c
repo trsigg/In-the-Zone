@@ -179,7 +179,7 @@ void sideGoal(bool twentyPt=true, bool middle=false, bool reversed=false, bool a
 	//position robot facing middle of 10pt bar
 	driveAndGoal(-42, IN);
 
-	if (!(isMobileGoalIn() || SKILLZ_MODE)) {	//stop execution in case mobile goal not intaked
+	if (!(isMobileGoalLoaded() || SKILLZ_MODE)) {	//stop execution in case mobile goal not intaked
 		playSound(soundLowBuzz);
 		while (true) EndTimeSlice();
 	}

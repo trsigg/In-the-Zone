@@ -13,7 +13,7 @@ int debugOut;
 int targets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };	/*0-lift, 1-driveStraight, 2-turn, 3-lift PID mode (up=1),
                                                             4-goalIntake maneuver target, 5-stack nth cone, 6-move fb (in=1),
 																														7-gyro scale, 8-drive maxAcc100ms*/
-bool wait = false; //TODO: fix for lift maneuvers
+bool wait = true; //TODO: fix for lift maneuvers
 bool abort = false;
 bool end = false;
 
@@ -27,7 +27,7 @@ void handlePIDinput(int index) {
 		case 0:
 			timedManeuver = true;
 			setTargetPosition(lift, input);
-			if (wait) waitForMovementToFinish(lift);
+			//if (wait) waitForMovementToFinish(lift);
 			break;
 		case 1:
 			timedManeuver = true;
@@ -43,7 +43,7 @@ void handlePIDinput(int index) {
 			break;
 		case 4:
 			timedManeuver = true;
-			createManeuver(goalIntake, input, !wait);
+			createManeuver(goalIntake, input/*, !wait*/);
 			//moveGoalIntake(input == 1);
 			break;
 		case 5:
@@ -54,7 +54,7 @@ void handlePIDinput(int index) {
 			}
 			break;
 		case 6:
-			moveFourBar(input==1, !wait);
+			moveFourBar(input==1/*, !wait*/);
 			break;
 		case 7:
 			SensorScale[HYRO] = input;
@@ -73,9 +73,9 @@ void handlePIDinput(int index) {
 void testPIDs() {
 	int prevTargets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };	//TODO: fill automatically
 
-	debugOut = SensorScale[HYRO];
-
 	while (!end) {
+		debugOut = SensorScale[HYRO];
+
 		for (int i=0; i<NUM_INPUTS; i++) {
 			if (prevTargets[i] != targets[i]) {
 				prevTargets[i] = targets[i];

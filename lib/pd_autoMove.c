@@ -222,8 +222,8 @@ bool drivingComplete() {
 }
 
 void driveStraightRuntime() {
-	driveData.leftDist += driveEncoderVal(autoDrive, LEFT, driveData.rawValue) * driveData.direction;
-	driveData.rightDist += driveEncoderVal(autoDrive, RIGHT, driveData.rawValue) * driveData.direction;
+	driveData.leftDist += driveEncoderVal(autoDrive, LEFT, (driveData.rawValue ? RAW_DIST : INCH)) * driveData.direction;
+	driveData.rightDist += driveEncoderVal(autoDrive, RIGHT, (driveData.rawValue ? RAW_DIST : INCH)) * driveData.direction;
 	driveData.totalDist = (driveData.leftDist + driveData.rightDist) / 2;
 
 	//track timeout states
