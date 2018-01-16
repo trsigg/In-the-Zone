@@ -6,7 +6,7 @@
 #pragma config(Sensor, dgtl3,  rightEnc,       sensorQuadEncoder)
 #pragma config(Motor,  port1,           LDrive1,       tmotorVex393_HBridge, openLoop, reversed)
 #pragma config(Motor,  port2,           lift1,         tmotorVex393_MC29, openLoop, reversed)
-#pragma config(Motor,  port3,           fb1,           tmotorVex393_MC29, openLoop, reversed)
+#pragma config(Motor,  port3,           fb1,           tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port4,           LDrive2,       tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port5,           RDrive1,       tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port6,           lift2,         tmotorVex393_MC29, openLoop, reversed)

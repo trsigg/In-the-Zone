@@ -168,7 +168,7 @@ void initializeStructs() {
 	initializeDrive(drive, NUM_LEFT_MOTORS, leftMotors, NUM_RIGHT_MOTORS, rightMotors, true, 40);
 	attachEncoder(drive, LEFT_ENC, LEFT, L_ENC_REVERSED);
 	attachEncoder(drive, RIGHT_ENC, RIGHT, R_ENC_REVERSED, 4.0);
-	attachUltrasonic(drive, FRONT_SONAR)
+	attachUltrasonic(drive, FRONT_SONAR);
 	attachGyro(drive, HYRO);
 
 	//lift
