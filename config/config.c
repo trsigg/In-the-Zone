@@ -33,19 +33,19 @@ int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSe
 
 	//#subregion motors
 	#define NUM_LIFT_MOTORS 2
-	tMotor liftMotors[NUM_LIFT_MOTORS] = { port2, port6 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
+	tMotor liftMotors[NUM_LIFT_MOTORS] = { port2, port9 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
 
 	#define NUM_FB_MOTORS 2
-	tMotor fourBarMotors[NUM_FB_MOTORS] = { port3, port8 };
+	tMotor fourBarMotors[NUM_FB_MOTORS] = { port1, port10 };
 
 	#define NUM_RIGHT_MOTORS 2
-	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port5, port10 };
+	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port5, port7 };
 
-	#define NUM_LEFT_MOTORS 3
-	tMotor leftMotors[NUM_LEFT_MOTORS] = { port1, port4, port7 };
+	#define NUM_LEFT_MOTORS 2
+	tMotor leftMotors[NUM_LEFT_MOTORS] = { port4, port6 };
 
-	#define NUM_GOAL_MOTORS 1
-	tMotor goalMotors[NUM_GOAL_MOTORS] = { port9 };
+	#define NUM_GOAL_MOTORS 2
+	tMotor goalMotors[NUM_GOAL_MOTORS] = { port3, port8 };
 	//#endsubregion
 
 	//#subregion sensors
