@@ -22,7 +22,7 @@ int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSe
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1420,  1420,    1700,   1500,       1910,   1915,   2985 };	//SAFE previously 1560
+	int liftPos[] = { 1400,  1470,    1700,   1500,       1910,   1915,   2950 };	//SAFE previously 1560
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 500,      750,     1500,  1500 };
@@ -128,8 +128,8 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define B_LINE_THRESHOLD 2870
 	//#endsubregion
 	//#subregion measurements
-#define CONE_HEIGHT 4.0
-#define L_OFFSET    2.0
+#define CONE_HEIGHT 3.0
+#define L_OFFSET    3.5
 #define GOAL_TO_MID_DIST 19
 #define BAR_TO_LINE_DIST 9
 	//#endsubregion

@@ -32,7 +32,7 @@ task autoStacking() {
 	while (true) {
 		while (!stacking) EndTimeSlice();
 
-		setLiftTargetAndPID(liftTarget);
+		setLiftTargetAndPID(liftTarget);	//TODO: only target if lift below target
 		if (FB_SENSOR >= 0) setFbState(FB_SAFE);
 		while (getPosition(lift) < liftRelease) EndTimeSlice();	//wait for lift to move to stacking position
 
@@ -45,13 +45,13 @@ task autoStacking() {
 
 		if (numCones>=MAX_NUM_CONES-1 && HOLD_LAST_CONE) {
 			stopAutomovement(lift);	//passively maintains lift position
-			lift.stillSpeedReversed = false;
+			lift.stillSpeedReversed = true;
 		}
 		else {
 			stopAutomovement(lift);
 			setPower(lift, -127);
 
-			wait1Msec(150); //while (getPosition(lift) > liftRelease) EndTimeSlice();
+			wait1Msec(250); //while (getPosition(lift) > liftRelease) EndTimeSlice();
 			if (FB_SENSOR >= 0)
 				setFbState(FB_DEF);
 			else

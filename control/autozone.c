@@ -29,6 +29,8 @@ void pre_auton() {
 		initializeAudio();
 }
 
+int autonDebug;
+
 #ifdef RUN_AUTON_AS_MAIN
 task main() {
 #else
@@ -40,6 +42,7 @@ task autonomous() {
 
 	int sidePos = SensorValue[SIDE_POT];
 	int modePos = SensorValue[MODE_POT];
+	int autonTimer = resetTimer();
 
 	turnDefaults.reversed = sidePos < SIDE_SWITCH_POS;	//TODO: put this val in config
 	variant = abs(sidePos - SIDE_SWITCH_POS) < 1400;
@@ -52,7 +55,7 @@ task autonomous() {
 		sideGoal(twentyPt, false, false, false);
 
 		if (variant) {	//drive to other side
-			turnDriveTurn(90, (twentyPt ? 28 : 12), 90);
+			turnDriveTurn(90, (twentyPt ? 25 : 12), 90);
 			driveStraight(60);
 		}
 	}
@@ -63,6 +66,7 @@ task autonomous() {
 			driveForDuration(2000, 127);
 	}
 
+	autonDebug = time(autonTimer);
 	while (true) EndTimeSlice();
 }
 
