@@ -161,7 +161,7 @@ void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//b
 		driveStraight(-BAR_TO_LINE_DIST);
 	}
 
-	waitForMovementToFinish(goalIntake);
+	if (!variant) waitForMovementToFinish(goalIntake);	//temp
 	if (isMobileGoalLoaded())
 		scoreGoal(twentyPt, align, intakeFully);
 	else
@@ -179,13 +179,13 @@ void sideGoal(bool twentyPt=true, bool middle=false, bool reversed=false, bool a
 	//position robot facing middle of 10pt bar
 	driveAndGoal(-42, IN);
 
-	if (!(isMobileGoalLoaded() || SKILLZ_MODE)) {	//stop execution in case mobile goal not intaked
+	if (!(isMobileGoalLoaded() || SKILLZ_MODE) && ABORT_IF_NO_GOAL) {	//stop execution in case mobile goal not intaked
 		playSound(soundLowBuzz);
 		while (true) EndTimeSlice();
 	}
 
 	turn(-direction * 45);	//turnDriveTurn?
-	driveStraight(middle||twentyPt ? -25 : -12, true);
+	driveStraight(middle||twentyPt ? -30 : -12, true);
 	while (driveData.totalDist < 5) EndTimeSlice();
 	stackNewCone();
 	while (driveData.isDriving) EndTimeSlice();
@@ -205,7 +205,7 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=tru
 
 	driveStraight(35 - (twentyPt&&middle ? 0 : BAR_TO_LINE_DIST));
 
-	driveAndGoal(-26, IN);
+	driveAndGoal(-29, IN);
 	if (twentyPt) {	//preload
 		stackNewCone();
 		moveLiftToSafePos(false);
@@ -234,13 +234,13 @@ task skillz() {
 
 	middleGoal(true, true, true);	//near left middle goal to 20Pt zone
 
-	turnDriveTurn(-90, GOAL_TO_MID_DIST-1, -90);	//TODO: turnToLine() (& similar below)
+	turnDriveTurn(-85, GOAL_TO_MID_DIST-1, -85);	//TODO: turnToLine() (& similar below)
 	moveGoalIntake(OUT);
 	//alignToBar(false, 1000);
 
-	middleGoal(false, false, false, false);	//near right middle goal to right 10pt
+	middleGoal(false, false, false/*, false*/);	//near right middle goal to right 10pt
 
-	turn(-185);
+	turn(-180);
 	moveGoalIntake(OUT, true);
 	alignToBar(false, 1500);
 
@@ -251,11 +251,11 @@ task skillz() {
 
 	driveStraight(25);*/
 
-	driveAndGoal(35/*43*/, IN);
+	driveAndGoal(40/*43*/, IN);
 
 	turn(-90);
 	driveStraight(GOAL_TO_MID_DIST-5);
-	moveGoalIntake(MID);	//to push cones to side
+	//moveGoalIntake(MID);	//to push cones to side
 	turn(90);
 	moveGoalIntake(IN);
 
@@ -263,14 +263,17 @@ task skillz() {
 
 	//far left middle goal to left 10pt
 	moveGoalIntake(OUT, true);
-	turnDriveTurn(-90, GOAL_TO_MID_DIST-4, -90);
+	turnDriveTurn(-90, GOAL_TO_MID_DIST-0.5, -90);
 	//alignToBar(false, 1500);
 
-	middleGoal(false, false, true);
+	middleGoal(false, false/*, true*/);
 
-	turnDriveTurn(-90, 25, -45);
+	/*turnDriveTurn(-90, 25, -45);
 
-	sideGoal(false, false, true);	//far left side goal to left 10pt
+	sideGoal(false, false, true);	//far left side goal to left 10pt*/
+
+	turn(-140);
+	driveForDuration(2000);
 }
 
 task altSkillz() {

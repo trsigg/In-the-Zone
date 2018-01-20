@@ -3,12 +3,13 @@
 
 
 //#region options
-#define SKILLZ_MODE    false
-#define ANTI_MARK      1
-#define MULTIPLE_PIDs  false //if lift uses different PID consts for movement in different locations or directions
-#define HOLD_LAST_CONE true	//if lift stays up after stacking last cone
-#define HAS_SPEAKER    true
-#define USE_ENC_CORR   true
+#define SKILLZ_MODE      false
+#define ANTI_MARK        1
+#define MULTIPLE_PIDs    false //if lift uses different PID consts for movement in different locations or directions
+#define HOLD_LAST_CONE   true	//if lift stays up after stacking last cone
+#define ABORT_IF_NO_GOAL true
+#define HAS_SPEAKER      true
+#define USE_ENC_CORR     false
 
 	//#subregion testing - TODO: change parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
@@ -28,7 +29,7 @@ int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSe
 	int fbPos[] = { 500,      750,     1500,  1500 };
 
 	enum goalState  { OUT, MID, IN };
-	int goalPos[] = { 15,  600, 2400 };
+	int goalPos[] = { 15,  600, 2300 };
 	//#endsubregion
 
 	//#subregion motors
@@ -130,7 +131,7 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 	//#subregion measurements
 #define CONE_HEIGHT 3.0
 #define L_OFFSET    3.5
-#define GOAL_TO_MID_DIST 19
+#define GOAL_TO_MID_DIST 16
 #define BAR_TO_LINE_DIST 9
 	//#endsubregion
 	//#subregion still speeds
