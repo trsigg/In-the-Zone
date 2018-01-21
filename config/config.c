@@ -8,6 +8,8 @@
 #define MULTIPLE_PIDs    false //if lift uses different PID consts for movement in different locations or directions
 #define HOLD_LAST_CONE   true	//if lift stays up after stacking last cone
 #define ABORT_IF_NO_GOAL true
+#define RETRY_GOAL_FAILS false
+#define PARK_IN_SKILLS   true
 #define HAS_SPEAKER      true
 #define USE_ENC_CORR     false
 
@@ -115,6 +117,7 @@ int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSe
 //#endregion
 
 //#region constants
+#define MAX_GOAL_RETRIES 2
 	//#subregion sensor consts
 #define RAD_TO_POT   880.1    //conversion factor between radians and potentiometer values
 #define L_GEAR_RATIO 5	//gear ratio between lift bar angle and sensors
@@ -123,7 +126,7 @@ const float RAD_TO_LIFT =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_ENC*L_GEAR_RATIO : RAD_T
 const float L_CORR_FCTR =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_LIFT : 1);
 const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define SIDE_SWITCH_POS  1780	//middle of sidePos
-#define GOAL_FOLL_THRESH 3005
+#define GOAL_FOLL_THRESH 3006
 #define R_LINE_THRESHOLD 2960
 #define L_LINE_THRESHOLD 3060
 #define B_LINE_THRESHOLD 2870
@@ -131,7 +134,7 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 	//#subregion measurements
 #define CONE_HEIGHT 3.0
 #define L_OFFSET    3.5
-#define GOAL_TO_MID_DIST 16
+#define GOAL_TO_MID_DIST 16.5
 #define BAR_TO_LINE_DIST 9
 	//#endsubregion
 	//#subregion still speeds
@@ -148,7 +151,7 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 	//#subregion timing
 #define FB_MOVE_DURATION      500
 #define GOAL_INTAKE_DURATION  1500
-#define GOAL_OUTTAKE_DURATION 1750
+#define GOAL_OUTTAKE_DURATION 1250
 	//#endsubregion
 //#endregion
 

@@ -6,7 +6,8 @@ goalState currGoalState = IN;
 void moveGoalIntake(goalState state, bool runConcurrently=false) {
   if (state != currGoalState) {
     currGoalState = state;
-    createManeuver(goalIntake, goalPos[state], runConcurrently, GOAL_STILL_SPEED*(state==OUT ? -1 : 1));
+    moveForDuration(goalIntake, 127*(state==IN ? 1 : -1), (state==IN ? GOAL_INTAKE_DURATION : GOAL_OUTTAKE_DURATION), runConcurrently);  //temp
+    //createManeuver(goalIntake, goalPos[state], runConcurrently, GOAL_STILL_SPEED*(state==OUT ? -1 : 1));
   }
 }
 
