@@ -1,6 +1,16 @@
 #include "audioControl.c"
 #include "lift.c"
 
+
+//#region sonar autostacking
+task sonarAutoStacking() {
+	while (!stacking) EndTimeSlice();
+
+	//... (TODO)
+}
+//#endregion
+
+//#region kinematic autostacking
 const float heightOffset = sin((liftPos[M_BASE_POS] - liftPos[L_ZERO]) / RAD_TO_LIFT);
 
 int numCones = 0; //current number of stacked cones
@@ -16,19 +26,7 @@ float calcLiftTargetForHeight(float height) {
 	             liftPos[L_MIN], liftPos[L_MAX]);
 }
 
-void stackNewCone(bool wait=false) {	//TODO: liftTarget and liftRelease
-	float stackHeight = CONE_HEIGHT * adjustedNumCones();
-
-	liftTarget = calcLiftTargetForHeight(stackHeight + L_OFFSET);	//TODO: noOffsetCones, etc?
-	liftRelease = calcLiftTargetForHeight(stackHeight);
-	stacking = true;
-
-	if (wait)
-		while (stacking)
-			EndTimeSlice();
-}
-
-task autoStacking() {
+task kinematicAutoStacking() {
 	while (true) {
 		while (!stacking) EndTimeSlice();
 
@@ -70,4 +68,32 @@ task autoStacking() {
 		else
 			moveFourBar(true);*/
 	}
+}
+//#endregion
+
+void startAutoStacking() {
+	stacking = false;
+
+	if (SONAR_STACKING && CONE_SONAR>=dgtl1) {
+		startTask(sonarAutoStacking);
+	}
+	else {
+		numCones = 0;
+		startTask(kinematicAutoStacking);
+	}
+}
+
+void stackNewCone(bool wait=false) {	//TODO: liftTarget and liftRelease
+	if (!(SONAR_STACKING && CONE_SONAR>=dgtl1)) {
+		float stackHeight = CONE_HEIGHT * adjustedNumCones();
+
+		liftTarget = calcLiftTargetForHeight(stackHeight + L_OFFSET);	//TODO: noOffsetCones, etc?
+		liftRelease = calcLiftTargetForHeight(stackHeight);
+	}
+
+	stacking = true;
+
+	if (wait)
+		while (stacking)
+			EndTimeSlice();
 }

@@ -9,9 +9,9 @@
 #include "..\game\autonomous.c"
 
 #ifdef PASSIVE
-	#include "..\control\passiveControl.c"
+	#include "..\game\passiveControl.c"
 #else
-	#include "..\control\rollerControl.c"
+	#include "..\game\rollerControl.c"
 #endif
 //#endregion
 

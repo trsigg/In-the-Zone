@@ -3,8 +3,9 @@
 #include "testing.c"
 
 
+int autonDebug;
 bool variant = false;
-bool numRetries = 0;
+int numRetries = 0;
 
 //#region perparation
 void prepareForAuton() {
@@ -337,4 +338,43 @@ task autonUpdateTask() {
 		logSensorVals();
 		EndTimeSlice();
 	}
+}
+
+#ifdef RUN_AUTON_AS_MAIN
+task main() {
+#else
+task autonomous() {
+#endif
+	prepareForAuton();
+	handleTesting();
+	startTask(autonUpdateTask);
+
+	int sidePos = SensorValue[SIDE_POT];
+	int modePos = SensorValue[MODE_POT];
+	int autonTimer = resetTimer();
+
+	turnDefaults.reversed = sidePos < SIDE_SWITCH_POS;	//TODO: put this val in config
+	variant = abs(sidePos - SIDE_SWITCH_POS) < 1400;
+
+	if (SKILLZ_MODE) {
+		startTask(skillz);
+	}
+	else if (modePos < 2030) {	//side goal
+		bool twentyPt = modePos<450;
+		sideGoal(twentyPt, false, false, false);
+
+		if (variant) {	//drive to other side
+			turnDriveTurn(90, (twentyPt ? 30 : 12), 90);
+			driveStraight(60);
+		}
+	}
+	else if (modePos < 3340) {	//defensive
+		if (variant)
+			startTask(antiMark);
+		else
+			driveForDuration(2000, 127);
+	}
+
+	autonDebug = time(autonTimer);
+	while (true) EndTimeSlice();
 }

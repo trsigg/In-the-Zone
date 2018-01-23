@@ -253,7 +253,7 @@ float getVelocity(motorGroup *group, bool useTimeCorrection=true) {
 		int disp = currPos;
 
 		if (group->potentiometerDefault) {
-			disp -= group->prevPos
+			disp -= group->prevPos;
 			group->prevPos = currPos;
 		}
 		else {

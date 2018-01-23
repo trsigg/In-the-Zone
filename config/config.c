@@ -25,7 +25,7 @@ int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSe
 #ifdef E_TEAM_PASSIVE
 	#include "E_PassivePragmas.c"
 
-	#define PASSIVE true
+	#define PASSIVE
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
@@ -85,8 +85,6 @@ int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSe
 
 #ifdef E_TEAM_ROLLER
 	#include "E_RollerPragmas.c"
-
-	#define PASSIVE false
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
