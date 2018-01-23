@@ -30,6 +30,11 @@ typedef struct {
 	int absMin, absMax; //extreme  positions of motorGroup
 	bool hasAbsMin, hasAbsMax;
 	int maxPowerAtAbs, defPowerAtAbs; //maximum power at absolute position (pushing down from minimum or up from maximum) and default power if this is exceeded
+	//velocity tracking
+	long velocityTimer;
+	float currVelocity;
+	int v_sampleTime, prevPos;
+	bool v_trackingActive;
 	//automovement
 	automovementType moving;
 	int movePower, endPower;	//both maneuver and duration
@@ -223,6 +228,42 @@ void setAbsolutes(motorGroup *group, int min, int max, int defPowerAtAbs=0, int 
 	group->hasAbsMax = true;
 	group->maxPowerAtAbs = maxPowerAtAbs;
 	group->defPowerAtAbs = defPowerAtAbs;
+}
+//#endregion
+
+//#region velocity tracking
+void configureVelocityTracking(motorGroup *group, int sampleTime=50) {
+	group->v_sampleTime = sampleTime;
+	group->currVelocity = 0;
+	group->velocityTimer = resetTimer();
+	group->v_trackingActive = true;
+
+	if (group->potentiometerDefault)
+		group->prevPos = getPosition(group);
+	else
+		group->prevPos = 0;
+}
+
+float getVelocity(motorGroup *group, bool useTimeCorrection=true) {
+	long elapsed = time(group->velocityTimer);
+
+	if (elapsed > group->v_sampleTime) {
+		group->velocityTimer = resetTimer();
+		int currPos = getPosition(group);
+		int disp = currPos;
+
+		if (group->potentiometerDefault) {
+			disp -= group->prevPos
+			group->prevPos = currPos;
+		}
+		else {
+			resetEncoder(group);
+		}
+
+		group->currVelocity = disp / (useTimeCorrection ? elapsed : 1);
+	}
+
+	return group->currVelocity;
 }
 //#endregion
 
