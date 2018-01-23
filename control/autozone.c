@@ -55,7 +55,7 @@ task autonomous() {
 		sideGoal(twentyPt, false, false, false);
 
 		if (variant) {	//drive to other side
-			turnDriveTurn(90, (twentyPt ? 25 : 12), 90);
+			turnDriveTurn(90, (twentyPt ? 30 : 12), 90);
 			driveStraight(60);
 		}
 	}

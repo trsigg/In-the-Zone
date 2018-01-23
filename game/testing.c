@@ -104,9 +104,8 @@ void testPIDs() {
 
 //#region misc test
 void miscTest() {
-	/*while (!end) {
-		while ()
-	}*/
+	/*startTask(autonUpdateTask);
+	sideGoal(false, false, true, true, false);*/
 }
 //#endregion
 
