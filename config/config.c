@@ -1,4 +1,5 @@
-#define E_TEAM
+#define E_TEAM_PASSIVE
+//#define E_TEAM_ROLLER
 //#define RUN_AUTON_AS_MAIN
 
 
@@ -9,6 +10,7 @@
 #define HOLD_LAST_CONE true	//if lift stays up after stacking last cone
 #define HAS_SPEAKER    true
 #define USE_ENC_CORR   true
+#define SONAR_STACKING true
 
 	//#subregion testing - TODO: change parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
@@ -17,8 +19,10 @@ int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSe
 //#endregion
 
 //#region E Team
-#ifdef E_TEAM
-	#include "E_TeamPragmas.c"
+#ifdef E_TEAM_PASSIVE
+	#include "E_PassivePragmas.c"
+
+	#define PASSIVE true
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
@@ -63,6 +67,7 @@ int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSe
 	#define LEFT_ENC      dgtl1
 	#define RIGHT_ENC     dgtl3
 	#define FRONT_SONAR   dgtl6
+	#define CONE_SONAR    -1
 
 	#define LEFT_LINE   in1	//not currently attached
 	#define BACK_LINE   in1
@@ -72,6 +77,77 @@ int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSe
 
 	//#subregion measurements
 	#define LIFT_LEN 14.75	//botton section-14"; top section-15.5"
+	//#endsubregion
+#endif
+
+#ifdef E_TEAM_ROLLER
+	#include "E_RollerPragmas.c"
+
+	#define PASSIVE false
+
+	//#subregion positions
+	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
+	int liftPos[] = { 1400,  1470,    1700,   1500,       1910,   1915,   2950 };	//SAFE previously 1560
+
+	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
+	int fbPos[] = { 500,      750,     1500,  1500 };
+
+	enum goalState  { OUT, MID, IN };
+	int goalPos[] = { 15,  600, 2400 };
+	//#endsubregion
+
+	//#subregion motors
+	#define NUM_LIFT_MOTORS 2
+	tMotor liftMotors[NUM_LIFT_MOTORS] = { port5, port8 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
+
+	#define NUM_FB_MOTORS 1
+	tMotor fourBarMotors[NUM_FB_MOTORS] = { port2 };
+
+	#define NUM_RIGHT_MOTORS 2
+	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port6, port10 };
+
+	#define NUM_LEFT_MOTORS 3
+	tMotor leftMotors[NUM_LEFT_MOTORS] = { port1, port4, port7 };
+
+	#define NUM_GOAL_MOTORS 1
+	tMotor goalMotors[NUM_GOAL_MOTORS] = { port9 };
+
+	#define NUM_ROLLER_MOTORS 1
+	tMotor rollerMotors[NUM_ROLLER_MOTORS] = { port3 };
+	//#endsubregion
+
+	//#subregion sensors
+	#define L_SENS_REVERSED  false	//lift
+	#define FB_SENS_REVERSED false	//four bar
+	#define L_ENC_REVERSED   false	//drive
+	#define R_ENC_REVERSED   true
+
+	#define HYRO          in1
+	#define SIDE_POT      in2
+	#define MODE_POT      in3
+	#define LIFT_SENSOR   in4
+	#define GOAL_SENSOR   -1
+	#define GOAL_FOLLOWER in6
+	#define ROLLER_ENC    dgtl5
+	#define LEFT_ENC      dgtl1
+	#define RIGHT_ENC     dgtl3
+	#define FRONT_SONAR   -1
+	#define CONE_SONAR    dgtl7
+
+	#define LEFT_LINE   in1	//not currently attached
+	#define BACK_LINE   in1
+	#define RIGHT_LINE  in1
+	#define FB_SENSOR   -1	//-1 if not attached
+	//#endsubregion
+
+	//#subregion measurements
+	#define LIFT_LEN 16	//botton section-14"; top section-15.5"
+	//#endsubregion
+
+	//#subregion team-specific components
+	#define intakeBtn  Btn6U
+	#define outtakeBtn Btn6D
+	motorGroup roller;
 	//#endsubregion
 #endif
 //#endregion
@@ -201,4 +277,8 @@ void initializeStructs() {
 		addSensor(fourBar, FB_SENSOR, FB_SENS_REVERSED);
 		if (FB_SENSOR>=dgtl1) configureEncoderCorrection(fourBar, fbPos[FB_MAX]);
 	}
+
+	#ifdef E_TEAM_ROLLER
+		initializeGroup(roller, NUM_ROLLER_MOTORS, rollerMotors, intakeBtn, outtakeBtn, 15);
+	#endif
 }
