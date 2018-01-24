@@ -62,6 +62,19 @@ void setLiftState(liftState state) {
 	else
 		setLiftTargetAndPID(liftPos[state]);
 }
+
+	//#subregion kinematics
+const float heightOffset = sin((liftPos[L_ZERO] - liftPos[M_BASE_POS]) / RAD_TO_LIFT);
+
+float calcLiftTargetForHeight(float height) {
+	return limit(RAD_TO_LIFT * asin(height / 2 / LIFT_LEN - heightOffset) + liftPos[L_ZERO],
+						   liftPos[L_MIN], liftPos[L_MAX]);
+}
+
+float calcLiftHeight(int liftVal) {	//finds lift sensor val separated from liftVal by offset inches
+	return 2 * LIFT_LEN * (sin((liftVal - liftPos[L_ZERO]) / RAD_TO_LIFT) + heightOffset);
+}
+	//#endsubregion
 //#endregion
 
 //#region four bar

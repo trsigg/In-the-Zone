@@ -86,7 +86,7 @@ task usercontrol() {
 		if (newlyPressed(abortManeuversBtn)) {
 			stacking = false;
 			movingToMax = false;
-			startTask(autoStacking);
+			startAutoStacking();
 			stopLiftTargeting();
 		}
 

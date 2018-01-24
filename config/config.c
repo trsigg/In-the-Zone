@@ -21,6 +21,8 @@ int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSe
 	//#endsubregion
 //#endregion
 
+#include "..\lib\pd_autoMove.c"
+
 //#region E Team
 #ifdef E_TEAM_PASSIVE
 	#include "E_PassivePragmas.c"
@@ -145,10 +147,9 @@ int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSe
 	#define LIFT_LEN 16	//botton section-14"; top section-15.5"
 	//#endsubregion
 
-	//#subregion team-specific components
+	//#subregion extra buttons
 	#define intakeBtn  Btn6U
 	#define outtakeBtn Btn6D
-	motorGroup roller;
 	//#endsubregion
 #endif
 //#endregion
@@ -199,11 +200,12 @@ int debugParameters[] = { -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSe
 const float RAD_TO_LIFT =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_ENC*L_GEAR_RATIO : RAD_TO_POT);
 const float L_CORR_FCTR =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_LIFT : 1);
 const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
-#define SIDE_SWITCH_POS  1780	//middle of sidePos
-#define GOAL_FOLL_THRESH 3006
-#define R_LINE_THRESHOLD 2960
-#define L_LINE_THRESHOLD 3060
-#define B_LINE_THRESHOLD 2870
+#define SIDE_SWITCH_POS   1780	//middle of sidePos
+#define GOAL_FOLL_THRESH  3006
+#define R_LINE_THRESHOLD  2960
+#define L_LINE_THRESHOLD  3060
+#define B_LINE_THRESHOLD  2870
+#define CONE_SONAR_THRESH 50
 	//#endsubregion
 	//#subregion measurements
 #define CONE_HEIGHT 3.0
@@ -229,12 +231,10 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 	//#endsubregion
 //#endregion
 
-
-#include "..\lib\pd_autoMove.c" //for drive declaration
-
 motorGroup goalIntake;
 motorGroup lift;
 motorGroup fourBar;
+motorGroup roller;
 
 //motorGroup groupWaitList[DEF_WAIT_LIST_LEN] = { lift, fourBar, goalIntake };
 

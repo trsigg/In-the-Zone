@@ -11,7 +11,7 @@ int numRetries = 0;
 void prepareForAuton() {
 	resetLiftEncoders();
 	stopLiftTargeting();
-	startTask(autoStacking);
+	startAutoStacking();
 	setPower(fourBar, FB_STILL_SPEED);
 	numCones = 0;
 

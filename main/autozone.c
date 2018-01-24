@@ -1,4 +1,3 @@
-//#region setup
 #ifndef RUN_AUTON_AS_MAIN
 	#include "Vex_Competition_Includes.c"
 #endif
@@ -9,11 +8,10 @@
 #include "..\game\autonomous.c"
 
 #ifdef PASSIVE
-	#include "..\game\passiveControl.c"
+	#include "..\control\passiveControl.c"
 #else
-	#include "..\game\rollerControl.c"
+	#include "..\control\rollerControl.c"
 #endif
-//#endregion
 
 void pre_auton() {
 	#ifndef RUN_AUTON_AS_MAIN
