@@ -3,7 +3,8 @@
 #include "testing.c"
 
 
-int autonDebug;
+int autonDebug[2];	// { time of auton routine, follower value on abort }
+int autonTimer;
 bool variant = false;
 int numRetries = 0;
 
@@ -115,7 +116,7 @@ void turnDriveTurn(int angle, int dist, int angle2=0) {
 	turn(angle2==0 ? -angle : angle2);
 }
 
-void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp=false, int intakeDelay=750) {
+void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp=false, int intakeDelay=500) {
 	moveLiftToSafePos();
 	moveGoalIntake(state, true);
 
@@ -137,12 +138,15 @@ void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp
 
 //#region routine portions
 void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//behind 10pt bar -> aligned with tape (approx)
-	if (twentyPt)
+	if (twentyPt) {
 		driveForDuration(1000, 90, 20);	//drive over bar
-	else
+		moveGoalIntake(OUT);
+	}
+	else {
+		moveGoalIntake(OUT, true);
 		alignToBar();
-
-	moveGoalIntake(OUT);
+		waitForMovementToFinish(goalIntake);
+	}
 
 	if (twentyPt) {
 		driveForDuration(250);	//push goal to back of zone
@@ -166,6 +170,8 @@ void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//b
 	if (!variant) waitForMovementToFinish(goalIntake);	//temp
 	if (isMobileGoalLoaded() && numRetries<MAX_GOAL_RETRIES && RETRY_GOAL_FAILS) {
 		numRetries++;
+		playSound(soundBeepBeep);
+		autonDebug[1] = SensorValue[GOAL_FOLLOWER];
 		scoreGoal(twentyPt, align, intakeFully);
 	}
 	else {
@@ -217,9 +223,12 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=tru
 	int direction = (left ? 1 : -1);                                                                          //if twentyPt and middle are true, assumes starting from bar (not tape)
 
 	moveLiftToSafePos();
-	moveGoalIntake(OUT);	//TODO: check if intake is out?
 
-	driveStraight(35 - (twentyPt&&middle ? 0 : BAR_TO_LINE_DIST));
+	moveGoalIntake(OUT, true);	//TODO: check if intake is out?
+	if (twentyPt && middle) driveStraight(BAR_TO_LINE_DIST);
+	waitForMovementToFinish(goalIntake);
+
+	driveStraight(26);
 
 	driveAndGoal(-29, IN);
 	if (twentyPt) {	//preload
@@ -242,6 +251,30 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=tru
 	moveLiftToSafePos();
 	scoreGoal(twentyPt, align, intakeFully);
 }
+
+void crossFieldGoal(bool twentyPt, bool neer, bool middle=false, bool clearCones=false) {	//aligned to tape -> aligned with tape (other side)
+	int nearOffset = neer ? 50 : 0;	//meant to be near. It doesn't work if you spell it correctly. I'm serious.
+
+	moveGoalIntake(OUT, true);
+	if (!neer) alignToBar(false, 1500);
+
+	driveStraight(75 - nearOffset);
+
+	if (twentyPt || middle) {
+		driveAndGoal(40+nearOffset, IN);
+
+		turn(-90);
+		driveStraight(GOAL_TO_MID_DIST);
+		if (clearCones) moveGoalIntake(MID);	//to push cones to side
+		turn(90);
+		if (clearCones) moveGoalIntake(IN);
+	}
+	else {
+		driveAndGoal(25+nearOffset, IN);
+	}
+
+	scoreGoal(twentyPt);
+}
 //#endregion
 
 //#region routines
@@ -250,49 +283,44 @@ task skillz() {
 
 	middleGoal(true, true, true);	//near left middle goal to 20Pt zone
 
-	turnDriveTurn(-90, GOAL_TO_MID_DIST-1.5, -90);	//TODO: turnToLine() (& similar below)
+	turnDriveTurn(-90, GOAL_TO_MID_DIST, -85);	//TODO: turnToLine() (& similar below)
 	moveGoalIntake(OUT);
 	//alignToBar(false, 1000);
 
-	middleGoal(false, false, false/*, false*/);	//near right middle goal to right 10pt
+	middleGoal(false, false, false, false);	//near right middle goal to right 10pt
 
 	turn(-180);
+
+	crossFieldGoal(true, false);	//far right middle goal to 20pt
+
+	//far left middle goal to...
 	moveGoalIntake(OUT, true);
-	alignToBar(false, 1500);
-
-	//far right middle goal to 20pt
-	driveStraight(75);	//previously 30 then 45
-	/*driveStraight(60);	//push aside cones
-	moveGoalIntake(-GOAL_TO_MID_DIST, OUT);
-
-	driveStraight(25);*/
-
-	driveAndGoal(40/*43*/, IN);
-
-	turn(-90);
-	driveStraight(GOAL_TO_MID_DIST-3);
-	//moveGoalIntake(MID);	//to push cones to side
-	turn(90);
-	moveGoalIntake(IN);
-
-	scoreGoal();
-
-	//far left middle goal to left 10pt
-	moveGoalIntake(OUT, true);
-	turnDriveTurn(-90, GOAL_TO_MID_DIST-1.5, -85);
+	turnDriveTurn(-90, GOAL_TO_MID_DIST-2, -85);
 	//alignToBar(false, 1500);
 
-	middleGoal(false, false/*, !PARK_IN_SKILLS*/);	//temp
+	if (CROSS_FIELD_SKLZ) {	//...near left
+		crossFieldGoal(false, true);
 
-	if (PARK_IN_SKILLS) {
-		turn(-140);
-		driveForDuration(2000);
-	}
-	else {
+		//temp (repetitive)
 		turnDriveTurn(-90, 18, -45);
 
 		sideGoal(false, false, true, true, false);	//far left side goal to left 10pt
 	}
+	else {	//...far left (or center?)
+		middleGoal(false, false/*, !PARK_IN_SKILLS*/);	//temp
+
+		if (PARK_IN_SKILLS) {
+			turn(-140);
+			driveForDuration(2000);
+		}
+		else {
+			turnDriveTurn(-90, 18, -45);
+
+			sideGoal(false, false, true, true, false);	//far left side goal to left 10pt
+		}
+	}
+
+	autonDebug[0] = time(autonTimer);
 }
 
 task altSkillz() {
@@ -351,7 +379,7 @@ task autonomous() {
 
 	int sidePos = SensorValue[SIDE_POT];
 	int modePos = SensorValue[MODE_POT];
-	int autonTimer = resetTimer();
+	autonTimer = resetTimer();
 
 	turnDefaults.reversed = sidePos < SIDE_SWITCH_POS;	//TODO: put this val in config
 	variant = abs(sidePos - SIDE_SWITCH_POS) < 1400;
@@ -375,6 +403,6 @@ task autonomous() {
 			driveForDuration(2000, 127);
 	}
 
-	autonDebug = time(autonTimer);
+	autonDebug[0] = time(autonTimer);
 	while (true) EndTimeSlice();
 }

@@ -104,8 +104,10 @@ void testPIDs() {
 
 //#region misc test
 void miscTest() {
-	/*startTask(autonUpdateTask);
-	sideGoal(false, false, true, true, false);*/
+	while (!end) {
+		datalogAddValueWithTimeStamp(0, SensorValue[in7]);
+		datalogAddValueWithTimeStamp(1, SensorValue[in8]);
+	}
 }
 //#endregion
 

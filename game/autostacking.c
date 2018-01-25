@@ -70,7 +70,7 @@ task kinematicAutoStacking() {
 			lift.stillSpeedReversed = true;
 		}
 		else {
-			stopAutomovement(lift);
+			stopAutomovement(lift);	//TODO: replace with maneuver?
 			setPower(lift, -127);
 
 			wait1Msec(250); //while (getPosition(lift) > liftRelease) EndTimeSlice();
