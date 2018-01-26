@@ -17,6 +17,8 @@
 #define RETRY_GOAL_FAILS true
 #define PARK_IN_SKILLS   true
 #define CROSS_FIELD_SKLZ false
+#define SKILLZ_5PT       false
+#define NUM_EXTRA_CONES  0
 	//#endsubregion
 
 	//#subregion testing - TODO: change parameter scheme
