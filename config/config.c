@@ -13,12 +13,14 @@
 	//#subregion auton/skillz options
 #define SKILLZ_MODE      false
 #define ANTI_MARK        1
-#define ABORT_IF_NO_GOAL true
+#define ABORT_IF_NO_GOAL false
 #define RETRY_GOAL_FAILS true
 #define PARK_IN_SKILLS   true
 #define CROSS_FIELD_SKLZ false
 #define SKILLZ_5PT       false
+#define VARIANT_5PT      false
 #define NUM_EXTRA_CONES  0
+#define DEFENSIVE_DELAY  2000
 	//#endsubregion
 
 	//#subregion testing - TODO: change parameter scheme
@@ -207,7 +209,7 @@ const float RAD_TO_LIFT =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_ENC*L_GEAR_RATIO : RAD_T
 const float L_CORR_FCTR =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_LIFT : 1);
 const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define SIDE_SWITCH_POS   1780	//middle of sidePos
-#define GOAL_FOLL_THRESH  2980
+#define GOAL_FOLL_THRESH  2995
 #define R_LINE_THRESHOLD  2960
 #define L_LINE_THRESHOLD  3060
 #define B_LINE_THRESHOLD  2870

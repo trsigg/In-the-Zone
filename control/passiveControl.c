@@ -22,7 +22,7 @@ void handleAutopositioningInput(bool shift) {
 		}
 
 		if (newlyPressed(maxPosBtn)) {
-			setLiftState(L_MAX);
+			setLiftState(SKILLZ_MODE ? L_SAFE : L_MAX);
 			movingToMax = true;
 		}
 	}

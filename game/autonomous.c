@@ -3,6 +3,8 @@
 #include "testing.c"
 
 
+enum zoneType { FIVE, TEN, TWENTY };
+
 int autonDebug[2];	// { time of auton routine, follower value on abort }
 int autonTimer;
 bool variant = false;
@@ -35,12 +37,12 @@ void prepareForAuton() {
 
 //#region conditional abort
 void stopAllMotors() {	//TODO: reposition?
-	for (int id=port1; i<=port10; i++) {
+	for (int id=port1; id<=port10; id++) {
 		motor[id] = 0;
 	}
 }
 
-bool maybeAbort() {	//stop execution in case mobile goal not intaked
+void maybeAbort() {	//stop execution in case mobile goal not intaked
 	if (!(isMobileGoalLoaded() || SKILLZ_MODE) && ABORT_IF_NO_GOAL) {
 		playSound(soundLowBuzz);
 		stopTask(autonUpdateTask);
@@ -167,18 +169,13 @@ void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//b
 	if (twentyPt) {
 		driveForDuration(1000, 90, 20);	//drive over bar
 		moveGoalIntake(OUT);
+		driveForDuration(250);	//push goal to back of zone
+		driveForDuration(250, -127);
 	}
 	else {
 		moveGoalIntake(OUT, true);
 		alignToBar();
 		waitForMovementToFinish(goalIntake);
-	}
-
-	if (twentyPt) {
-		driveForDuration(250);	//push goal to back of zone
-		driveForDuration(250, -127);
-	}
-	else {
 		driveStraight(-10);	//back out
 	}
 
@@ -193,7 +190,7 @@ void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//b
 		driveStraight(-BAR_TO_LINE_DIST);
 	}
 
-	if (!variant) waitForMovementToFinish(goalIntake);	//temp
+	//waitForMovementToFinish(goalIntake);	//if something breaks with the goal intake, uncomment this line
 	if (isMobileGoalLoaded() && numRetries<MAX_GOAL_RETRIES && RETRY_GOAL_FAILS) {
 		numRetries++;
 		playSound(soundBeepBeep);
@@ -206,7 +203,7 @@ void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//b
 	}
 }
 
-void sideGoal(bool twentyPt=true, bool middle=false, bool reversed=false, bool align=true, bool startingFromBar=true, bool fieldCones=false, bool intakeFully=true) {	//touching bar, aligned with goal -> aligned with tape (approx)
+void sideGoal(zoneType zone=TWENTY, bool middle=false, bool reversed=false, bool align=true, bool startingFromBar=true, bool fieldCones=false, bool intakeFully=true) {	//touching bar, aligned with goal -> aligned with tape (approx)
 	int direction = (reversed ? -1 : 1);
 	moveLiftToSafePos();
 
@@ -216,14 +213,18 @@ void sideGoal(bool twentyPt=true, bool middle=false, bool reversed=false, bool a
 
 	//position robot facing middle of 10pt bar
 	if (fieldCones) {
-		moveGoalIntake(IN);
+		moveGoalIntake(IN, true);
+		wait1Msec(500);
 
+		driveStraight(7);
+
+		waitForMovementToFinish(goalIntake);
 		maybeAbort();
 
 		for (int i=0; i<NUM_EXTRA_CONES; i++) {	//TODO: numAutonCones
 			stackNewCone();
 
-			driveStraight(10);
+			driveStraight(7);
 			/*stopLiftTargeting();
 			moveFourBar(true);
 			setPower(lift, -15);	//temp
@@ -251,9 +252,10 @@ void sideGoal(bool twentyPt=true, bool middle=false, bool reversed=false, bool a
 		maybeAbort();
 	}
 
-	if (!(SKILLZ_MODE && SKILLZ_5PT)) {
+	if (zone != FIVE) {	//ten or twenty
 		turn(-direction * 45);	//turnDriveTurn?
-		driveStraight(middle||twentyPt ? -30 : -12, true);
+
+		driveStraight(middle||zone==TWENTY ? -30 : -12, true);
 		while (driveData.totalDist < 5) EndTimeSlice();
 		if (!(NUM_EXTRA_CONES>0 && variant)) stackNewCone();
 		while (driveData.isDriving) EndTimeSlice();
@@ -262,16 +264,17 @@ void sideGoal(bool twentyPt=true, bool middle=false, bool reversed=false, bool a
 		while (stacking) EndTimeSlice();
 		moveLiftToSafePos();
 
-		scoreGoal(twentyPt, align, intakeFully);
+		scoreGoal(zone==TWENTY, align, intakeFully);
 	}
 	else {	//score in 5pt
-		moveGoalIntake(OUT, true);
-		turn(direction * 180);
-		waitForMovementToFinish(goalIntake);
+		stackNewCone();
+		turn(direction * 180, true);
+		while (stacking) EndTimeSlice();
+		moveLiftToSafePos();
+		moveGoalIntake(OUT);
+		while (turnData.isTurning) EndTimeSlice();
 		driveStraight(-10);
-		turn(-direction * 160);
 		moveGoalIntake(IN, true);
-		driveForDuration(2000);
 	}
 }
 
@@ -360,7 +363,7 @@ task skillz() {
 		//temp (repetitive)
 		turnDriveTurn(-90, 18, -45);
 
-		sideGoal(false, false, true, true, false);	//far left side goal to left 10pt
+		sideGoal((SKILLZ_5PT ? FIVE : TEN), false, true, true, false);	//far left side goal to left 10pt
 	}
 	else {	//...far left (or center?)
 		middleGoal(false, false/*, !PARK_IN_SKILLS*/);	//temp
@@ -372,7 +375,11 @@ task skillz() {
 		else {
 			turnDriveTurn(-90, 18, -45);
 
-			sideGoal(false, false, true, true, false);	//far left side goal to left 10pt
+			sideGoal((SKILLZ_5PT ? FIVE : TEN), false, true, true, false);	//far left side goal to left 10pt
+
+			turn(160);
+			moveGoalIntake(IN, true);
+			driveForDuration(2000);
 		}
 	}
 
@@ -391,7 +398,7 @@ task altSkillz() {
 
 task antiMark() {
 	//if (ANTI_MARK == 1) {
-		wait1Msec(2000);
+		wait1Msec(DEFENSIVE_DELAY);
 		driveStraight(10);
 		turn(47);
 		driveStraight(75);
@@ -436,11 +443,30 @@ task autonomous() {
 		startTask(skillz);
 	}
 	else if (modePos < 2030) {	//side goal
-		bool twentyPt = modePos<450;
-		sideGoal(twentyPt, false, false, false, true, variant&&NUM_EXTRA_CONES>0);
+		zoneType zone;
 
-		if (variant || NUM_EXTRA_CONES>0) {	//drive to other side
-			turnDriveTurn(90, (twentyPt ? 30 : 12), 90);
+		if (modePos < 450)
+			zone = TWENTY;
+		else if (VARIANT_5PT && variant)
+			zone = FIVE;
+		else
+			zone = TEN;
+
+		sideGoal(zone, false, false, false, true, variant&&NUM_EXTRA_CONES>0);
+
+		if (variant || NUM_EXTRA_CONES>0 || (zone==TEN && VARIANT_5PT)) {	//drive to other side
+			switch (zone) {
+				case FIVE:
+					turn(-135);
+					break;
+				case TEN:
+					turnDriveTurn(90, 12, 90);
+					break;
+				case TWENTY:
+					turnDriveTurn(90, 30, 90);
+					break;
+			}
+
 			driveStraight(60);
 		}
 	}
