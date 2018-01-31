@@ -1,5 +1,5 @@
-#define E_TEAM_PASSIVE
-//#define E_TEAM_ROLLER
+//#define E_TEAM_PASSIVE
+#define E_TEAM_ROLLER
 //#define RUN_AUTON_AS_MAIN
 
 
@@ -91,6 +91,18 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	//#subregion measurements
 	#define LIFT_LEN 14.75	//botton section-14"; top section-15.5"
 	//#endsubregion
+
+	//#subregion specific buttons
+		//#subsubregion fb
+	#define fbInBtn   Btn6U
+	#define fbOutBtn  Btn6D
+		//#endsubsubregion
+
+		//#subsubregion autopositioning
+	#define defPosBtn Btn8D	//takes lift to default position
+	#define maxPosBtn Btn8L //takes lift to maximum position
+		//#endsubsubregion
+	//#endsubregion
 #endif
 
 #ifdef E_TEAM_ROLLER
@@ -98,7 +110,7 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1400,  1470,    1700,   1500,       2095,   1915,   2800 };	//SAFE previously 1560
+	int liftPos[] = { 820,   825,     1126,   820,        1320,   1400,   2130 };	//SAFE previously 1560
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 500,      750,     1500,  1500 };
@@ -109,13 +121,13 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 
 	//#subregion motors
 	#define NUM_LIFT_MOTORS 2
-	tMotor liftMotors[NUM_LIFT_MOTORS] = { port5, port8 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
+	tMotor liftMotors[NUM_LIFT_MOTORS] = { port2, port6 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
 
 	#define NUM_FB_MOTORS 1
-	tMotor fourBarMotors[NUM_FB_MOTORS] = { port2 };
+	tMotor fourBarMotors[NUM_FB_MOTORS] = { port8 };
 
 	#define NUM_RIGHT_MOTORS 2
-	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port6, port10 };
+	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port5, port10 };
 
 	#define NUM_LEFT_MOTORS 3
 	tMotor leftMotors[NUM_LEFT_MOTORS] = { port1, port4, port7 };
@@ -155,15 +167,28 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	#define LIFT_LEN 16	//botton section-14"; top section-15.5"
 	//#endsubregion
 
-	//#subregion extra buttons
+	//#subregion specific buttons
+		//#subsubregion rollers
 	#define intakeBtn  Btn6U
 	#define outtakeBtn Btn6D
+		//#endsubsubregion
+
+		//#subsubregion fb
+	#define fbInBtn    Btn8U
+	#define fbOutBtn   Btn8R
+		//#endsubsubregion
+
+		//#subregion autopositioning
+	#define fbStackBtn Btn8D	//takes fb to STACK
+	#define fbDefBtn   Btn8L	//takes lift to default position for mode (fielding or d_load)
+	                        	//when pressed together, they take lift and chain to default positions
+		//#endsubregion
 	//#endsubregion
 #endif
 //#endregion
 
 
-//#region buttons
+//#region common buttons
 #define abortManeuversBtn Btn7L
 #define shiftBtn          Btn7R
 #define sayConeNumberBtn  Btn8L	//with shift
@@ -173,19 +198,9 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 #define goalOuttakeBtn    Btn7U
 	//#endsubregion
 
-	//#subregion top four bar
-#define fbInBtn           Btn6U
-#define fbOutBtn          Btn6D
-	//#endsubregion
-
 	//#subregion lift
 #define liftUpBtn         Btn5U	//fielding mode
 #define liftDownBtn       Btn5D
-	//#endsubregion
-
-	//#subregion autopositioning
-#define defPosBtn         Btn8D	//takes lift to default position
-#define maxPosBtn         Btn8L //takes lift to maximum position
 	//#endsubregion
 
 	//#subregion autostacking control
