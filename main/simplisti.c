@@ -22,6 +22,7 @@
 //#region includes
 #include "Vex_Competition_Includes.c"
 #include "../lib/parallelDrive.c"
+#include "../lib/buttonTracker.c"
 //#endregion
 
 //#region globals
@@ -62,11 +63,20 @@ task autonomous() {
 }
 
 task usercontrol() {
+	bool fbIn = false;
+
   while (true) {
     takeInput(lift);
   	takeInput(goalIntake);
   	takeInput(coneIntake);
-  	takeInput(fourBar);
+  	takeInput(fourBar, fourBar.moving==NO);
   	driveRuntime(drive);
+
+  	if (newlyPressed(Btn8L)) {
+  		moveForDuration(fourBar, (fbIn ? 127 : -127), 500);
+  		fbIn = !fbIn;
+  	}
+
+  	executeAutomovement(fourBar);
   }
 }
