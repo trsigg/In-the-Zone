@@ -18,7 +18,7 @@ task autonUpdateTask() {
 	}
 }
 
-//#region perparation
+//#region preparation
 void prepareForAuton() {
 	resetLiftEncoders();
 	stopLiftTargeting();

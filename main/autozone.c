@@ -6,12 +6,8 @@
 #pragma competitionControl(Competition)
 #include "..\lib\buttonTracker.c"
 #include "..\game\autonomous.c"
+#include "..\control\commonControl.c"
 
-#ifdef PASSIVE
-	#include "..\control\passiveControl.c"
-#else
-	#include "..\control\rollerControl.c"
-#endif
 
 void pre_auton() {
 	#ifndef RUN_AUTON_AS_MAIN

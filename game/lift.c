@@ -2,6 +2,7 @@
 
 
 bool fielding = true;	//whether robot is intaking cones from the driver load or field
+bool fbUpAfterLiftManeuver;	//whether four bar should raise after current lift maneuver (TODO: down option as well?)
 
 //#region sensors
 void resetLiftEncoders() {
@@ -17,24 +18,6 @@ void handleEncoderCorrection() {
 		correctEncVal(fourBar);
 }
 //#endregion
-
-void executeManeuvers(bool autoStillSpeed=true) {	//TODO: argument doesn't do anything right now
-	handleEncoderCorrection();
-
-	executeAutomovement(lift, debugParameters[0]);
-	executeAutomovement(fourBar, debugParameters[2]);
-	executeAutomovement(goalIntake);	//I know, this isn't really part of the lift... (TODO: reposition)
-}
-
-void waitForLiftingToFinish(int timeout=100) {	//TODO: delete as soon as possible
-	waitForMovementToFinish(lift, timeout);
-	waitForMovementToFinish(fourBar);
-}
-
-void stopLiftTargeting() {
-	stopAutomovement(lift);
-	stopAutomovement(fourBar);
-}
 
 //#region lift
 void setLiftPIDmode(bool up) {	//up is true for upward movement consts, false for downward movement ones
@@ -53,7 +36,7 @@ void setLiftTargetAndPID(int target, bool resetIntegral=true) {	//sets lift targ
 			setLiftPIDmode(false);
 	}
 
-	setTargetPosition(lift, target, resetIntegral);
+	setTargetPosition(lift, limit(target, liftPos[L_MIN], liftPos[L_MIN]), resetIntegral);
 }
 
 void setLiftState(liftState state) {
@@ -71,7 +54,7 @@ float calcLiftTargetForHeight(float height) {
 						   liftPos[L_MIN], liftPos[L_MAX]);
 }
 
-float calcLiftHeight(int liftVal) {	//finds lift sensor val separated from liftVal by offset inches
+float calcLiftHeight(int liftVal) {	//finds lift sensor val separated from liftVal by offset inches	- TODO: what?
 	return 2 * LIFT_LEN * (sin((liftVal - liftPos[L_ZERO]) / RAD_TO_LIFT) + heightOffset);
 }
 	//#endsubregion
@@ -110,12 +93,39 @@ void moveFourBar(bool up, bool runConcurrently=true, int power=127) {
 }
 //#endregion
 
+//#region general maneuvers
+void executeManeuvers(bool autoStillSpeed=true) {	//TODO: argument doesn't do anything right now
+	handleEncoderCorrection();
+
+	executeAutomovement(lift, debugParameters[0]);
+	executeAutomovement(fourBar, debugParameters[2]);
+	executeAutomovement(goalIntake);	//I know, this isn't really part of the lift... (TODO: reposition)
+
+	if (fbUpAfterLiftManeuver && (lift.moving==NO || lift.moving==TARGET && errorLessThan(lift, lift.waitErrorMargin)))	//TODO: better targeting completion criterion?
+		if (FB_SENSOR >= 0)
+			setFbState(FB_SAFE);
+		else
+			moveFourBar(true);
+}
+
+void waitForLiftingToFinish(int timeout=100) {	//TODO: delete as soon as possible
+	waitForMovementToFinish(lift, timeout);
+	waitForMovementToFinish(fourBar);
+}
+
+void stopLiftTargeting() {
+	stopAutomovement(lift);
+	stopAutomovement(fourBar);
+}
+//#endregion
+
 void moveLiftToSafePos(bool wait=true) {
-	if (getPosition(lift)<liftPos[L_SAFE] || (lift.moving==TARGET && lift.posPID.target>liftPos[L_SAFE])) {
+	if (getPosition(lift)<liftPos[L_SAFE] || (lift.moving==TARGET && lift.posPID.target<liftPos[L_SAFE])) {
 		setLiftTargetAndPID(liftPos[L_SAFE] + 100/L_CORR_FCTR);
 	}
 	else {	//passively hold lift up
 		stopAutomovement(lift);
+		setPower(lift, LIFT_STILL_SPEED);
 		lift.stillSpeedReversed = false;
 	}
 

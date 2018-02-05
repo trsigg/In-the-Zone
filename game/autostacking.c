@@ -54,7 +54,7 @@ task kinematicAutoStacking() {
 	while (true) {
 		while (!stacking) EndTimeSlice();
 
-		setLiftTargetAndPID(liftTarget);	//TODO: only target if lift below target
+		setLiftTargetAndPID(liftTarget);	//TODO: if (getPosition(lift) < liftTarget)?
 		if (FB_SENSOR >= 0) setFbState(FB_SAFE);
 		while (getPosition(lift) < liftRelease) EndTimeSlice();	//wait for lift to move to stacking position
 
@@ -70,10 +70,25 @@ task kinematicAutoStacking() {
 			lift.stillSpeedReversed = true;
 		}
 		else {
-			stopAutomovement(lift);	//TODO: replace with maneuver?
-			setPower(lift, -127);
+			#ifdef PASSIVE
+				stopAutomovement(lift);	//TODO: replace with maneuver?
+				setPower(lift, -127);
 
-			wait1Msec(250); //while (getPosition(lift) > liftRelease) EndTimeSlice();
+				wait1Msec(250); //while (getPosition(lift) > liftRelease) EndTimeSlice();
+			#else
+				/*stopAutomovement(lift);	//TODO: replace with maneuver?
+				setPower(lift, -127);
+
+				long stackTimer = resetTimer();
+				while (getPosition(lift) > liftRelease && time(stackTimer) < 150) EndTimeSlice();*/
+				setLiftTargetAndPID(liftRelease);
+				waitForMovementToFinish(lift);
+
+				setPower(roller, -127);
+				setLiftTargetAndPID(liftTarget);
+				waitForMovementToFinish(lift);
+			#endif
+
 			if (FB_SENSOR >= 0)
 				setFbState(FB_DEF);
 			else
