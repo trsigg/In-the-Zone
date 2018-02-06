@@ -1,24 +1,28 @@
-bool movingToMax = false;	//true if lifting up to MAX_POS - TODO: fb down after going to def?
+bool fbIn = false;	//true if lifting up to MAX_POS - TODO: fb down after going to def?
 
 void handleAutopositioningInput(bool shift) {
-	if (!shift) {
-		if (newlyPressed(defPosBtn)) {
-			setLiftState(L_DEF);
-			movingToMax = false;
-		}
+	if (!shift)
+		if (newlyPressed(toggleFbBtn))
+			moveFourBar(fbIn = !fbIn);
+}
 
-		if (newlyPressed(maxPosBtn)) {
-			setLiftState(SKILLZ_MODE ? L_SAFE : L_MAX);
-			movingToMax = true;
+void handleLiftInput(bool shift) {
+	if (!stacking) {
+		if (!shift && vexRT[stackBtn]==1) {
+			stackNewCone();
+		}
+		else {
+			handleAutopositioningInput(shift);
+
+			//will only set power if not maintaining a position
+			//if there is input, activelyMaintaining will be set to false and normal control will resume
+			takeInput(lift, lift.moving==NO);
+			int fbPower = takeInput(fourBar, fourBar.moving==NO);
+
+			if (fabs(fbPower) > FB_STILL_SPEED)	//update fbIn
+				fbIn = fbPower > 0;	//TODO: reverse?
 		}
 	}
 
-	if (movingToMax && errorLessThan(lift, 100)) {
-		if (FB_SENSOR >= 0)
-			setFbState(STACK);
-		else
-			moveFourBar(true);
-
-		movingToMax = false;
-	}
+	executeManeuvers();
 }

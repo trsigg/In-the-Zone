@@ -101,11 +101,14 @@ void executeManeuvers(bool autoStillSpeed=true) {	//TODO: argument doesn't do an
 	executeAutomovement(fourBar, debugParameters[2]);
 	executeAutomovement(goalIntake);	//I know, this isn't really part of the lift... (TODO: reposition)
 
-	if (fbUpAfterLiftManeuver && (lift.moving==NO || lift.moving==TARGET && errorLessThan(lift, lift.waitErrorMargin)))	//TODO: better targeting completion criterion?
+	if (fbUpAfterLiftManeuver && (lift.moving==NO || lift.moving==TARGET && errorLessThan(lift, lift.waitErrorMargin))) {	//TODO: better targeting completion criterion?
 		if (FB_SENSOR >= 0)
 			setFbState(FB_SAFE);
 		else
 			moveFourBar(true);
+
+		fbUpAfterLiftManeuver = false;
+	}
 }
 
 void waitForLiftingToFinish(int timeout=100) {	//TODO: delete as soon as possible

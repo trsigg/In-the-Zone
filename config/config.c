@@ -8,7 +8,7 @@
 #define HOLD_LAST_CONE   true	//if lift stays up after stacking last cone
 #define HAS_SPEAKER      true
 #define USE_ENC_CORR     false
-#define SONAR_STACKING   true
+#define SONAR_STACKING   false
 
 	//#subregion auton/skillz options
 #define SKILLZ_MODE      false
@@ -42,7 +42,7 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	int liftPos[] = { 1400,  1470,    1700,   1500,       2195,   1915,   2800 };	//SAFE previously 1560
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
-	int fbPos[] = { 500,      750,     1500,  1500 };
+	int fbPos[] = { 0,        0,       0,     0 };
 
 	enum goalState  { OUT, MID, IN };
 	int goalPos[] = { 15,  600, 2300 };
@@ -90,6 +90,15 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 
 	//#subregion measurements
 	#define LIFT_LEN 14.75	//botton section-14"; top section-15.5"
+	#define CONE_HEIGHT 3.5
+	#define L_OFFSET    3.5
+	#define GOAL_TO_MID_DIST 17
+	#define BAR_TO_LINE_DIST 9
+	//#endsubregion
+
+	//#subregion cone counts
+	#define APATHY_CONES       0 //number of cones for which lift does not move
+	#define MAX_NUM_CONES      16
 	//#endsubregion
 
 	//#subregion specific buttons
@@ -113,7 +122,7 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	int liftPos[] = { 820,   825,     1126,   820,        1320,   1400,   2130 };	//SAFE previously 1560
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
-	int fbPos[] = { 500,      750,     1500,  1500 };
+	int fbPos[] = { 0,        0,       0,     0 };
 
 	enum goalState  { OUT, MID, IN };
 	int goalPos[] = { 15,  600, 2400 };
@@ -150,21 +159,30 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	#define MODE_POT      in3
 	#define LIFT_SENSOR   in4
 	#define GOAL_SENSOR   -1
-	#define GOAL_FOLLOWER in6
-	#define ROLLER_ENC    dgtl5
+	#define GOAL_FOLLOWER -1
+	#define ROLLER_ENC    -1
 	#define LEFT_ENC      dgtl1
 	#define RIGHT_ENC     dgtl3
 	#define FRONT_SONAR   -1
-	#define CONE_SONAR    dgtl7
+	#define CONE_SONAR    -1
 
-	#define LEFT_LINE   in1	//not currently attached
-	#define BACK_LINE   in1
-	#define RIGHT_LINE  in1
-	#define FB_SENSOR   -1	//-1 if not attached
+	#define LEFT_LINE   -1	//not currently attached
+	#define BACK_LINE   -1
+	#define RIGHT_LINE  -1
+	#define FB_SENSOR   -1
 	//#endsubregion
 
 	//#subregion measurements
-	#define LIFT_LEN 16	//botton section-14"; top section-15.5"
+	#define LIFT_LEN 16
+	#define CONE_HEIGHT 3.5
+	#define L_OFFSET    3.5
+	#define GOAL_TO_MID_DIST 17
+	#define BAR_TO_LINE_DIST 9
+	//#endsubregion
+
+	//#subregion cone counts
+	#define APATHY_CONES       0 //number of cones for which lift does not move
+	#define MAX_NUM_CONES      16
 	//#endsubregion
 
 	//#subregion specific buttons
@@ -200,7 +218,7 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	//#endsubregion
 
 	//#subregion lift
-#define liftUpBtn         Btn5U	//fielding mode
+#define liftUpBtn         Btn5U
 #define liftDownBtn       Btn5D
 	//#endsubregion
 
@@ -231,22 +249,12 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define B_LINE_THRESHOLD  2870
 #define CONE_SONAR_THRESH 50
 	//#endsubregion
-	//#subregion measurements
-#define CONE_HEIGHT 3.5
-#define L_OFFSET    3.5
-#define GOAL_TO_MID_DIST 17
-#define BAR_TO_LINE_DIST 9
-	//#endsubregion
 	//#subregion still speeds
 #define LIFT_STILL_SPEED  15
 #define L_AUTO_SS_MARGIN  50
 #define FB_STILL_SPEED    20
 #define FB_AUTO_SS_MARGIN 50
 #define GOAL_STILL_SPEED  15
-	//#endsubregion
-	//#subregion cone counts
-#define APATHY_CONES       0 //number of cones for which lift does not move
-#define MAX_NUM_CONES      14
 	//#endsubregion
 	//#subregion timing
 #define FB_MOVE_DURATION      500
@@ -304,7 +312,7 @@ void initializeStructs() {
 		if (FB_SENSOR>=dgtl1) configureEncoderCorrection(fourBar, fbPos[FB_MAX]);
 	}
 
-	#ifdef E_TEAM_ROLLER
+	#ifndef PASSIVE
 		initializeGroup(roller, NUM_ROLLER_MOTORS, rollerMotors, intakeBtn, outtakeBtn, 15);
 	#endif
 }

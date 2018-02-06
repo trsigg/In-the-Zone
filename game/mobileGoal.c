@@ -12,7 +12,7 @@ void moveGoalIntake(goalState state, bool runConcurrently=false) {
 }
 
 bool isMobileGoalLoaded() {
-  return SensorValue[GOAL_FOLLOWER] < GOAL_FOLL_THRESH;
+  return SensorValue[GOAL_FOLLOWER] < GOAL_FOLL_THRESH || GOAL_FOLLOWER < in1;
 }
 
 /*void moveGoalIntake(bool in, bool runConcurrently=false, bool checkPos=true) {

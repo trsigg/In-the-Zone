@@ -22,3 +22,20 @@ void handleAutopositioningInput(bool shift) {
 		movingToMax = false;
 	}
 }
+
+void handleLiftInput(bool shift) {
+	if (!stacking) {
+		if (!shift && vexRT[stackBtn]==1) {
+			movingToMax = false;
+			stackNewCone();
+		}
+		else {
+			handleAutopositioningInput(shift);
+
+			takeInput(fourBar, fourBar.moving==NO); //will only set power if not maintaining a position
+			takeInput(lift, lift.moving==NO);       //if there is input, activelyMaintaining will be set to false and normal control will resume
+		}
+	}
+
+	executeManeuvers();
+}
