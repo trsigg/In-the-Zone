@@ -71,6 +71,10 @@ task usercontrol() {
 		handleLiftInput(shift);
 		handleGoalIntakeInput();
 
+		#ifndef PASSIVE
+			takeInput(roller);
+		#endif
+
 		driveRuntime(drive);
 	}
 }

@@ -11,12 +11,7 @@ task sonarAutoStacking() {
 	//lift above stack
 	setPower(lift, 127);
 
-	bool abort = false;
-	while (SensorValue[CONE_SONAR] < CONE_SONAR_THRESH && !abort) {
-		if (getPosition(lift) > liftPos[L_MAX]-75)
-			abort = true;
-		EndTimeSlice();
-	}
+	bool abort = liftUntilSonar(false, true);
 
 	moveFourBar(true);
 

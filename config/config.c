@@ -8,6 +8,7 @@
 #define HOLD_LAST_CONE   true	//if lift stays up after stacking last cone
 #define HAS_SPEAKER      true
 #define USE_ENC_CORR     false
+#define DOUBLE_DRIVER    false
 #define SONAR_STACKING   false
 
 	//#subregion auton/skillz options
@@ -39,13 +40,13 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1400,  1470,    1700,   1500,       2195,   1915,   2800 };	//SAFE previously 1560
+	int liftPos[] = { 565,   565,     850,    565,        1180,   1200,   2050 };	//SAFE previously 1560
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 0,        0,       0,     0 };
 
-	enum goalState  { OUT, MID, IN };
-	int goalPos[] = { 15,  600, 2300 };
+	enum goalState  { OUT,  MID,  IN };
+	int goalPos[] = { 2400, 1990, 15 };
 	//#endsubregion
 
 	//#subregion motors
@@ -107,6 +108,10 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	#define fbOutBtn  Btn6D
 		//#endsubsubregion
 
+		//#subsubregion autostacking control
+	#define stackBtn  Btn8U
+		//#endsubsubregion
+
 		//#subsubregion autopositioning
 	#define defPosBtn Btn8D	//takes lift to default position
 	#define maxPosBtn Btn8L //takes lift to maximum position
@@ -154,17 +159,17 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	#define L_ENC_REVERSED   false	//drive
 	#define R_ENC_REVERSED   true
 
-	#define HYRO          in1
-	#define SIDE_POT      in2
-	#define MODE_POT      in3
-	#define LIFT_SENSOR   in4
-	#define GOAL_SENSOR   -1
+	#define HYRO          -1
+	#define SIDE_POT      -1
+	#define MODE_POT      -1
+	#define LIFT_SENSOR   in2
+	#define GOAL_SENSOR   in1
 	#define GOAL_FOLLOWER -1
 	#define ROLLER_ENC    -1
 	#define LEFT_ENC      dgtl1
 	#define RIGHT_ENC     dgtl3
 	#define FRONT_SONAR   -1
-	#define CONE_SONAR    -1
+	#define CONE_SONAR    dgtl5
 
 	#define LEFT_LINE   -1	//not currently attached
 	#define BACK_LINE   -1
@@ -196,6 +201,10 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	#define fbOutBtn   Btn8R
 		//#endsubsubregion
 
+		//#subsubregion autostacking control
+	#define stackBtn   Btn8L
+		//#endsubsubregion
+
 		//#subregion autopositioning
 	#define toggleFbBtn Btn8D
 	/*#define fbStackBtn Btn8D	//takes fb to STACK
@@ -223,7 +232,6 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	//#endsubregion
 
 	//#subregion autostacking control
-#define stackBtn          Btn8U
 #define toggleFieldingBtn Btn8R
 		//#subsubregion cone count adjustment (all with shift)
 #define resetBtn          Btn8R
@@ -303,7 +311,7 @@ void initializeStructs() {
 	if (SKILLZ_MODE)
 		configureButtonInput(fourBar, goalIntakeBtn, goalOuttakeBtn);
 	else
-		configureButtonInput(fourBar, fbInBtn, fbOutBtn);
+		configureButtonInput(fourBar, fbOutBtn, fbInBtn);
 	configureBtnDependentStillSpeed(fourBar, FB_STILL_SPEED);
 
 	if (FB_SENSOR >= 0) {

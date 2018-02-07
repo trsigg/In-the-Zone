@@ -46,6 +46,23 @@ void setLiftState(liftState state) {
 		setLiftTargetAndPID(liftPos[state]);
 }
 
+bool liftUntilSonar(bool obstructed, bool up, int power=127, int quitMargin=75) {	//if obstructed is true, will wait until lift is obstructed
+	setPower(lift, abs(power)*(up ? 1 : -1));
+
+	bool abort = false;
+	int dangerPos = liftPos[ up ? L_MAX : L_MIN ];
+
+	while (xor(SensorValue[CONE_SONAR] > CONE_SONAR_THRESH, obstructed) && !abort) {
+		if (abs(getPosition(lift) - dangerPos) < quitMargin)
+			abort = true;
+		EndTimeSlice();
+	}
+
+	setGroupToStillSpeed(lift);
+
+	return abort;
+}
+
 	//#subregion kinematics
 const float heightOffset = sin((liftPos[L_ZERO] - liftPos[M_BASE_POS]) / RAD_TO_LIFT);
 

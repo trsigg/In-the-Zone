@@ -175,6 +175,27 @@ void correctEncVal(motorGroup *group) {
 }
 //#endregion
 
+//#region set and get power
+int setPower(motorGroup *group, int power, bool overrideAbsolutes=false) {
+	if (!overrideAbsolutes) {
+		if (group->hasAbsMin && getPosition(group) <= group->absMin && power < -group->maxPowerAtAbs)
+			power = -group->defPowerAtAbs;
+
+		if (group->hasAbsMax && getPosition(group) >= group->absMax && power > group->maxPowerAtAbs)
+			power = group->defPowerAtAbs;
+	}
+
+	for (int i=0; i<group->numMotors; i++) //set motors
+		motor[group->motors[i]] = power;
+
+	return power;
+}
+
+int getPower(motorGroup *group) {
+	return group->motors[0];
+}
+//#endregion
+
 //#region still speeds
 void configurePosDependentStillSpeed(motorGroup *group, int switchPos, int stillSpeed=0) {	//motor will have stillSpeed power when below switchPos, -stillSpeed power when above switchPos
 	if (stillSpeed!=0) group->stillSpeed = stillSpeed;
@@ -203,6 +224,10 @@ int calcStillSpeed(motorGroup *group, bool posForBtnSS=true) {
 	}
 
 	return group->stillSpeed * (reversed ? -1 : 1);
+}
+
+void setGroupToStillSpeed(motorGroup *group, bool posForBtnSS=true) {
+	setPower(group, calcStillSpeed(group, posForBtnSS));
 }
 //#endregion
 
@@ -264,27 +289,6 @@ float getVelocity(motorGroup *group, bool useTimeCorrection=true) {
 	}
 
 	return group->currVelocity;
-}
-//#endregion
-
-//#region set and get power
-int setPower(motorGroup *group, int power, bool overrideAbsolutes=false) {
-	if (!overrideAbsolutes) {
-		if (group->hasAbsMin && getPosition(group) <= group->absMin && power < -group->maxPowerAtAbs)
-			power = -group->defPowerAtAbs;
-
-		if (group->hasAbsMax && getPosition(group) >= group->absMax && power > group->maxPowerAtAbs)
-			power = group->defPowerAtAbs;
-	}
-
-	for (int i=0; i<group->numMotors; i++) //set motors
-		motor[group->motors[i]] = power;
-
-	return power;
-}
-
-int getPower(motorGroup *group) {
-	return group->motors[0];
 }
 //#endregion
 
