@@ -9,7 +9,7 @@
 #define HAS_SPEAKER      true
 #define USE_ENC_CORR     false
 #define DOUBLE_DRIVER    false
-#define SONAR_STACKING   false
+#define SONAR_STACKING   true
 
 	//#subregion auton/skillz options
 #define SKILLZ_MODE      false
@@ -159,12 +159,12 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	#define L_ENC_REVERSED   false	//drive
 	#define R_ENC_REVERSED   true
 
-	#define HYRO          -1
-	#define SIDE_POT      -1
-	#define MODE_POT      -1
+	#define HYRO          in4
+	#define SIDE_POT      in5
+	#define MODE_POT      in6
 	#define LIFT_SENSOR   in2
 	#define GOAL_SENSOR   in1
-	#define GOAL_FOLLOWER -1
+	#define GOAL_FOLLOWER in3
 	#define ROLLER_ENC    -1
 	#define LEFT_ENC      dgtl1
 	#define RIGHT_ENC     dgtl3
@@ -232,7 +232,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	//#endsubregion
 
 	//#subregion autostacking control
-#define toggleFieldingBtn Btn8R
+#define toggleFieldingBtn Btn7D
 		//#subsubregion cone count adjustment (all with shift)
 #define resetBtn          Btn8R
 #define increaseConesBtn  Btn8U
@@ -251,11 +251,11 @@ const float RAD_TO_LIFT =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_ENC*L_GEAR_RATIO : RAD_T
 const float L_CORR_FCTR =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_LIFT : 1);
 const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define SIDE_SWITCH_POS   1780	//middle of sidePos
-#define GOAL_FOLL_THRESH  2995
+#define GOAL_FOLL_THRESH  3000
 #define R_LINE_THRESHOLD  2960
 #define L_LINE_THRESHOLD  3060
 #define B_LINE_THRESHOLD  2870
-#define CONE_SONAR_THRESH 50
+#define CONE_SONAR_THRESH 1000
 	//#endsubregion
 	//#subregion still speeds
 #define LIFT_STILL_SPEED  15
@@ -311,7 +311,7 @@ void initializeStructs() {
 	if (SKILLZ_MODE)
 		configureButtonInput(fourBar, goalIntakeBtn, goalOuttakeBtn);
 	else
-		configureButtonInput(fourBar, fbOutBtn, fbInBtn);
+		configureButtonInput(fourBar, fbInBtn, fbOutBtn);
 	configureBtnDependentStillSpeed(fourBar, FB_STILL_SPEED);
 
 	if (FB_SENSOR >= 0) {

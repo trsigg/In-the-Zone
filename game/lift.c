@@ -36,7 +36,7 @@ void setLiftTargetAndPID(int target, bool resetIntegral=true) {	//sets lift targ
 			setLiftPIDmode(false);
 	}
 
-	setTargetPosition(lift, limit(target, liftPos[L_MIN], liftPos[L_MIN]), resetIntegral);
+	setTargetPosition(lift, limit(target, liftPos[L_MIN], liftPos[L_MAX]), resetIntegral);
 }
 
 void setLiftState(liftState state) {
@@ -46,17 +46,19 @@ void setLiftState(liftState state) {
 		setLiftTargetAndPID(liftPos[state]);
 }
 
-bool liftUntilSonar(bool obstructed, bool up, int power=127, int quitMargin=75) {	//if obstructed is true, will wait until lift is obstructed
+bool liftUntilSonar(bool obstructed, bool up, int additionalTime=75, int power=127, int quitMargin=75) {	//if obstructed is true, will wait until lift is obstructed
 	setPower(lift, abs(power)*(up ? 1 : -1));
 
 	bool abort = false;
 	int dangerPos = liftPos[ up ? L_MAX : L_MIN ];
 
-	while (xor(SensorValue[CONE_SONAR] > CONE_SONAR_THRESH, obstructed) && !abort) {
+	while (xor(sonarFartherThan(CONE_SONAR, CONE_SONAR_THRESH), !obstructed) && !abort) {
 		if (abs(getPosition(lift) - dangerPos) < quitMargin)
 			abort = true;
 		EndTimeSlice();
 	}
+
+	if (!abort) wait1Msec(additionalTime);
 
 	setGroupToStillSpeed(lift);
 
@@ -78,6 +80,8 @@ float calcLiftHeight(int liftVal) {	//finds lift sensor val separated from liftV
 //#endregion
 
 //#region four bar
+bool fbUp = false;
+
 void setFbPIDmode(bool high) {	//high is true for targets above FB_SAFE
 	if (MULTIPLE_PIDs)
 		if (high)
@@ -104,7 +108,8 @@ void setFbState(fbState state) {
 		setFbTargetAndPID(fbPos[state]);
 }
 
-void moveFourBar(bool up, bool runConcurrently=true, int power=127) {	//TODO: handle fbstate here
+void moveFourBar(bool up, bool runConcurrently=true, int power=127) {
+	fbUp = up;
 	fourBar.stillSpeedReversed = !up;
 	moveForDuration(fourBar, power*(up ? 1 : -1), FB_MOVE_DURATION, runConcurrently);
 }
@@ -140,9 +145,9 @@ void stopLiftTargeting() {
 //#endregion
 
 void moveLiftToSafePos(bool wait=true) {
-	if (getPosition(lift)<liftPos[L_SAFE] || (lift.moving==TARGET && lift.posPID.target<liftPos[L_SAFE])) {
-		playSound(soundUpwardTones);
-		setLiftTargetAndPID(liftPos[L_SAFE] + 100/L_CORR_FCTR);
+	if (getPosition(lift)<liftPos[L_SAFE]) {
+		if (lift.moving!=TARGET || lift.posPID.target<liftPos[L_SAFE])
+			setLiftTargetAndPID(liftPos[L_SAFE] + 100/L_CORR_FCTR);
 	}
 	else {	//passively hold lift up
 		stopAutomovement(lift);
@@ -150,9 +155,9 @@ void moveLiftToSafePos(bool wait=true) {
 		lift.stillSpeedReversed = false;
 	}
 
-	if (FB_SENSOR >= 0)
+	if (FB_SENSOR >= 0)	//and fb not in?
 		setFbState(FB_SAFE);
-	else
+	else if (!fbUp)
 		moveFourBar(true);
 
 	if (wait)	//TODO: ensure fb in correct position?

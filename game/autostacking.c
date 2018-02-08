@@ -23,17 +23,19 @@ task sonarAutoStacking() {
 
 	//lift down
 	//setLiftTargetAndPID(calcLiftTargetForHeight(calcLiftHeight(finishPos) - L_OFFSET));
-	setPower(lift, -40);
-	wait1Msec(100);
+	liftUntilSonar(true, false);
 
 	//outtake
 	setPower(roller, -127);
-	setLiftTargetAndPID(finishPos);
-	waitForMovementToFinish(lift);
+	liftUntilSonar(false, true);
+	/*setLiftTargetAndPID(finishPos);
+	waitForMovementToFinish(lift);*/
 
 	//lift down
 	moveFourBar(false, false);
 	setLiftState(L_DEF);
+
+	stacking = false;
 }
 //#endregion
 

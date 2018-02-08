@@ -1,6 +1,8 @@
 #include "coreIncludes.c"
-#include "timer.c"
 #include "motorGroup.c"
+#include "sonar.c"
+#include "timer.c"
+
 
 enum encoderConfig { UNASSIGNED, LEFT, RIGHT, AVERAGE };
 enum gyroCorrectionType { NONE, MEDIUM, FULL };
@@ -92,21 +94,7 @@ void attachGyro(parallel_drive *drive, tSensors gyro, bool reversed=true, gyroCo
 void attachUltrasonic(parallel_drive *drive, tSensors ultrasonic) {
 	drive->hasUltrasonic = true;
 	drive->ultrasonic = ultrasonic;
-
-	switch (SensorType[ultrasonic]) {
-		case sensorSONAR_TwoPins_mm:
-			drive->ultrasonicUnits = MM;
-			break;
-		case sensorSONAR_TwoPins_cm:
-			drive->ultrasonicUnits = CM;
-			break;
-		case sensorSONAR_TwoPins_inch:
-			drive->ultrasonicUnits = INCH;
-			break;
-		case sensorSONAR_TwoPins_raw:
-			drive->ultrasonicUnits = RAW_DIST;
-			break;
-	}
+	drive->ultrasonicUnits = getSonarType(ultrasonic);
 }
 
 void setEncoderConfig(parallel_drive *drive, encoderConfig config) {

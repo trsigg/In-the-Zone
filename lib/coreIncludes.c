@@ -85,6 +85,7 @@ float tan(float x) {
 }
 //#endregion
 
+
 bool xor(bool in1, bool in2) {
 	return (in1 || in2) && !(in1 && in2);
 }

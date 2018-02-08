@@ -28,8 +28,8 @@ void handleConeCountInput() {	//change cone count based on user input
 			speakNum(numCones);
 }
 
-void handleModeInput() {
-	if (newlyPressed(toggleFieldingBtn)) {
+void handleModeInput(bool shift) {
+	if (shift && newlyPressed(toggleFieldingBtn)) {
 		fielding = !fielding;
 
 		if (fielding)
@@ -65,14 +65,14 @@ task usercontrol() {
 
 		if (shift) handleConeCountInput();
 
-		handleModeInput();
+		handleModeInput(shift);
 		handleAbortInput();
 
 		handleLiftInput(shift);
 		handleGoalIntakeInput();
 
 		#ifndef PASSIVE
-			takeInput(roller);
+			if (!stacking) takeInput(roller);
 		#endif
 
 		driveRuntime(drive);
