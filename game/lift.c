@@ -104,7 +104,7 @@ void setFbState(fbState state) {
 		setFbTargetAndPID(fbPos[state]);
 }
 
-void moveFourBar(bool up, bool runConcurrently=true, int power=127) {
+void moveFourBar(bool up, bool runConcurrently=true, int power=127) {	//TODO: handle fbstate here
 	fourBar.stillSpeedReversed = !up;
 	moveForDuration(fourBar, power*(up ? 1 : -1), FB_MOVE_DURATION, runConcurrently);
 }
@@ -141,6 +141,7 @@ void stopLiftTargeting() {
 
 void moveLiftToSafePos(bool wait=true) {
 	if (getPosition(lift)<liftPos[L_SAFE] || (lift.moving==TARGET && lift.posPID.target<liftPos[L_SAFE])) {
+		playSound(soundUpwardTones);
 		setLiftTargetAndPID(liftPos[L_SAFE] + 100/L_CORR_FCTR);
 	}
 	else {	//passively hold lift up

@@ -239,10 +239,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, bool reversed=false, bool
 		driveStraight(-60, true);
 
 		while (stacking) EndTimeSlice();
-		setLiftTargetAndPID(liftPos[L_SAFE] + 100);	//TODO: L_CORR_FCTR
-
-		waitForMovementToFinish(lift);
-		moveFourBar(true);
+		moveLiftToSafePos();
 
 		while (driveData.isDriving) EndTimeSlice();
 	}
