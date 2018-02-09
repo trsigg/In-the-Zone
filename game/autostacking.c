@@ -94,6 +94,7 @@ task kinematicAutoStacking() {
 
 			waitForMovementToFinish(fourBar);
 			setLiftState(L_DEF);
+			setToStillSpeed(roller);
 		}
 
 		stacking = false;

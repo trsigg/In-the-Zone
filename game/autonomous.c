@@ -214,7 +214,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, bool reversed=false, bool
 	driveStraight(startingFromBar ? 30 : 20);
 
 	//position robot facing middle of 10pt bar
-	if (fieldCones) {
+	if (fieldCones && NUM_EXTRA_CONES>0) {
 		moveGoalIntake(IN, true);
 		wait1Msec(500);
 
@@ -264,6 +264,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, bool reversed=false, bool
 		while (driveData.totalDist < 5) EndTimeSlice();
 		if (!(NUM_EXTRA_CONES>0 && variant)) stackNewCone();
 		while (driveData.isDriving) EndTimeSlice();
+
 		turn(-direction * 90);
 
 		while (stacking) EndTimeSlice();

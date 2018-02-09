@@ -14,6 +14,7 @@
 	//#subregion auton/skillz options
 #define SKILLZ_MODE      false
 #define SKILLZ_VARIANT   false
+#define TURN_CHEAT       true
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL false
 #define RETRY_GOAL_FAILS true
