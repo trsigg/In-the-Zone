@@ -219,10 +219,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 		//#endsubsubregion
 
 		//#subregion autopositioning
-	#define toggleFbBtn Btn8R
-	/*#define fbStackBtn Btn8D	//takes fb to STACK
-	#define fbDefBtn   Btn8L	//takes lift to default position for mode (fielding or d_load)
-	                        	//when pressed together, they take lift and chain to default positions*/
+	#define defPosBtn Btn8R
 		//#endsubregion
 	//#endsubregion
 #endif

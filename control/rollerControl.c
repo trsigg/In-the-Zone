@@ -1,7 +1,9 @@
 void handleAutopositioningInput(bool shift) {
 	if (!shift)
-		if (newlyPressed(toggleFbBtn))
-			moveFourBar(!fbUp);
+		if (newlyPressed(defPosBtn)) {
+			setLiftState(L_DEF);
+			moveFb(true);
+		}
 }
 
 void handleLiftInput(bool shift) {
