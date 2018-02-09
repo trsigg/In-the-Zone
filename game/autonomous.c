@@ -1,5 +1,6 @@
 #include "autostacking.c"
 #include "mobileGoal.c"
+#include "rollers.c"
 #include "testing.c"
 
 
@@ -23,6 +24,7 @@ void prepareForAuton() {
 	resetLiftEncoders();
 	stopLiftTargeting();
 	startAutoStacking();
+	setToStillSpeed(roller);
 	setPower(fourBar, FB_STILL_SPEED);
 	numCones = 0;
 
@@ -158,7 +160,7 @@ void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp
 
 	waitForMovementToFinish(goalIntake);
 
-	if (stackCone) stackNewCone();
+	if (stackCone) pulseRollers();	//stackNewCone();
 
 	while (driveData.isDriving /*|| (stacking && stackCone)*/) EndTimeSlice();
 }
@@ -219,24 +221,30 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, bool reversed=false, bool
 		driveStraight(7);
 
 		waitForMovementToFinish(goalIntake);
-		maybeAbort();
+
+		pulseRollers(false);
+		//maybeAbort();	- TODO: abort!
+
 
 		for (int i=0; i<NUM_EXTRA_CONES; i++) {	//TODO: numAutonCones
-			stackNewCone();
-
 			driveStraight(7);
-			/*stopLiftTargeting();
-			moveFourBar(true);
-			setPower(lift, -15);	//temp
 
-			driveStraight(10);
+			while (stacking || roller.moving==DURATION) EndTimeSlice();
 
-			moveFourBar(false, false);
-			stackNewCone(true);*/
+			if (i == 0) {
+				setPower(roller, 127);
+				setLiftState(L_FIELD);
+				moveFourBar(false, false);
+				waitForMovementToFinish(lift, INTAKE_DURATION);
+			}
+			else {
+				pulseRollers(false, false);
+			}
+
+			stackNewCone();
 		}
 
-		stackNewCone();
-		driveStraight(-60, true);
+		driveStraight(-60 - 7 * NUM_EXTRA_CONES, true);
 
 		while (stacking) EndTimeSlice();
 		moveLiftToSafePos();
@@ -284,7 +292,7 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=tru
 	if (twentyPt && middle) driveStraight(BAR_TO_LINE_DIST);
 	waitForMovementToFinish(goalIntake);
 
-	driveStraight(26);
+	driveStraight(26/*LINE_TO_GOAL_DIST*/);
 
 	driveAndGoal(-29, IN);
 	if (twentyPt) {	//preload
@@ -337,15 +345,34 @@ void crossFieldGoal(bool twentyPt, bool neer, bool middle=false, bool clearCones
 task skillz() {
 	turnDefaults.reversed = false;
 
-	middleGoal(true, true, true);	//near left middle goal to 20Pt zone
+	if (SKILLZ_VARIANT) {
+		sideGoal();	//near left side goal to twenty
 
-	turnDriveTurn(-90, GOAL_TO_MID_DIST, -85);	//TODO: turnToLine() (& similar below)
-	moveGoalIntake(OUT);
-	//alignToBar(false, 1000);
+		turnDriveTurn(90, GOAL_TO_MID_DIST, 90);
 
-	middleGoal(false, false, false, false);	//near right middle goal to right 10pt
+		middleGoal(true, false);	//near left middle goal to ten
 
-	turn(-180);
+		//near right middle goal
+		driveStraight(-26/*LINE_TO_GOAL_DIST*/);
+		turn(-90);
+		moveGoalIntake(OUT);
+		driveStraight(2 * GOAL_TO_MID_DIST);
+		moveGoalIntake(IN);
+		turn(90);
+		driveStraight(BAR_TO_LINE_DIST + 26/*LINE_TO_GOAL_DIST*/);
+		scoreGoal(false);
+	}
+	else {
+		middleGoal(true, true, true);	//near left middle goal to 20Pt zone
+
+		turnDriveTurn(-90, GOAL_TO_MID_DIST, -85);	//TODO: turnToLine() (& similar below)
+		moveGoalIntake(OUT);
+		//alignToBar(false, 1000);
+
+		middleGoal(false, false, false, false);	//near right middle goal to right 10pt
+
+		turn(-180);
+	}
 
 	crossFieldGoal(true, false);	//far right middle goal to 20pt
 
@@ -383,24 +410,14 @@ task skillz() {
 	autonDebug[0] = time(autonTimer);
 }
 
-task altSkillz() {
-	turnDefaults.reversed = false;
-
-	middleGoal(false);
-
-	turnDriveTurn(-90, 25 /*TODO: const (like goalToMid)*/);
-
-
-}
-
 task antiMark() {
 	//if (ANTI_MARK == 1) {
 		wait1Msec(DEFENSIVE_DELAY);
-		driveStraight(10);
-		turn(47);
+		driveStraight(15);
+		turn(50);
 		driveStraight(75);
-		driveAndGoal(-45, OUT);
-		turn(30);
+		driveAndGoal(-40, OUT);
+		turn(25);
 		driveStraight(33);
 		moveGoalIntake(IN, false);
 		stackNewCone();
@@ -434,15 +451,15 @@ task autonomous() {
 	autonTimer = resetTimer();
 
 	turnDefaults.reversed = sidePos < SIDE_SWITCH_POS;	//TODO: put this val in config
-	variant = abs(sidePos - SIDE_SWITCH_POS) < 1400;
+	variant = abs(sidePos - SIDE_SWITCH_POS) < 1650;
 
 	if (SKILLZ_MODE) {
 		startTask(skillz);
 	}
-	else if (modePos < 2030) {	//side goal
+	else if (modePos > 1800) {	//side goal
 		zoneType zone;
 
-		if (modePos < 450)
+		if (modePos > 3440)
 			zone = TWENTY;
 		else if (VARIANT_5PT && variant)
 			zone = FIVE;
@@ -467,7 +484,7 @@ task autonomous() {
 			driveStraight(60);
 		}
 	}
-	else if (modePos < 3340) {	//defensive
+	else if (modePos > 350) {	//defensive
 		if (variant)
 			startTask(antiMark);
 		else

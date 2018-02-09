@@ -33,6 +33,7 @@ task sonarAutoStacking() {
 
 	//lift down
 	moveFourBar(false, false);
+	setToStillSpeed(roller);
 	setLiftState(L_DEF);
 
 	stacking = false;

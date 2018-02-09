@@ -53,6 +53,7 @@ void handleAbortInput() {
 
 task usercontrol() {
 	stopLiftTargeting();
+	setToStillSpeed(roller);
 	if (SKILLZ_MODE) moveLiftToSafePos(false);
 
 	startAutoStacking();

@@ -9,10 +9,11 @@
 #define HAS_SPEAKER      true
 #define USE_ENC_CORR     false
 #define DOUBLE_DRIVER    false
-#define SONAR_STACKING   true
+#define SONAR_STACKING   false
 
 	//#subregion auton/skillz options
 #define SKILLZ_MODE      false
+#define SKILLZ_VARIANT   false
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL false
 #define RETRY_GOAL_FAILS true
@@ -93,13 +94,19 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	#define LIFT_LEN 14.75	//botton section-14"; top section-15.5"
 	#define CONE_HEIGHT 3.5
 	#define L_OFFSET    3.5
-	#define GOAL_TO_MID_DIST 17
-	#define BAR_TO_LINE_DIST 9
+	#define GOAL_TO_MID_DIST  17	//distance from field diagonal to mid goal
+	#define LINE_TO_GOAL_DIST 26	//distance from line to mid goal - TODO: wtf?
+	#define BAR_TO_LINE_DIST  9
 	//#endsubregion
 
+
+		//#region consts
+		#define SIDE_SWITCH_POS 1845	//middle of sidePos
+		//#endregion
+
 	//#subregion cone counts
-	#define APATHY_CONES       0 //number of cones for which lift does not move
-	#define MAX_NUM_CONES      16
+	#define APATHY_CONES  0 //number of cones for which lift does not move
+	#define MAX_NUM_CONES 16
 	//#endsubregion
 
 	//#subregion specific buttons
@@ -157,7 +164,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	#define L_SENS_REVERSED  false	//lift
 	#define FB_SENS_REVERSED false	//four bar
 	#define L_ENC_REVERSED   false	//drive
-	#define R_ENC_REVERSED   true
+	#define R_ENC_REVERSED   false
 
 	#define HYRO          in4
 	#define SIDE_POT      in5
@@ -166,7 +173,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	#define GOAL_SENSOR   in1
 	#define GOAL_FOLLOWER in3
 	#define ROLLER_ENC    -1
-	#define LEFT_ENC      dgtl1
+	#define LEFT_ENC      dgtl7
 	#define RIGHT_ENC     dgtl3
 	#define FRONT_SONAR   -1
 	#define CONE_SONAR    dgtl5
@@ -176,6 +183,12 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	#define RIGHT_LINE  -1
 	#define FB_SENSOR   -1
 	//#endsubregion
+
+	//#region consts
+	#define SIDE_SWITCH_POS  1860	//middle of sidePos
+	#define OUTTAKE_DURATION 300
+	#define INTAKE_DURATION  500
+	//#endregion
 
 	//#subregion measurements
 	#define LIFT_LEN 16
@@ -198,7 +211,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 
 		//#subsubregion fb
 	#define fbInBtn    Btn8U
-	#define fbOutBtn   Btn8R
+	#define fbOutBtn   Btn8D
 		//#endsubsubregion
 
 		//#subsubregion autostacking control
@@ -206,7 +219,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 		//#endsubsubregion
 
 		//#subregion autopositioning
-	#define toggleFbBtn Btn8D
+	#define toggleFbBtn Btn8R
 	/*#define fbStackBtn Btn8D	//takes fb to STACK
 	#define fbDefBtn   Btn8L	//takes lift to default position for mode (fielding or d_load)
 	                        	//when pressed together, they take lift and chain to default positions*/
@@ -250,7 +263,6 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 const float RAD_TO_LIFT =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_ENC*L_GEAR_RATIO : RAD_TO_POT);
 const float L_CORR_FCTR =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_LIFT : 1);
 const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
-#define SIDE_SWITCH_POS   1780	//middle of sidePos
 #define GOAL_FOLL_THRESH  3000
 #define R_LINE_THRESHOLD  2960
 #define L_LINE_THRESHOLD  3060
@@ -263,6 +275,7 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define FB_STILL_SPEED    20
 #define FB_AUTO_SS_MARGIN 50
 #define GOAL_STILL_SPEED  15
+#define CONE_STILL_SPEED  15
 	//#endsubregion
 	//#subregion timing
 #define FB_MOVE_DURATION      500
@@ -321,6 +334,6 @@ void initializeStructs() {
 	}
 
 	#ifndef PASSIVE
-		initializeGroup(roller, NUM_ROLLER_MOTORS, rollerMotors, intakeBtn, outtakeBtn, 15);
+		initializeGroup(roller, NUM_ROLLER_MOTORS, rollerMotors, intakeBtn, outtakeBtn, CONE_STILL_SPEED);
 	#endif
 }

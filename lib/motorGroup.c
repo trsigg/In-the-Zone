@@ -226,7 +226,7 @@ int calcStillSpeed(motorGroup *group, bool posForBtnSS=true) {
 	return group->stillSpeed * (reversed ? -1 : 1);
 }
 
-void setGroupToStillSpeed(motorGroup *group, bool posForBtnSS=true) {
+void setToStillSpeed(motorGroup *group, bool posForBtnSS=true) {
 	setPower(group, calcStillSpeed(group, posForBtnSS));
 }
 //#endregion

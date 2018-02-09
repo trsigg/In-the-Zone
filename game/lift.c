@@ -60,7 +60,7 @@ bool liftUntilSonar(bool obstructed, bool up, int additionalTime=75, int power=1
 
 	if (!abort) wait1Msec(additionalTime);
 
-	setGroupToStillSpeed(lift);
+	setToStillSpeed(lift);
 
 	return abort;
 }
@@ -121,7 +121,10 @@ void executeManeuvers(bool autoStillSpeed=true) {	//TODO: argument doesn't do an
 
 	executeAutomovement(lift, debugParameters[0]);
 	executeAutomovement(fourBar, debugParameters[2]);
-	executeAutomovement(goalIntake);	//I know, this isn't really part of the lift... (TODO: reposition)
+
+	//I know, this isn't really part of the lift... (TODO: reposition)
+	executeAutomovement(goalIntake);
+	executeAutomovement(roller);
 
 	if (fbUpAfterLiftManeuver && (lift.moving==NO || lift.moving==TARGET && errorLessThan(lift, lift.waitErrorMargin))) {	//TODO: better targeting completion criterion?
 		if (FB_SENSOR >= 0)
