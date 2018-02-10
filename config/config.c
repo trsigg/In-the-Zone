@@ -7,20 +7,20 @@
 #define MULTIPLE_PIDs    false //if lift uses different PID consts for movement in different locations or directions
 #define HOLD_LAST_CONE   true	//if lift stays up after stacking last cone
 #define HAS_SPEAKER      true
-#define USE_ENC_CORR     false
+#define USE_ENC_CORR     true
 #define DOUBLE_DRIVER    false
 #define SONAR_STACKING   false
 
 	//#subregion auton/skillz options
-#define SKILLZ_MODE      false
+#define SKILLZ_MODE      false	//skills
 #define SKILLZ_VARIANT   false
-#define TURN_CHEAT       true
+#define PARK_IN_SKILLS   false
+#define CROSS_FIELD_SKLZ true
+#define SKILLZ_5PT       false
+#define TURN_CHEAT       false	//general
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL false
 #define RETRY_GOAL_FAILS true
-#define PARK_IN_SKILLS   true
-#define CROSS_FIELD_SKLZ false
-#define SKILLZ_5PT       false
 #define VARIANT_5PT      false
 #define NUM_EXTRA_CONES  0
 #define DEFENSIVE_DELAY  2000
@@ -41,7 +41,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	#define PASSIVE
 
 	//#subregion positions
-	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
+	/*enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
 	int liftPos[] = { 565,   565,     850,    565,        1180,   1200,   2050 };	//wrong wrong wrong (check prev commits)
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
@@ -124,7 +124,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	#define defPosBtn Btn8D	//takes lift to default position
 	#define maxPosBtn Btn8L //takes lift to maximum position
 		//#endsubsubregion
-	//#endsubregion
+	//#endsubregion*/
 #endif
 
 #ifdef E_TEAM_ROLLER
@@ -132,7 +132,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 565,   565,     850,    565,        1180,   1200,   2050 };
+	int liftPos[] = { 565,   565,     700,    565,        1180,   1200,   2050 };
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 0,        0,       0,     0 };
@@ -174,7 +174,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	#define GOAL_SENSOR   in1
 	#define GOAL_FOLLOWER in3
 	#define ROLLER_ENC    -1
-	#define LEFT_ENC      dgtl7
+	#define LEFT_ENC      dgtl1
 	#define RIGHT_ENC     dgtl3
 	#define FRONT_SONAR   -1
 	#define CONE_SONAR    dgtl5
@@ -195,8 +195,9 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	#define LIFT_LEN 16
 	#define CONE_HEIGHT 3.5
 	#define L_OFFSET    3.5
-	#define GOAL_TO_MID_DIST 17
-	#define BAR_TO_LINE_DIST 9
+	#define GOAL_TO_MID_DIST  18
+	#define LINE_TO_GOAL_DIST 26
+	#define BAR_TO_LINE_DIST  9
 	//#endsubregion
 
 	//#subregion cone counts
@@ -265,7 +266,7 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define R_LINE_THRESHOLD  2960
 #define L_LINE_THRESHOLD  3060
 #define B_LINE_THRESHOLD  2870
-#define CONE_SONAR_THRESH 1000
+#define CONE_SONAR_THRESH 2000
 	//#endsubregion
 	//#subregion still speeds
 #define LIFT_STILL_SPEED  15
@@ -286,6 +287,8 @@ motorGroup goalIntake;
 motorGroup lift;
 motorGroup fourBar;
 motorGroup roller;
+
+float generalDebug[] = { 0, 0 };
 
 //motorGroup groupWaitList[DEF_WAIT_LIST_LEN] = { lift, fourBar, goalIntake };
 
@@ -311,7 +314,7 @@ void initializeStructs() {
 	//mobile goal intake
 	initializeGroup(goalIntake, NUM_GOAL_MOTORS, goalMotors);
 	if (SKILLZ_MODE)
-		configureButtonInput(goalIntake, fbOutBtn, fbInBtn);
+		configureButtonInput(goalIntake, intakeBtn, outtakeBtn);
 	else
 		configureButtonInput(goalIntake, goalIntakeBtn, goalOuttakeBtn);
 	configureBtnDependentStillSpeed(goalIntake, GOAL_STILL_SPEED);
@@ -319,10 +322,7 @@ void initializeStructs() {
 
 	//top four bar
 	initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors);
-	if (SKILLZ_MODE)
-		configureButtonInput(fourBar, goalIntakeBtn, goalOuttakeBtn);
-	else
-		configureButtonInput(fourBar, fbInBtn, fbOutBtn);
+	configureButtonInput(fourBar, fbOutBtn, fbInBtn);
 	configureBtnDependentStillSpeed(fourBar, FB_STILL_SPEED);
 
 	if (FB_SENSOR >= 0) {
@@ -332,6 +332,10 @@ void initializeStructs() {
 	}
 
 	#ifndef PASSIVE
-		initializeGroup(roller, NUM_ROLLER_MOTORS, rollerMotors, intakeBtn, outtakeBtn, CONE_STILL_SPEED);
+		initializeGroup(roller, NUM_ROLLER_MOTORS, rollerMotors);
+		if (SKILLZ_MODE)
+			configureButtonInput(roller, goalIntakeBtn, goalOuttakeBtn, CONE_STILL_SPEED);
+		else
+			configureButtonInput(roller, intakeBtn, outtakeBtn, CONE_STILL_SPEED);
 	#endif
 }

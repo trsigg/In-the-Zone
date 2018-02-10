@@ -86,10 +86,6 @@ float tan(float x) {
 //#endregion
 
 
-bool xor(bool in1, bool in2) {
-	return (in1 || in2) && !(in1 && in2);
-}
-
 void arrayCopy(void* source, void* destination, int elements) {
 	for (int i=0; i<elements; i++)
 		destination[i] = source[i];

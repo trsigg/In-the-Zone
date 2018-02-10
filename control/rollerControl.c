@@ -2,7 +2,7 @@ void handleAutopositioningInput(bool shift) {
 	if (!shift)
 		if (newlyPressed(defPosBtn)) {
 			setLiftState(L_DEF);
-			moveFourBar(true);
+			moveFourBar(SKILLZ_MODE);
 		}
 }
 

@@ -46,20 +46,31 @@ void setLiftState(liftState state) {
 		setLiftTargetAndPID(liftPos[state]);
 }
 
-bool liftUntilSonar(bool obstructed, bool up, int additionalTime=75, int power=127, int quitMargin=75) {	//if obstructed is true, will wait until lift is obstructed
-	setPower(lift, abs(power)*(up ? 1 : -1));
+bool liftUntilSonar(bool up, int timeout=25, int power=127, int lowPower=60, int quitMargin=75) {	//if obstructed is true, will wait until lift is obstructed
+	stopAutomovement(lift)
+	power = abs(power) * (up ? 1 : -1);
+	lowPower = abs(lowPower) * (up ? 1 : -1);
 
 	bool abort = false;
 	int dangerPos = liftPos[ up ? L_MAX : L_MIN ];
 
-	while (xor(sonarFartherThan(CONE_SONAR, CONE_SONAR_THRESH), !obstructed) && !abort) {
+	long timer = resetTimer();
+
+	while (time(timer) < timeout && !abort) {
+		if (sonarFartherThan(CONE_SONAR, CONE_SONAR_THRESH) == up) {
+			setPower(lift, lowPower);
+		}
+		else {
+			setPower(lift, power)
+			timer = resetTimer();
+		}
+
 		if (abs(getPosition(lift) - dangerPos) < quitMargin)
 			abort = true;
+
 		EndTimeSlice();
 	}
-
-	if (!abort) wait1Msec(additionalTime);
-
+	if (up) { generalDebug[0] = SensorValue[CONE_SONAR]; }
 	setToStillSpeed(lift);
 
 	return abort;

@@ -77,5 +77,7 @@ task usercontrol() {
 		#endif
 
 		driveRuntime(drive);
+
+		EndTimeSlice();
 	}
 }

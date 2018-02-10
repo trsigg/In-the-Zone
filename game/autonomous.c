@@ -160,7 +160,7 @@ void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp
 
 	waitForMovementToFinish(goalIntake);
 
-	if (stackCone) pulseRollers();	//stackNewCone();
+	if (stackCone) stackNewCone(false, true);
 
 	while (driveData.isDriving /*|| (stacking && stackCone)*/) EndTimeSlice();
 }
@@ -222,7 +222,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, bool reversed=false, bool
 
 		waitForMovementToFinish(goalIntake);
 
-		pulseRollers(false);
+		stackNewCone(true, true);
 		//maybeAbort();	- TODO: abort!
 
 
@@ -238,7 +238,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, bool reversed=false, bool
 				waitForMovementToFinish(lift, INTAKE_DURATION);
 			}
 			else {
-				pulseRollers(false, false);
+				stackNewCone(true, true);
 			}
 
 			stackNewCone();
@@ -258,28 +258,31 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, bool reversed=false, bool
 	}
 
 	if (zone != FIVE) {	//ten or twenty
-		turn(-direction * 45);	//turnDriveTurn?
+		if (TURN_CHEAT)
+			turn(-direction * 45, false, 40, 127, -30, 250, 20, false);
+		else
+			turn(-direction * 45);	//turnDriveTurn?
 
-		driveStraight(middle||zone==TWENTY ? -30 : -12, true);
+		driveStraight(middle||zone==TWENTY ? -25 : -12, true);
 		while (driveData.totalDist < 5) EndTimeSlice();
-		if (!(NUM_EXTRA_CONES>0 && variant)) stackNewCone();
+		if (!(NUM_EXTRA_CONES>0 && fieldCones)) stackNewCone(false, true);
 		while (driveData.isDriving) EndTimeSlice();
 
 		turn(-direction * 90);
 
 		while (stacking) EndTimeSlice();
-		moveLiftToSafePos();
+		//moveLiftToSafePos();
 
 		scoreGoal(zone==TWENTY, align, intakeFully);
 	}
 	else {	//score in 5pt
 		stackNewCone();
-		turn(direction * 180, true);
+		turn(direction * 200, true);
 		while (stacking) EndTimeSlice();
 		moveLiftToSafePos();
 		moveGoalIntake(OUT);
 		while (turnData.isTurning) EndTimeSlice();
-		driveStraight(-10);
+		driveStraight(-15);
 		moveGoalIntake(IN, true);
 	}
 }
@@ -293,7 +296,7 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=tru
 	if (twentyPt && middle) driveStraight(BAR_TO_LINE_DIST);
 	waitForMovementToFinish(goalIntake);
 
-	driveStraight(26/*LINE_TO_GOAL_DIST*/);
+	driveStraight(LINE_TO_GOAL_DIST);
 
 	driveAndGoal(-29, IN);
 	if (twentyPt) {	//preload
@@ -303,7 +306,7 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=tru
 
 	if (middle || twentyPt) {
 		turn(-90 * direction);
-		driveStraight(-GOAL_TO_MID_DIST);
+		driveStraight(-GOAL_TO_MID_DIST - 3.5);
 		turn(-90 * direction);
 	}
 	else {
@@ -329,7 +332,7 @@ void crossFieldGoal(bool twentyPt, bool neer, bool middle=false, bool clearCones
 		driveAndGoal(40+nearOffset, IN);
 
 		turn(-90);
-		driveStraight(GOAL_TO_MID_DIST);
+		driveStraight(GOAL_TO_MID_DIST-2);
 		if (clearCones) moveGoalIntake(MID);	//to push cones to side
 		turn(90);
 		if (clearCones) moveGoalIntake(IN);
@@ -354,19 +357,19 @@ task skillz() {
 		middleGoal(true, false);	//near left middle goal to ten
 
 		//near right middle goal
-		driveStraight(-26/*LINE_TO_GOAL_DIST*/);
+		driveStraight(-LINE_TO_GOAL_DIST);
 		turn(-90);
 		moveGoalIntake(OUT);
 		driveStraight(2 * GOAL_TO_MID_DIST);
 		moveGoalIntake(IN);
 		turn(90);
-		driveStraight(BAR_TO_LINE_DIST + 26/*LINE_TO_GOAL_DIST*/);
+		driveStraight(BAR_TO_LINE_DIST + LINE_TO_GOAL_DIST);
 		scoreGoal(false);
 	}
 	else {
 		middleGoal(true, true, true);	//near left middle goal to 20Pt zone
 
-		turnDriveTurn(-90, GOAL_TO_MID_DIST, -85);	//TODO: turnToLine() (& similar below)
+		turnDriveTurn(-90, GOAL_TO_MID_DIST, -95);	//TODO: turnToLine() (& similar below)
 		moveGoalIntake(OUT);
 		//alignToBar(false, 1000);
 
@@ -379,7 +382,7 @@ task skillz() {
 
 	//far left middle goal to...
 	moveGoalIntake(OUT, true);
-	turnDriveTurn(-90, GOAL_TO_MID_DIST-2, -85);
+	turnDriveTurn(-90, GOAL_TO_MID_DIST-3, -90);
 	//alignToBar(false, 1500);
 
 	if (CROSS_FIELD_SKLZ) {	//...near left
@@ -472,13 +475,13 @@ task autonomous() {
 		if (variant || NUM_EXTRA_CONES>0 || (zone==TEN && VARIANT_5PT)) {	//drive to other side
 			switch (zone) {
 				case FIVE:
-					turn(-135);
+					turn(-145);
 					break;
 				case TEN:
 					turnDriveTurn(90, 12, 90);
 					break;
 				case TWENTY:
-					turnDriveTurn(90, 30, 90);
+					turnDriveTurn(90, 25, 90);
 					break;
 			}
 
