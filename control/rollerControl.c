@@ -1,9 +1,10 @@
 void handleAutopositioningInput(bool shift) {
 	if (!shift)
-		if (newlyPressed(defPosBtn)) {
+		if (newlyPressed(defPosBtn))
 			setLiftState(L_DEF);
-			moveFourBar(SKILLZ_MODE);
-		}
+
+		if (newlyPressed(toggleFbBtn))
+			moveFourBar(!fbUp);
 }
 
 void handleLiftInput(bool shift) {

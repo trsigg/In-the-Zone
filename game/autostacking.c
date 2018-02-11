@@ -116,13 +116,13 @@ task kinematicAutoStacking() {
 void startAutoStacking() {
 	stacking = false;
 
-	if (SONAR_STACKING && CONE_SONAR>=dgtl1)
+	if (CONE_SONAR>=dgtl1 && SONAR_STACKING && !bIfiAutonomousMode)
 		startTask(sonarAutoStacking);
 	else
 		startTask(kinematicAutoStacking);
 }
 
-void stackNewCone(bool wait=false, bool goToSafe=false) {	//TODO: liftTarget and liftRelease
+void stackNewCone(bool wait=false, bool safeAtEnd=false) {	//TODO: liftTarget and liftRelease
 	if (!(SONAR_STACKING && CONE_SONAR>=dgtl1)) {
 		float stackHeight = CONE_HEIGHT * adjustedNumCones();
 
@@ -130,7 +130,7 @@ void stackNewCone(bool wait=false, bool goToSafe=false) {	//TODO: liftTarget and
 		liftRelease = calcLiftTargetForHeight(stackHeight);
 	}
 
-	safeAtEnd = goToSafe;
+	goToSafe = safeAtEnd;
 	stacking = true;
 
 	if (wait)

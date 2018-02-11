@@ -6,22 +6,23 @@
 //#region options
 #define MULTIPLE_PIDs    false //if lift uses different PID consts for movement in different locations or directions
 #define HOLD_LAST_CONE   true	//if lift stays up after stacking last cone
-#define HAS_SPEAKER      true
+#define HAS_SPEAKER      false
 #define USE_ENC_CORR     true
 #define DOUBLE_DRIVER    false
-#define SONAR_STACKING   false
+#define SONAR_STACKING   true
 
 	//#subregion auton/skillz options
 #define SKILLZ_MODE      false	//skills
 #define SKILLZ_VARIANT   false
 #define PARK_IN_SKILLS   false
-#define CROSS_FIELD_SKLZ true
+#define CROSS_FIELD_SKLZ false
 #define SKILLZ_5PT       false
-#define TURN_CHEAT       false	//general
+#define TURN_CHEAT       true	//general
+#define DRIVE_BACK_5     false
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL false
 #define RETRY_GOAL_FAILS true
-#define VARIANT_5PT      false
+#define VARIANT_5PT      true
 #define NUM_EXTRA_CONES  0
 #define DEFENSIVE_DELAY  2000
 	//#endsubregion
@@ -132,7 +133,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 565,   565,     700,    565,        1180,   1200,   2050 };
+	int liftPos[] = { 565,   565,     750,    565,        1180,   1200,   2050 };
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 0,        0,       0,     0 };
@@ -194,8 +195,8 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	//#subregion measurements
 	#define LIFT_LEN 16
 	#define CONE_HEIGHT 3.5
-	#define L_OFFSET    3.5
-	#define GOAL_TO_MID_DIST  18
+	#define L_OFFSET    4
+	#define GOAL_TO_MID_DIST  17
 	#define LINE_TO_GOAL_DIST 26
 	#define BAR_TO_LINE_DIST  9
 	//#endsubregion
@@ -217,11 +218,12 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 		//#endsubsubregion
 
 		//#subsubregion autostacking control
-	#define stackBtn   Btn8L
+	#define stackBtn   -1
 		//#endsubsubregion
 
 		//#subregion autopositioning
-	#define defPosBtn Btn8R
+	#define defPosBtn   Btn8R
+	#define toggleFbBtn Btn8L
 		//#endsubregion
 	//#endsubregion
 #endif
@@ -314,7 +316,7 @@ void initializeStructs() {
 	//mobile goal intake
 	initializeGroup(goalIntake, NUM_GOAL_MOTORS, goalMotors);
 	if (SKILLZ_MODE)
-		configureButtonInput(goalIntake, intakeBtn, outtakeBtn);
+		configureButtonInput(goalIntake, outtakeBtn, intakeBtn);
 	else
 		configureButtonInput(goalIntake, goalIntakeBtn, goalOuttakeBtn);
 	configureBtnDependentStillSpeed(goalIntake, GOAL_STILL_SPEED);
@@ -334,7 +336,7 @@ void initializeStructs() {
 	#ifndef PASSIVE
 		initializeGroup(roller, NUM_ROLLER_MOTORS, rollerMotors);
 		if (SKILLZ_MODE)
-			configureButtonInput(roller, goalIntakeBtn, goalOuttakeBtn, CONE_STILL_SPEED);
+			configureButtonInput(roller, goalOuttakeBtn, goalIntakeBtn, CONE_STILL_SPEED);
 		else
 			configureButtonInput(roller, intakeBtn, outtakeBtn, CONE_STILL_SPEED);
 	#endif

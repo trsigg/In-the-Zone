@@ -75,7 +75,7 @@ void initializeAutoMovement() {
 	driveDefaults.rampConst3 = 50;
 	driveDefaults.rampConst4 = 0.1;
 	driveDefaults.rampConst5 = 100;
-	driveDefaults.kP_c = 0.8;
+	driveDefaults.kP_c = 0.7;
 	driveDefaults.kI_c = 0.007;
 	driveDefaults.kD_c = 0.15;
 	driveDefaults.minSpeed = 1;	//TODO: is not being assigned correctly
