@@ -26,6 +26,9 @@ typedef struct {
 	float powMap; //degree of polynomial to which inputs are mapped (1 for linear)
 	float coeff; //factor by which motor powers are multiplied
 	long lastUpdated; //ramping
+	//power limits
+	int minPow, maxPow;
+	bool hasMinPow, hasMaxPow;
 	//absolutes
 	int absMin, absMax; //extreme  positions of motorGroup
 	bool hasAbsMin, hasAbsMax;
@@ -176,7 +179,9 @@ void correctEncVal(motorGroup *group) {
 //#endregion
 
 //#region set and get power
-int setPower(motorGroup *group, int power, bool overrideAbsolutes=false) {
+int setPower(motorGroup *group, int power, bool overrideAbsolutes=false) {	//TODO: option to override power limits?
+	power = limit(power, (group->hasMinPow ? group->minPow : -128), (group->hasMaxPow ? group->maxPow : 128));
+
 	if (!overrideAbsolutes) {
 		if (group->hasAbsMin && getPosition(group) <= group->absMin && power < -group->maxPowerAtAbs)
 			power = -group->defPowerAtAbs;
@@ -228,6 +233,28 @@ int calcStillSpeed(motorGroup *group, bool posForBtnSS=true) {
 
 void setToStillSpeed(motorGroup *group, bool posForBtnSS=true) {
 	setPower(group, calcStillSpeed(group, posForBtnSS));
+}
+//#endregion
+
+//#region power limiting
+void setMinPow(motorGroup *group, int min) {
+	group->minPow = min;
+	group->hasMinPow = true;
+}
+
+void setMaxPow(motorGroup *group, int max) {
+	group->maxPow = max;
+	group->hasMaxPow = true;
+}
+
+void setPowerLimits(motorGroup *group, int min, int max) {
+	setMinPow(group, min);
+	setMaxPow(group, max);
+}
+
+void stopPowerLimiting(motorGroup* group) {
+	group->hasMinPow = false;
+	group->hasMaxPow = false;
 }
 //#endregion
 

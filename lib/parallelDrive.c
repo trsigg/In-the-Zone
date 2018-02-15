@@ -54,6 +54,34 @@ void configureRamping(parallel_drive *drive, int maxAcc100ms) {
 	configureRamping(drive->rightDrive, maxAcc100ms);
 }
 
+void setNumMotors(parallel_drive *drive, int leftMotors, int rightMotors) {
+	drive->leftDrive.numMotors = limit(leftMotors, 0, 10);
+	drive->rightDrive.numMotors = limit(rightMotors, 0, 10);
+}
+
+
+//#region power limiting
+void setMinPow(parallel_drive *drive, int min) {
+	setMinPow(drive->leftDrive, min);
+	setMinPow(drive->rightDrive, min);
+}
+
+void setMaxPow(parallel_drive *drive, int max) {
+	setMaxPow(drive->leftDrive, max);
+	setMaxPow(drive->rightDrive, max);
+}
+
+void setPowerLimits(parallel_drive *drive, int min, int max) {
+	setMinPow(drive, min);
+	setMaxPow(drive, max);
+}
+
+void stopPowerLimiting(parallel_drive *drive) {
+	stopPowerLimiting(drive->leftDrive);
+	stopPowerLimiting(drive->rightDrive);
+}
+//#endregion
+
 
 //#region sensor setup
 void updateEncoderConfig(parallel_drive *drive) {

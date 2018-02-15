@@ -80,6 +80,11 @@ int limit(float input, float min, float max) {
 	}
 }
 
+/*int limit(float* input, float min, float max) {	doesn't work for some reason
+	*input = limit(*input, min, max);
+	return *input;
+}*/
+
 float tan(float x) {
 	return sin(x)/cos(x);
 }
