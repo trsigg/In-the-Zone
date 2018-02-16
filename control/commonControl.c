@@ -62,6 +62,7 @@ task usercontrol() {
 
 	while (true) {
 		logSensorVals();
+		updateMotorConfig();
 		shift = vexRT[shiftBtn]==1;
 
 		if (shift) handleConeCountInput();

@@ -14,6 +14,7 @@ int numRetries = 0;
 task autonUpdateTask() {
 	while (true) {
 		executeManeuvers();
+		updateMotorConfig();
 		logSensorVals();
 		EndTimeSlice();
 	}

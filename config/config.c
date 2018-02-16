@@ -144,22 +144,22 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 
 	//#subregion motors
 	#define NUM_LIFT_MOTORS 2
-	tMotor liftMotors[NUM_LIFT_MOTORS] = { port2, port6 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
+	tMotor liftMotors[NUM_LIFT_MOTORS] = { port5, port6 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
 
 	#define NUM_FB_MOTORS 1
-	tMotor fourBarMotors[NUM_FB_MOTORS] = { port8 };
-
-	#define NUM_RIGHT_MOTORS 2
-	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port5, port10 };
+	tMotor fourBarMotors[NUM_FB_MOTORS] = { port4 };
 
 	#define NUM_LEFT_MOTORS 3
-	tMotor leftMotors[NUM_LEFT_MOTORS] = { port1, port4, port7 };
+	tMotor leftMotors[NUM_LEFT_MOTORS] = { port1, port2, port3 };
 
-	#define NUM_GOAL_MOTORS 1
-	tMotor goalMotors[NUM_GOAL_MOTORS] = { port9 };
+	#define NUM_RIGHT_MOTORS 3
+	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port9, port10, port8 };
+
+	#define NUM_GOAL_MOTORS 2
+	tMotor goalMotors[NUM_GOAL_MOTORS] = { port3, port8 };
 
 	#define NUM_ROLLER_MOTORS 1
-	tMotor rollerMotors[NUM_ROLLER_MOTORS] = { port3 };
+	tMotor rollerMotors[NUM_ROLLER_MOTORS] = { port7 };
 	//#endsubregion
 
 	//#subregion sensors
@@ -168,22 +168,22 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	#define L_ENC_REVERSED   false	//drive
 	#define R_ENC_REVERSED   false
 
-	#define HYRO          in4
-	#define SIDE_POT      in5
-	#define MODE_POT      in6
-	#define LIFT_SENSOR   in2
-	#define GOAL_SENSOR   in1
-	#define GOAL_FOLLOWER in3
+	#define HYRO          -1
+	#define SIDE_POT      -1
+	#define MODE_POT      -1
+	#define LIFT_SENSOR   in1
+	#define GOAL_SENSOR   -1
+	#define GOAL_FOLLOWER -1
 	#define ROLLER_ENC    -1
 	#define LEFT_ENC      dgtl1
 	#define RIGHT_ENC     dgtl3
 	#define FRONT_SONAR   -1
-	#define CONE_SONAR    dgtl5
+	#define CONE_SONAR    -1
 
-	#define LEFT_LINE   -1	//not currently attached
-	#define BACK_LINE   -1
-	#define RIGHT_LINE  -1
-	#define FB_SENSOR   -1
+	#define LEFT_LINE     -1	//not currently attached
+	#define BACK_LINE     -1
+	#define RIGHT_LINE    -1
+	#define FB_SENSOR     -1
 	//#endsubregion
 
 	//#region consts
@@ -202,8 +202,8 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	//#endsubregion
 
 	//#subregion cone counts
-	#define APATHY_CONES       0 //number of cones for which lift does not move
-	#define MAX_NUM_CONES      16
+	#define APATHY_CONES  0 //number of cones for which lift does not move
+	#define MAX_NUM_CONES 16
 	//#endsubregion
 
 	//#subregion specific buttons
@@ -275,7 +275,7 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define L_AUTO_SS_MARGIN  50
 #define FB_STILL_SPEED    20
 #define FB_AUTO_SS_MARGIN 50
-#define GOAL_STILL_SPEED  15
+#define GOAL_STILL_SPEED  0
 #define CONE_STILL_SPEED  15
 	//#endsubregion
 	//#subregion timing

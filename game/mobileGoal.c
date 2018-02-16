@@ -15,6 +15,21 @@ bool isMobileGoalLoaded() {
   return SensorValue[GOAL_FOLLOWER] < GOAL_FOLL_THRESH || GOAL_FOLLOWER < in1;
 }
 
+void updateMotorConfig() {
+  int goalPower = getPower(goalIntake);
+
+  if (goalPower != 0) {
+		setNumMotors(drive, 2, 2);
+
+		bool goalOut = goalPower > 0;
+		setPowerLimits(drive, (goalOut ? -127 : -30), (goalOut ? 30 : 127));
+	}
+	else {
+		setNumMotors(drive, 3, 3);
+		stopPowerLimiting(drive);
+	}
+}
+
 /*void moveGoalIntake(bool in, bool runConcurrently=false, bool checkPos=true) {
   int goalPos = getPosition(goalIntake);
   if (!checkPos || (goalPos<10 && in || goalPos>0 && !in))
