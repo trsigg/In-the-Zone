@@ -168,12 +168,12 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	#define L_ENC_REVERSED   false	//drive
 	#define R_ENC_REVERSED   false
 
-	#define HYRO          -1
-	#define SIDE_POT      -1
-	#define MODE_POT      -1
+	#define HYRO          in2
+	#define SIDE_POT      in5
+	#define MODE_POT      in6
 	#define LIFT_SENSOR   in1
-	#define GOAL_SENSOR   -1
-	#define GOAL_FOLLOWER -1
+	#define GOAL_SENSOR   in4
+	#define GOAL_FOLLOWER in3
 	#define ROLLER_ENC    -1
 	#define LEFT_ENC      dgtl1
 	#define RIGHT_ENC     dgtl3
