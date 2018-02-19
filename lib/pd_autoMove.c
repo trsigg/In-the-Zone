@@ -16,9 +16,13 @@ typedef struct {
 	bool runAsTask;
 	bool useGyro;
 	bool reversed;	//reverses all turns (for mirroring auton routines)
-	bool usePID;	//true for PID ramping, false for quad ramping
 	int debugStartCol;
 	int sampleTime;
+	//movement timeout
+	int movementTimeout;
+	float minSpeed;
+	//ramping
+	bool usePID;	//true for PID ramping, false for quad ramping
 	int waitAtEnd;
 	int minErrorMargin;	//minimum possible error margin 	(TODO: find another system?)
 	float rampConst1, rampConst2, rampConst3, rampConst4, rampConst5; // initialPower/kP, maxPower/kI, finalPower/kD, brakeDuration/pd acceptable error, brakePower/pd timeout
@@ -28,30 +32,32 @@ typedef struct {
 	correctionType defCorrectionType;
 	bool runAsTask;
 	bool rawValue;
-	bool usePID;
-	int brakeDuration;
-	int movementTimeout;
 	int waitAtEnd;
 	int sampleTime;
 	int debugStartCol;
+	float kP_c, kI_c, kD_c; //correction PID constants
+	//movement timeout
+	int movementTimeout;
+	float minSpeed;
+	//ramping
+	bool usePID;
+	int brakeDuration;
 	int minErrorMargin;
 	float rampConst1, rampConst2, rampConst3, rampConst4, rampConst5;	//same as in turnDefsStruct
-	float kP_c, kI_c, kD_c; //correction PID constants
-	float minSpeed;
 } driveDefsStruct;
 
 turnDefsStruct turnDefaults;
 driveDefsStruct driveDefaults;
 
 void initializeAutoMovement() {
-	//turning
+	//#subregion turning
 	turnDefaults.defAngleType = DEGREES;
 	turnDefaults.runAsTask = false;
 	turnDefaults.useGyro = true;
 	turnDefaults.reversed = false;
-	turnDefaults.usePID = true;
 	turnDefaults.debugStartCol = -1;
 	turnDefaults.sampleTime = 30;
+	turnDefaults.usePID = true;	//ramping
 	turnDefaults.waitAtEnd = 100;
 	turnDefaults.minErrorMargin = 2;
 	turnDefaults.rampConst1 = 4;    // initialPower  / kP
@@ -59,26 +65,28 @@ void initializeAutoMovement() {
 	turnDefaults.rampConst3 = 16;	  // finalPower    / kD
 	turnDefaults.rampConst4 = 0.08; // brakeDuration / pd acceptable error (proportion of target)
 	turnDefaults.rampConst5 = 100;	// brakePower    / pd timeout
+	//#endsubregion
 
-	//driving
+	//#subregion driving
 	driveDefaults.defCorrectionType = AUTO;
 	driveDefaults.runAsTask = false;
 	driveDefaults.rawValue = false;
-	driveDefaults.movementTimeout = 500;
 	driveDefaults.waitAtEnd = 100;
 	driveDefaults.sampleTime = 50;
-	driveDefaults.usePID = true;
 	driveDefaults.debugStartCol = -1;
+	driveDefaults.kP_c = 0.7;
+	driveDefaults.kI_c = 0.007;
+	driveDefaults.kD_c = 0.15;
+	driveDefaults.movementTimeout = 500;	//movement timeout
+	driveDefaults.minSpeed = 1;	//TODO: is not being assigned correctly
+	driveDefaults.usePID = true;	//ramping
 	driveDefaults.minErrorMargin = 1;
 	driveDefaults.rampConst1 = 10;	//same as above
 	driveDefaults.rampConst2 = 0.1;
 	driveDefaults.rampConst3 = 50;
 	driveDefaults.rampConst4 = 0.1;
 	driveDefaults.rampConst5 = 100;
-	driveDefaults.kP_c = 0.7;
-	driveDefaults.kI_c = 0.007;
-	driveDefaults.kD_c = 0.15;
-	driveDefaults.minSpeed = 1;	//TODO: is not being assigned correctly
+	//#endsubregion
 }
 //#endregion
 
@@ -87,9 +95,10 @@ typedef struct {
 	float angle; //positive for clockwise, negative for counterclockwise
 	rampHandler ramper; //used for ramping motor powers
 	int sampleTime;	//time between motor power adjustments
-	float error;	//allowable deviation from target value
-	int pdTimeout;	//time robot is required to be within <error> of the target before continuing
-	long pdTimer;	//tracks timeout state when PD ramping
+	float error, minSpeed;	//allowable deviation from target value / minimum speed during maneuver to prevent timeout (angle per sample)
+	int pdTimeout, movementTimeout;	//time robot is required to be within <error> of the target before continuing / amount of time after which a drive action sensing lower speed than minSpeed ceases (ms)
+	long pdTimer, movementTimer;	//tracks timeout state when PD ramping / for tracking timeout (time without movement)
+	float prevProgress;	//tracks change between samples (for timeout)
 	int finalDelay; //delay after finishing turn (default 100ms for braking)
 	int brakeDelay; //maximum duration of braking at end of turn
 	int brakePower; //the motor power while braking
@@ -121,8 +130,13 @@ void turnRuntime() {
 
 	setDrivePower(autoDrive, turnData.direction*power, -turnData.direction*power);
 
+	//track timeout states
 	if (turnData.ramper.algorithm==PD && fabs(progress - turnData.angle) > turnData.error)	//track timeout state
 		turnData.pdTimer = resetTimer();
+	if (progress - turnData.prevProgress >= turnData.minSpeed)
+		turnData.movementTimer = resetTimer();
+
+	turnData.prevProgress = progress;
 }
 
 void turnEnd() {
@@ -154,6 +168,7 @@ void turn(float angle, bool runAsTask=turnDefaults.runAsTask, float in1=turnDefa
 	turnData.sampleTime = sampleTime;
 	turnData.usingGyro = useGyro;
 	turnData.isTurning = true;
+	turnData.prevProgress = 0;
 
 	if (usePID) {
 		initializeRampHandler(turnData.ramper, PD, formattedAngle, in1, in2, in3, 0, false);	//temp
