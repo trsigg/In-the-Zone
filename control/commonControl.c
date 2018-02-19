@@ -9,10 +9,13 @@
 void handleGoalIntakeInput() {
 	int goalPower = takeInput(goalIntake, false);
 
-	if (getPosition(lift)>liftPos[L_SAFE] || abs(goalPower)<=GOAL_STILL_SPEED)
+	if (getPosition(lift)>=liftPos[L_SAFE] || abs(goalPower)<=GOAL_STILL_SPEED) {
 		setPower(goalIntake, goalPower);
-	else
+		updateMotorConfig(goalPower);
+	}
+	else {
 		moveLiftToSafePos(false);
+	}
 }
 
 void handleConeCountInput() {	//change cone count based on user input
