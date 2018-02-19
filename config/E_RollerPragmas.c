@@ -9,7 +9,7 @@
 #pragma config(Motor,  port1,           LDrive1,       tmotorVex393_HBridge, openLoop)
 #pragma config(Motor,  port2,           LDrive2,       tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port3,           LSwitchy,      tmotorVex393_MC29, openLoop)
-#pragma config(Motor,  port4,           fbMotor,       tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port4,           fbMotor,       tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port5,           lift1,         tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port6,           lift2,         tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port7,           rollerMotor,   tmotorVex393_MC29, openLoop)

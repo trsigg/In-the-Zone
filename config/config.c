@@ -18,11 +18,9 @@
 #define CROSS_FIELD_SKLZ false
 #define SKILLZ_5PT       false
 #define TURN_CHEAT       true	//general
-#define DRIVE_BACK_5     false
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL false
 #define RETRY_GOAL_FAILS true
-#define VARIANT_5PT      true
 #define NUM_EXTRA_CONES  0
 #define DEFENSIVE_DELAY  2000
 	//#endsubregion
@@ -133,13 +131,13 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 565,   565,     750,    565,        1180,   1200,   2050 };
+	int liftPos[] = { 1240,  1245,    1530,   1240,       1900,   1865,   2940 };
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 0,        0,       0,     0 };
 
-	enum goalState  { OUT, MID, IN };
-	int goalPos[] = { 15,  600, 2400 };
+	enum goalState  { OUT,  MID,  IN };
+	int goalPos[] = { 3200, 2855, 1050 };
 	//#endsubregion
 
 	//#subregion motors
@@ -187,7 +185,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	//#endsubregion
 
 	//#region consts
-	#define SIDE_SWITCH_POS  1860	//middle of sidePos
+	#define SIDE_SWITCH_POS  1960	//middle of sidePos
 	#define OUTTAKE_DURATION 300
 	#define INTAKE_DURATION  500
 	//#endregion
@@ -213,8 +211,8 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 		//#endsubsubregion
 
 		//#subsubregion fb
-	#define fbInBtn    Btn8U
-	#define fbOutBtn   Btn8D
+	#define fbInBtn    Btn8D
+	#define fbOutBtn   Btn8U
 		//#endsubsubregion
 
 		//#subsubregion autostacking control
@@ -264,7 +262,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 const float RAD_TO_LIFT =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_ENC*L_GEAR_RATIO : RAD_TO_POT);
 const float L_CORR_FCTR =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_LIFT : 1);
 const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
-#define GOAL_FOLL_THRESH  3000
+#define GOAL_FOLL_THRESH  2950
 #define R_LINE_THRESHOLD  2960
 #define L_LINE_THRESHOLD  3060
 #define B_LINE_THRESHOLD  2870
@@ -301,7 +299,7 @@ void initializeStructs() {
   //drive
 	initializeDrive(drive, NUM_LEFT_MOTORS, leftMotors, NUM_RIGHT_MOTORS, rightMotors, true, 40);
 	attachEncoder(drive, LEFT_ENC, LEFT, L_ENC_REVERSED);
-	attachEncoder(drive, RIGHT_ENC, RIGHT, R_ENC_REVERSED, 4.0);
+	attachEncoder(drive, RIGHT_ENC, RIGHT, R_ENC_REVERSED, 3.25);
 	attachUltrasonic(drive, FRONT_SONAR);
 	attachGyro(drive, HYRO);
 
@@ -318,7 +316,7 @@ void initializeStructs() {
 	if (SKILLZ_MODE)
 		configureButtonInput(goalIntake, outtakeBtn, intakeBtn);
 	else
-		configureButtonInput(goalIntake, goalIntakeBtn, goalOuttakeBtn);
+		configureButtonInput(goalIntake, goalOuttakeBtn, goalIntakeBtn);
 	configureBtnDependentStillSpeed(goalIntake, GOAL_STILL_SPEED);
 	addSensor(goalIntake, GOAL_SENSOR);
 

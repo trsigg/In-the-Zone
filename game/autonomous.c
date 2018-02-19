@@ -173,7 +173,7 @@ void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//b
 		driveForDuration(1000, 90, 20);	//drive over bar
 		moveGoalIntake(OUT);
 		driveForDuration(250);	//push goal to back of zone
-		driveForDuration(250, -127);
+		driveForDuration(500, -127);
 	}
 	else {
 		moveGoalIntake(OUT, true);
@@ -182,7 +182,7 @@ void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//b
 		driveStraight(-10);	//back out
 	}
 
-	moveGoalIntake(intakeFully ? IN : MID, true);
+	moveGoalIntake(intakeFully ? IN : MID/*, true*/);
 	wait1Msec(200);	//while (getPosition(goalIntake) < goalPos[MID]) EndTimeSlice();
 
 	if (twentyPt)
@@ -289,7 +289,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, bool reversed=false, bool
 		moveGoalIntake(OUT);
 		while (turnData.isTurning) EndTimeSlice();
 		driveStraight(-15);
-		if (DRIVE_BACK_5) moveGoalIntake(IN, true);
+		if (variant) moveGoalIntake(IN, true);
 	}
 }
 
@@ -461,43 +461,40 @@ task autonomous() {
 	autonTimer = resetTimer();
 
 	turnDefaults.reversed = sidePos < SIDE_SWITCH_POS;	//TODO: put this val in config
-	variant = abs(sidePos - SIDE_SWITCH_POS) < 1650;
+	variant = abs(sidePos - SIDE_SWITCH_POS) < 1500;
 
 	if (SKILLZ_MODE) {
 		startTask(skillz);
 	}
-	else if (modePos > 1800) {	//side goal
+	else if (modePos > 1500) {	//side goal
 		zoneType zone;
 
-		if (modePos > 3440)
+		if (modePos > 3560)
 			zone = TWENTY;
-		else if (VARIANT_5PT && variant)
-			zone = FIVE;
-		else
+		else if (modePos > 2225)
 			zone = TEN;
+		else
+			zone = FIVE;
 
 		sideGoal(zone, false, false, false, true, variant&&NUM_EXTRA_CONES>0);
 
-		if (variant || NUM_EXTRA_CONES>0 || (zone==TEN && VARIANT_5PT)) {	//drive to other side
+		if (variant || NUM_EXTRA_CONES>0) {	//drive to other side
 			switch (zone) {
 				case FIVE:
-					if (DRIVE_BACK_5) {
-						turn(-150);
-						driveStraight(60);
-					}
+					turn(-150);
 					break;
 				case TEN:
-					turnDriveTurn(90, 13, 90);
-					driveStraight(60);
+					turnDriveTurn(90, 13);
 					break;
 				case TWENTY:
-					turnDriveTurn(90, 28, 90);
-					driveStraight(60);
+					turnDriveTurn(90, 28);
 					break;
 			}
+
+			driveStraight(60 * (zone==FIVE ? 1 : -1));
 		}
 	}
-	else if (modePos > 350) {	//defensive
+	else if (modePos > 305) {	//defensive
 		if (variant)
 			startTask(antiMark);
 		else

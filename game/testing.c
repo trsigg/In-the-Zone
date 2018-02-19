@@ -50,7 +50,7 @@ void handlePIDinput(int index) {
 			if (input > 0) {
 				timedManeuver = true;
 				numCones = input - 1;
-				stackNewCone(wait);
+				stackNewCone(/*wait*/);
 			}
 			break;
 		case 6:

@@ -17,11 +17,11 @@ bool isMobileGoalLoaded() {
 
 void updateMotorConfig(int goalPower=0) {
   if (goalPower == 0 && goalIntake.moving == NO) {
-    setNumMotors(drive, 3, 3);
+    setNumMotors(drive, NUM_LEFT_MOTORS, NUM_RIGHT_MOTORS);
 		stopPowerLimiting(drive);
   }
   else {
-		setNumMotors(drive, 2, 2);
+		setNumMotors(drive, NUM_LEFT_MOTORS-1, NUM_RIGHT_MOTORS-1);
 
 		bool goalOut = goalPower > 0;
 		setPowerLimits(drive, (goalOut ? -127 : -30), (goalOut ? 30 : 127));
