@@ -121,7 +121,7 @@ void startAutoStacking() {
 		startTask(kinematicAutoStacking);
 }
 
-void stackNewCone(bool waite=false, bool safeAtEnd=false) {	//TODO: liftTarget and liftRelease
+void stackNewCone(bool waite=false, bool safeAtEnd=bIfiAutonomousMode) {	//TODO: liftTarget and liftRelease
 	if (!(SONAR_STACKING && CONE_SONAR>=dgtl1)) {
 		float stackHeight = CONE_HEIGHT * adjustedNumCones();
 

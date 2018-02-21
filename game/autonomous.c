@@ -131,14 +131,19 @@ void driveAndSonar(int driveDist, int sonarDist, int power=30, int brakePower=10
 }
 
 void driveForDuration(int duration, int beginPower=127, int endPower=0) {
-	setDrivePower(drive, beginPower, beginPower);
-	wait1Msec(duration);
+	long timer = resetTimer();
+
+	while (time(timer) < duration) {
+		setDrivePower(drive, beginPower, beginPower);
+		EndTimeSlice();
+	}
+
 	setDrivePower(drive, endPower, endPower);
 }
 
 void alignToBar(bool forward=true, int duration=600) {
 	int direction = (forward ? 1 : -1);
-	driveForDuration(duration, 35*direction, 15*direction);
+	driveForDuration(duration, 35*direction, 35*direction);
 }
 
 void turnDriveTurn(int angle, int dist, int angle2=0) {
@@ -165,7 +170,7 @@ void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp
 
 	waitForMovementToFinish(goalIntake);
 
-	if (stackCone) stackNewCone(false, true);
+	if (stackCone) stackNewCone();
 
 	while (driveData.isDriving /*|| (stacking && stackCone)*/) EndTimeSlice();
 }
@@ -190,7 +195,7 @@ void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//b
 	//wait1Msec(200);	//while (getPosition(goalIntake) < goalPos[MID]) EndTimeSlice();
 
 	if (twentyPt)
-		driveStraight(-17);	//back out
+		driveStraight(-12);	//back out
 
 	if (align) {
 		alignToBar();
@@ -225,20 +230,20 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		maybeAbort();
 
 		for (int i=0; i<numExtraCones; i++) {
-			stackNewCone(false, true);
-			driveStraight(10);
+			stackNewCone();
+			driveStraight(12);
 
 			goToSafe = false;
 			while (stacking) EndTimeSlice();
 
 			//intake
-			if (fbUp) moveFourBar(false, false);
+			/*if (fbUp)*/ moveFourBar(false, false);
 			setPower(roller, 127);
 			setLiftState(L_FIELD);
 			waitForMovementToFinish(lift, INTAKE_DURATION);
 		}
 
-		stackNewCone(false, true);
+		stackNewCone();
 
 		driveStraight(-42 - 7 * numExtraCones);
 
@@ -251,8 +256,8 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 	}
 
 	if (zone == FIVE) {	//score in 5pt
-		if (numExtraCones == 0) stackNewCone(false, true);
-		turn(direction * 200, true);
+		if (numExtraCones == 0) stackNewCone();
+		turn(-direction * 160, true);
 		while (stacking) EndTimeSlice();
 		liftToConeSafePos();
 		while (turnData.isTurning) EndTimeSlice();
@@ -271,9 +276,9 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			turn(-direction * 45);	//turnDriveTurn?
 		}
 
-		driveStraight(middle||zone==TWENTY ? -27 : -12, true);
+		driveStraight(middle||zone==TWENTY ? -33 : -12, true);
 		while (driveData.totalDist < 5) EndTimeSlice();
-		if (numExtraCones == 0) stackNewCone(false, true);
+		if (numExtraCones == 0) stackNewCone();
 		while (driveData.isDriving) EndTimeSlice();
 
 		turn(-direction * 90);
@@ -308,7 +313,7 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=tru
 		turn(-90 * direction);
 	}
 	else {
-		turn(-175);
+		turn(-180);
 		//driveForDuration(1250, 40);	//align to 10pt bar
 	}
 
@@ -352,14 +357,14 @@ task skillz() {
 
 		turnDriveTurn(90, GOAL_TO_MID_DIST, 90);
 
-		middleGoal(true, false);	//near left middle goal to ten
+		middleGoal(true, false/*, false, false*/);	//near left middle goal to ten
 
 		//near right middle goal
 		driveStraight(-LINE_TO_GOAL_DIST);
 		turn(-90);
 		moveGoalIntake(OUT);
 		driveStraight(2 * GOAL_TO_MID_DIST);
-		moveGoalIntake(IN);
+		driveAndGoal(10, IN);
 		turn(90);
 		driveStraight(BAR_TO_LINE_DIST + LINE_TO_GOAL_DIST);
 		scoreGoal(false);
@@ -367,7 +372,7 @@ task skillz() {
 	else {
 		middleGoal(true, true, true);	//near left middle goal to 20Pt zone
 
-		turnDriveTurn(-90, GOAL_TO_MID_DIST, -95);	//TODO: turnToLine() (& similar below)
+		turnDriveTurn(-90, GOAL_TO_MID_DIST, -90);	//TODO: turnToLine() (& similar below)
 		moveGoalIntake(OUT);
 		//alignToBar(false, 1000);
 
@@ -422,7 +427,7 @@ task antiMark() {
 		turn(35);
 		driveStraight(20);
 		moveGoalIntake(IN, false);
-		stackNewCone();
+		stackNewCone(false, false);
 	}
 	else {
 		moveFourBar(true);
@@ -439,11 +444,18 @@ task antiMark() {
 }
 //#endregion
 
+task selfDestruct() {
+	wait1Msec(SKILLZ_MODE ? 60000 : 15000);
+	stopAllTasks();
+}
+
 #ifdef RUN_AUTON_AS_MAIN
 task main() {
 #else
 task autonomous() {
 #endif
+	if (ABORT_AFTER_15) startTask(selfDestruct);
+
 	prepareForAuton();
 	handleTesting();
 	startTask(autonUpdateTask);
@@ -488,7 +500,7 @@ task autonomous() {
 					turnDriveTurn(90, 13);
 					break;
 				case TWENTY:
-					turnDriveTurn(90, 28);
+					turnDriveTurn(90, 30);
 					break;
 			}
 
