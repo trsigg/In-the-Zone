@@ -13,29 +13,29 @@ int debugOut;
 int targets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };	/*0-lift, 1-driveStraight, 2-turn, 3-lift PID mode (up=1),
                                                             4-goalIntake maneuver target, 5-stack nth cone, 6-move fb (in=1),
 																														7-gyro scale, 8-drive maxAcc100ms*/
-bool wait = true; //TODO: fix for lift maneuvers
+bool waite = true; //TODO: fix for lift maneuvers
 bool abort = false;
 bool end = false;
 
 void handlePIDinput(int index) {
 	int input = targets[index];
 
-	if (wait) testingTimer = resetTimer();
+	if (waite) testingTimer = resetTimer();
 	bool timedManeuver= false;
 
 	switch (index) {
 		case 0:
 			timedManeuver = true;
 			setTargetPosition(lift, input);
-			//if (wait) waitForMovementToFinish(lift);
+			//if (waite) waitForMovementToFinish(lift);
 			break;
 		case 1:
 			timedManeuver = true;
-			driveStraight(input, !wait);
+			driveStraight(input, !waite);
 			break;
 		case 2:
 			timedManeuver = true;
-			turn(input, !wait);
+			turn(input, !waite);
 			break;
 		case 3:
 			if (MULTIPLE_PIDs)
@@ -43,18 +43,18 @@ void handlePIDinput(int index) {
 			break;
 		case 4:
 			timedManeuver = true;
-			createManeuver(goalIntake, input/*, !wait*/);
+			createManeuver(goalIntake, input/*, !waite*/);
 			//moveGoalIntake(input == 1);
 			break;
 		case 5:
 			if (input > 0) {
 				timedManeuver = true;
 				numCones = input - 1;
-				stackNewCone(/*wait*/);
+				stackNewCone(/*waite*/);
 			}
 			break;
 		case 6:
-			moveFourBar(input==1/*, !wait*/);
+			moveFourBar(input==1/*, !waite*/);
 			break;
 		case 7:
 			SensorScale[HYRO] = input;
@@ -64,7 +64,7 @@ void handlePIDinput(int index) {
 			break;
 	}
 
-	if (wait && timedManeuver) {
+	if (waite && timedManeuver) {
 		debugOut = time(testingTimer);
 		playSound(soundLowBuzz);
 	}

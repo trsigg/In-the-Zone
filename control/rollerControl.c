@@ -21,7 +21,7 @@ void handleLiftInput(bool shift) {
 			int fbPower = takeInput(fourBar, fourBar.moving==NO);
 
 			if (fabs(fbPower) > FB_STILL_SPEED)	//update fbUp
-				fbUp = fbPower > 0;
+				fbUp = fbPower < 0;
 		}
 	}
 

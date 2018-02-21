@@ -4,9 +4,9 @@
 
 
 //#region options
+//#define HAS_SPEAKER
 #define MULTIPLE_PIDs    false //if lift uses different PID consts for movement in different locations or directions
 #define HOLD_LAST_CONE   true	//if lift stays up after stacking last cone
-#define HAS_SPEAKER      false
 #define USE_ENC_CORR     true
 #define DOUBLE_DRIVER    false
 #define SONAR_STACKING   true
@@ -21,7 +21,7 @@
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL false
 #define RETRY_GOAL_FAILS true
-#define NUM_EXTRA_CONES  0
+#define STACK_SIDE_CONES true
 #define DEFENSIVE_DELAY  2000
 	//#endsubregion
 
@@ -141,8 +141,8 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	//#endsubregion
 
 	//#subregion motors
-	#define NUM_LIFT_MOTORS 2
-	tMotor liftMotors[NUM_LIFT_MOTORS] = { port5, port6 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
+	#define NUM_LIFT_MOTORS 3
+	tMotor liftMotors[NUM_LIFT_MOTORS] = { port5, port9, port10 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
 
 	#define NUM_FB_MOTORS 1
 	tMotor fourBarMotors[NUM_FB_MOTORS] = { port4 };
@@ -150,8 +150,8 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	#define NUM_LEFT_MOTORS 3
 	tMotor leftMotors[NUM_LEFT_MOTORS] = { port1, port2, port3 };
 
-	#define NUM_RIGHT_MOTORS 3
-	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port9, port10, port8 };
+	#define NUM_RIGHT_MOTORS 2
+	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port6, port8 };
 
 	#define NUM_GOAL_MOTORS 2
 	tMotor goalMotors[NUM_GOAL_MOTORS] = { port3, port8 };
@@ -306,7 +306,7 @@ void initializeStructs() {
 	//lift
   initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors, liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
 	configureBtnDependentStillSpeed(lift);
-	initializeTargetingPID(lift, 0.7*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 70*L_CORR_FCTR, 50/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
+	initializeTargetingPID(lift, 0.3*L_CORR_FCTR, 0.0005*L_CORR_FCTR, 15*L_CORR_FCTR, 50/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
 	configureAutoStillSpeed(lift, 25);
 	addSensor(lift, LIFT_SENSOR, L_SENS_REVERSED);
 	if (LIFT_SENSOR>=dgtl1) configureEncoderCorrection(lift, liftPos[L_MAX]);

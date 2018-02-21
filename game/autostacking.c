@@ -44,7 +44,6 @@ task sonarAutoStacking() {
 //#endregion
 
 //#region kinematic autostacking
-int numCones = 0; //current number of stacked cones
 int liftTarget, liftRelease;
 
 int adjustedNumCones() {
@@ -122,7 +121,7 @@ void startAutoStacking() {
 		startTask(kinematicAutoStacking);
 }
 
-void stackNewCone(bool wait=false, bool safeAtEnd=false) {	//TODO: liftTarget and liftRelease
+void stackNewCone(bool waite=false, bool safeAtEnd=false) {	//TODO: liftTarget and liftRelease
 	if (!(SONAR_STACKING && CONE_SONAR>=dgtl1)) {
 		float stackHeight = CONE_HEIGHT * adjustedNumCones();
 
@@ -133,7 +132,7 @@ void stackNewCone(bool wait=false, bool safeAtEnd=false) {	//TODO: liftTarget an
 	goToSafe = safeAtEnd;
 	stacking = true;
 
-	if (wait)
+	if (waite)
 		while (stacking)
 			EndTimeSlice();
 }

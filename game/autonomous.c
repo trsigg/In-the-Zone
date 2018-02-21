@@ -147,6 +147,10 @@ void turnDriveTurn(int angle, int dist, int angle2=0) {
 	turn(angle2==0 ? -angle : angle2);
 }
 
+void quadDrive(int dist, bool runAsTask=false) {
+	driveStraight(dist, runAsTask, 30, 120, -20, 250, 20, false);
+}
+
 void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp=false, int intakeDelay=500) {
 	moveLiftToSafePos();
 	moveGoalIntake(state, true);
@@ -155,7 +159,7 @@ void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp
 		wait1Msec(intakeDelay);
 
 	if (quadRamp)
-		driveStraight(dist, true, 30, 120, -20, 250, 20, false);
+		quadDrive(dist, true);
 	else
 		driveStraight(dist, true);
 
@@ -183,7 +187,7 @@ void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//b
 	}
 
 	moveGoalIntake(intakeFully ? IN : MID/*, true*/);
-	wait1Msec(200);	//while (getPosition(goalIntake) < goalPos[MID]) EndTimeSlice();
+	//wait1Msec(200);	//while (getPosition(goalIntake) < goalPos[MID]) EndTimeSlice();
 
 	if (twentyPt)
 		driveStraight(-17);	//back out
@@ -206,51 +210,39 @@ void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//b
 	}
 }
 
-void sideGoal(zoneType zone=TWENTY, bool middle=false, bool reversed=false, bool align=true, bool startingFromBar=true, bool fieldCones=false, bool intakeFully=true) {	//touching bar, aligned with goal -> aligned with tape (approx)
+void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool reversed=false, bool startingFromBar=true, bool align=true, bool intakeFully=true) {	//touching bar, aligned with goal -> aligned with tape (approx)
 	int direction = (reversed ? -1 : 1);
 	moveLiftToSafePos();
 
 	//pick up side goal
 	driveAndGoal((startingFromBar ? 15 : 10), OUT, false, true);
-	driveStraight(startingFromBar ? 30 : 20);
+	quadDrive(startingFromBar ? 30 : 20);
 
 	//position robot facing middle of 10pt bar
-	if (fieldCones && NUM_EXTRA_CONES>0) {
-		moveGoalIntake(IN, true);
-		wait1Msec(500);
+	if (numExtraCones > 0) {
+		moveGoalIntake(IN);
 
-		driveStraight(7);
+		maybeAbort();
 
-		waitForMovementToFinish(goalIntake);
+		for (int i=0; i<numExtraCones; i++) {
+			stackNewCone(false, true);
+			driveStraight(10);
 
-		stackNewCone(true, true);
-		//maybeAbort();	- TODO: abort!
+			goToSafe = false;
+			while (stacking) EndTimeSlice();
 
-
-		for (int i=0; i<NUM_EXTRA_CONES; i++) {	//TODO: numAutonCones
-			driveStraight(7);
-
-			while (stacking || roller.moving==DURATION) EndTimeSlice();
-
-			if (i == 0) {
-				setPower(roller, 127);
-				setLiftState(L_FIELD);
-				moveFourBar(false, false);
-				waitForMovementToFinish(lift, INTAKE_DURATION);
-			}
-			else {
-				stackNewCone(true, true);
-			}
-
-			stackNewCone();
+			//intake
+			if (fbUp) moveFourBar(false, false);
+			setPower(roller, 127);
+			setLiftState(L_FIELD);
+			waitForMovementToFinish(lift, INTAKE_DURATION);
 		}
 
-		driveStraight(-60 - 7 * NUM_EXTRA_CONES, true);
+		stackNewCone(false, true);
 
-		while (stacking) EndTimeSlice();
-		moveLiftToSafePos();
+		driveStraight(-42 - 7 * numExtraCones);
 
-		while (driveData.isDriving) EndTimeSlice();
+		//while (stacking) EndTimeSlice();
 	}
 	else {
 		driveAndGoal(-42, IN);
@@ -258,7 +250,17 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, bool reversed=false, bool
 		maybeAbort();
 	}
 
-	if (zone != FIVE) {	//ten or twenty
+	if (zone == FIVE) {	//score in 5pt
+		if (numExtraCones == 0) stackNewCone(false, true);
+		turn(direction * 200, true);
+		while (stacking) EndTimeSlice();
+		liftToConeSafePos();
+		while (turnData.isTurning) EndTimeSlice();
+		moveGoalIntake(OUT);
+		driveStraight(-15);
+		if (intakeFully) moveGoalIntake(IN);
+	}
+	else {	//ten or twenty
 		if (TURN_CHEAT) {
 			turn(-direction * 45, true/*, false, 40, 127, -30, 250, 20, false*/);
 			long timer = resetTimer();
@@ -271,25 +273,15 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, bool reversed=false, bool
 
 		driveStraight(middle||zone==TWENTY ? -27 : -12, true);
 		while (driveData.totalDist < 5) EndTimeSlice();
-		if (!(NUM_EXTRA_CONES>0 && fieldCones)) stackNewCone(false, true);
+		if (numExtraCones == 0) stackNewCone(false, true);
 		while (driveData.isDriving) EndTimeSlice();
 
 		turn(-direction * 90);
 
 		while (stacking) EndTimeSlice();
-		//moveLiftToSafePos();
+		liftToConeSafePos();
 
 		scoreGoal(zone==TWENTY, align, intakeFully);
-	}
-	else {	//score in 5pt
-		stackNewCone();
-		turn(direction * 200, true);
-		while (stacking) EndTimeSlice();
-		moveLiftToSafePos();
-		moveGoalIntake(OUT);
-		while (turnData.isTurning) EndTimeSlice();
-		driveStraight(-15);
-		if (variant) moveGoalIntake(IN, true);
 	}
 }
 
@@ -397,7 +389,7 @@ task skillz() {
 		//temp (repetitive)
 		turnDriveTurn(-90, 18, -45);
 
-		sideGoal((SKILLZ_5PT ? FIVE : TEN), false, true, true, false);	//far left side goal to left 10pt
+		sideGoal((SKILLZ_5PT ? FIVE : TEN), false, 0, true, false);	//far left side goal to left 10pt
 	}
 	else {	//...far left (or center?)
 		middleGoal(false, false/*, !PARK_IN_SKILLS*/);	//temp
@@ -409,7 +401,7 @@ task skillz() {
 		else {
 			turnDriveTurn(-90, 18, -45);
 
-			sideGoal((SKILLZ_5PT ? FIVE : TEN), false, true, true, false);	//far left side goal to left 10pt
+			sideGoal((SKILLZ_5PT ? FIVE : TEN), false, 0, true, false);	//far left side goal to left 10pt
 
 			turn(160);
 			moveGoalIntake(IN, true);
@@ -421,7 +413,7 @@ task skillz() {
 }
 
 task antiMark() {
-	//if (ANTI_MARK == 1) {
+	if (ANTI_MARK == 1) {
 		wait1Msec(DEFENSIVE_DELAY);
 		driveStraight(15);
 		turn(50);
@@ -431,7 +423,7 @@ task antiMark() {
 		driveStraight(20);
 		moveGoalIntake(IN, false);
 		stackNewCone();
-	/*}
+	}
 	else {
 		moveFourBar(true);
 		setLiftTargetAndPID(2500);
@@ -443,7 +435,7 @@ task antiMark() {
 		wait1Msec(750);
 		driveForDuration(500);
 		setLiftTargetAndPID(2500);
-	}*/
+	}
 }
 //#endregion
 
@@ -468,20 +460,29 @@ task autonomous() {
 	}
 	else if (modePos > 1500) {	//side goal
 		zoneType zone;
+		int extraCones;
 
-		if (modePos > 3560)
+		if (modePos > 3560) {
 			zone = TWENTY;
-		else if (modePos > 2225)
+			extraCones = 1;
+		}
+		else if (modePos > 2225) {
 			zone = TEN;
-		else
+			extraCones = 1;
+		}
+		else {
 			zone = FIVE;
+			extraCones = 2;
+		}
 
-		sideGoal(zone, false, false, false, true, variant&&NUM_EXTRA_CONES>0);
+		if (!(STACK_SIDE_CONES && variant)) extraCones = 0;
 
-		if (variant || NUM_EXTRA_CONES>0) {	//drive to other side
+		sideGoal(zone, false, extraCones, false, true, false, (zone!=FIVE || variant || STACK_SIDE_CONES));
+
+		if (variant || extraCones>0) {	//drive to other side
 			switch (zone) {
 				case FIVE:
-					turn(-150);
+					turn(45);
 					break;
 				case TEN:
 					turnDriveTurn(90, 13);
@@ -491,7 +492,7 @@ task autonomous() {
 					break;
 			}
 
-			driveStraight(60 * (zone==FIVE ? 1 : -1));
+			driveStraight(-75);
 		}
 	}
 	else if (modePos > 305) {	//defensive

@@ -3,6 +3,7 @@
 
 bool fielding = true;	//whether robot is intaking cones from the driver load or field
 bool fbUpAfterLiftManeuver;	//whether four bar should raise after current lift maneuver (TODO: down option as well?)
+int numCones = 0; //current number of stacked cones (mostly used in autostacking) - TODO: move
 
 //#region sensors
 void resetLiftEncoders() {
@@ -158,7 +159,7 @@ void stopLiftTargeting() {
 }
 //#endregion
 
-void moveLiftToSafePos(bool wait=true) {
+void moveLiftToSafePos(bool waite=true) {
 	if (getPosition(lift)<liftPos[L_SAFE]) {
 		if (lift.moving!=TARGET || lift.posPID.target<liftPos[L_SAFE])
 			setLiftTargetAndPID(liftPos[L_SAFE] + 100/L_CORR_FCTR);
@@ -174,7 +175,11 @@ void moveLiftToSafePos(bool wait=true) {
 	else if (!fbUp)
 		moveFourBar(true);
 
-	if (wait)	//TODO: ensure fb in correct position?
+	if (waite)	//TODO: ensure fb in correct position?
 		while (getPosition(lift) < liftPos[L_SAFE])
 			EndTimeSlice();
+}
+
+void liftToConeSafePos() {
+	setLiftTargetAndPID(max(calcLiftTargetForHeight(CONE_HEIGHT * numCones + 9), liftPos[L_SAFE]));
 }

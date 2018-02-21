@@ -20,6 +20,7 @@ void pre_auton() {
 	driveDefaults.debugStartCol = debugParameters[4];
 	turnDefaults.debugStartCol = debugParameters[5];
 
-	if (HAS_SPEAKER)
+	#ifdef HAS_SPEAKER
 		initializeAudio();
+	#endif
 }
