@@ -54,9 +54,9 @@ void initializeAutoMovement() {
 	turnDefaults.sampleTime = 30;
 	turnDefaults.waitAtEnd = 100;
 	turnDefaults.minErrorMargin = 2;
-	turnDefaults.rampConst1 = 4;    // initialPower  / kP
-	turnDefaults.rampConst2 = 0.01; // maxPower      / kI
-	turnDefaults.rampConst3 = 16;	  // finalPower    / kD
+	turnDefaults.rampConst1 = 5.75;    // initialPower  / kP
+	turnDefaults.rampConst2 = 0.1; // maxPower      / kI
+	turnDefaults.rampConst3 = 20;	  // finalPower    / kD
 	turnDefaults.rampConst4 = 0.08; // brakeDuration / pd acceptable error (proportion of target)
 	turnDefaults.rampConst5 = 100;	// brakePower    / pd timeout
 
@@ -70,9 +70,9 @@ void initializeAutoMovement() {
 	driveDefaults.usePID = true;
 	driveDefaults.debugStartCol = -1;
 	driveDefaults.minErrorMargin = 1;
-	driveDefaults.rampConst1 = 10;	//same as above
-	driveDefaults.rampConst2 = 0.1;
-	driveDefaults.rampConst3 = 50;
+	driveDefaults.rampConst1 = 25;	//same as above
+	driveDefaults.rampConst2 = 0.5;
+	driveDefaults.rampConst3 = 70;
 	driveDefaults.rampConst4 = 0.1;
 	driveDefaults.rampConst5 = 100;
 	driveDefaults.kP_c = 0.7;

@@ -160,15 +160,8 @@ void stopLiftTargeting() {
 //#endregion
 
 void moveLiftToSafePos(bool waite=true) {
-	if (getPosition(lift)<liftPos[L_SAFE]) {
-		if (lift.moving!=TARGET || lift.posPID.target<liftPos[L_SAFE])
-			setLiftTargetAndPID(liftPos[L_SAFE] + 100/L_CORR_FCTR);
-	}
-	else {	//passively hold lift up
-		stopAutomovement(lift);
-		setPower(lift, LIFT_STILL_SPEED);
-		lift.stillSpeedReversed = false;
-	}
+	if (lift.moving!=TARGET || lift.posPID.target<liftPos[L_SAFE])
+			setLiftTargetAndPID(liftPos[L_SAFE] + 50/L_CORR_FCTR);
 
 	if (FB_SENSOR >= 0)	//and fb not in?
 		setFbState(FB_SAFE);

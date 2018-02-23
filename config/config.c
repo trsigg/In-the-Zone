@@ -132,7 +132,7 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1240,  1240,    1530,   1240,       1900,   1865,   2940 };
+	int liftPos[] = { 1240,  1240,    1560,   1240,       1900,   1780,   2790 };
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 0,        0,       0,     0 };
@@ -164,8 +164,8 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	//#subregion sensors
 	#define L_SENS_REVERSED  false	//lift
 	#define FB_SENS_REVERSED false	//four bar
-	#define L_ENC_REVERSED   false	//drive
-	#define R_ENC_REVERSED   false
+	#define L_ENC_REVERSED   true	//drive
+	#define R_ENC_REVERSED   true
 
 	#define HYRO          in2
 	#define SIDE_POT      in4
@@ -195,8 +195,8 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 	#define LIFT_LEN 16
 	#define CONE_HEIGHT 3.5
 	#define L_OFFSET    4
-	#define GOAL_TO_MID_DIST  17
-	#define LINE_TO_GOAL_DIST 26
+	#define GOAL_TO_MID_DIST  18
+	#define LINE_TO_GOAL_DIST 22
 	#define BAR_TO_LINE_DIST  9
 	//#endsubregion
 
@@ -295,7 +295,7 @@ float generalDebug[] = { 0, 0 };
 
 void initializeStructs() {
 	//arrayCopy(groupWaitList, defGroupWaitList, DEF_WAIT_LIST_LEN);
-	SensorScale[HYRO] = 149;
+	SensorScale[HYRO] = 145;
 
   //drive
 	initializeDrive(drive, NUM_LEFT_MOTORS, leftMotors, NUM_RIGHT_MOTORS, rightMotors, true, 40);
@@ -307,7 +307,7 @@ void initializeStructs() {
 	//lift
   initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors, liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
 	configureBtnDependentStillSpeed(lift);
-	initializeTargetingPID(lift, 0.35*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 15*L_CORR_FCTR, 75/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
+	initializeTargetingPID(lift, 0.35*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 30*L_CORR_FCTR, 75/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
 	//configureAutoStillSpeed(lift, 30);
 	addSensor(lift, LIFT_SENSOR, L_SENS_REVERSED);
 	if (LIFT_SENSOR>=dgtl1) configureEncoderCorrection(lift, liftPos[L_MAX]);
