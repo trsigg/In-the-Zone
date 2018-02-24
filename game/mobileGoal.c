@@ -24,7 +24,8 @@ void updateMotorConfig(int goalPower=0) {
 		setNumMotors(drive, NUM_LEFT_MOTORS-1, NUM_RIGHT_MOTORS-1);
 
 		bool goalOut = goalPower > 0;
-		setPowerLimits(drive, (goalOut ? -127 : -30), (goalOut ? 30 : 127));
+    int oppLimit = (bIfiAutonomousMode ? 30 : 0)
+		setPowerLimits(drive, (goalOut ? -127 : -oppLimit), (goalOut ? oppLimit : 127));
 	}
 }
 

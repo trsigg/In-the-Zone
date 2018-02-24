@@ -7,12 +7,12 @@
 //#define HAS_SPEAKER
 #define MULTIPLE_PIDs    false //if lift uses different PID consts for movement in different locations or directions
 #define HOLD_LAST_CONE   true	//if lift stays up after stacking last cone
-#define USE_ENC_CORR     true
+#define USE_ENC_CORR     false
 #define DOUBLE_DRIVER    false
 #define SONAR_STACKING   true
 
 	//#subregion auton/skillz options
-#define SKILLZ_MODE      false	//skills
+#define SKILLZ_MODE      true	//skills
 #define SKILLZ_VARIANT   true
 #define PARK_IN_SKILLS   false
 #define CROSS_FIELD_SKLZ false
@@ -28,7 +28,7 @@
 
 	//#subregion testing - TODO: change parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
-int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol }
+int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol }
 	//#endsubregion
 //#endregion
 
@@ -132,7 +132,7 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1240,  1240,    1560,   1240,       1900,   1780,   2790 };
+	int liftPos[] = { 1340,  1340,    1670,   1340,       2500,   1900,   2910 };
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 0,        0,       0,     0 };
@@ -143,13 +143,13 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSe
 
 	//#subregion motors
 	#define NUM_LIFT_MOTORS 3
-	tMotor liftMotors[NUM_LIFT_MOTORS] = { port5, port9, port10 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
+	tMotor liftMotors[NUM_LIFT_MOTORS] = { port1, port5, port10 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
 
 	#define NUM_FB_MOTORS 1
 	tMotor fourBarMotors[NUM_FB_MOTORS] = { port4 };
 
 	#define NUM_LEFT_MOTORS 3
-	tMotor leftMotors[NUM_LEFT_MOTORS] = { port1, port2, port3 };
+	tMotor leftMotors[NUM_LEFT_MOTORS] = { port2, port9, port3 };
 
 	#define NUM_RIGHT_MOTORS 2
 	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port6, port8 };
@@ -307,8 +307,8 @@ void initializeStructs() {
 	//lift
   initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors, liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
 	configureBtnDependentStillSpeed(lift);
-	initializeTargetingPID(lift, 0.35*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 30*L_CORR_FCTR, 75/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
-	//configureAutoStillSpeed(lift, 30);
+	initializeTargetingPID(lift, 0.3*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 32*L_CORR_FCTR, 75/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
+	//configureAutoStillSpeed(lift, 30);.35, 30
 	addSensor(lift, LIFT_SENSOR, L_SENS_REVERSED);
 	if (LIFT_SENSOR>=dgtl1) configureEncoderCorrection(lift, liftPos[L_MAX]);
 
