@@ -1,6 +1,6 @@
 void initializeAudio(bool play=false) { //play argument necessary so compiler thinks there is a possibility these sounds will actually be played
   if (play) {                           //look, if it ain't broke, don't fix it
-    playSoundFile("0.wav");
+    /*playSoundFile("0.wav");
     playSoundFile("1.wav");
   	playSoundFile("2.wav");
   	playSoundFile("3.wav");

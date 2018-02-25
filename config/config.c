@@ -7,18 +7,18 @@
 //#define HAS_SPEAKER
 #define MULTIPLE_PIDs    false //if lift uses different PID consts for movement in different locations or directions
 #define HOLD_LAST_CONE   true	//if lift stays up after stacking last cone
-#define USE_ENC_CORR     false
+#define USE_ENC_CORR     true
 #define DOUBLE_DRIVER    false
 #define SONAR_STACKING   true
 
 	//#subregion auton/skillz options
-#define SKILLZ_MODE      true	//skills
+#define SKILLZ_MODE      false	//skills
 #define SKILLZ_VARIANT   true
 #define PARK_IN_SKILLS   false
 #define CROSS_FIELD_SKLZ false
 #define SKILLZ_5PT       false
 #define TURN_CHEAT       true	//general
-#define ABORT_AFTER_15   true
+#define ABORT_AFTER_15   false
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL false
 #define RETRY_GOAL_FAILS true
@@ -132,7 +132,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1340,  1340,    1670,   1340,       2500,   1900,   2910 };
+	int liftPos[] = { 1310,  1310,    1670,   1330,       2500,   1900,   2910 };
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
 	int fbPos[] = { 0,        0,       0,     0 };
@@ -167,7 +167,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	#define L_ENC_REVERSED   true	//drive
 	#define R_ENC_REVERSED   true
 
-	#define HYRO          in2
+	#define HYRO          in7
 	#define SIDE_POT      in4
 	#define MODE_POT      in5
 	#define LIFT_SENSOR   in1
@@ -188,7 +188,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	//#region consts
 	#define SIDE_SWITCH_POS  1960	//middle of sidePos
 	#define OUTTAKE_DURATION 300
-	#define INTAKE_DURATION  500
+	#define INTAKE_DURATION  600
 	//#endregion
 
 	//#subregion measurements
@@ -278,7 +278,7 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define CONE_STILL_SPEED  15
 	//#endsubregion
 	//#subregion timing
-#define FB_MOVE_DURATION      500
+#define FB_MOVE_DURATION      700
 #define GOAL_INTAKE_DURATION  1500
 #define GOAL_OUTTAKE_DURATION 1250
 	//#endsubregion
