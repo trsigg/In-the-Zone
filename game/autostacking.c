@@ -13,25 +13,16 @@ task sonarAutoStacking() {
 		while (!stacking) EndTimeSlice();
 
 		//lift above stack
-		bool abort = liftUntilSonar(true);
+		liftUntilSonar(true);
 
 		moveFourBar(true, false);
 
-		/*if (!abort) wait1Msec(50);
-		int finishPos = getPosition(lift);
-
-		setLiftTargetAndPID(finishPos);
-		waitForMovementToFinish(fourBar);*/
-
 		//lift down
-		//setLiftTargetAndPID(calcLiftTargetForHeight(calcLiftHeight(finishPos) - L_OFFSET));
 		liftUntilSonar(false);
 
 		//outtake
 		setPower(roller, -127);
 		liftUntilSonar(true);
-		/*setLiftTargetAndPID(finishPos);
-		waitForMovementToFinish(lift);*/
 
 		//lift down
 		moveFourBar(goToSafe, false);

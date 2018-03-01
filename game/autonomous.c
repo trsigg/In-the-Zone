@@ -370,7 +370,7 @@ void crossFieldGoal(bool twentyPt, bool neer, bool middle=false, bool clearCones
 }
 
 void backUpGoal(bool startingFromBar=false, bool intakeFully=true, bool reversed=false) {
-	int direction = (reversed ? -1 : 1)
+	int direction = (reversed ? -1 : 1);
 
 	moveGoalIntake(IN, true);
 	accuDrive(-LINE_TO_GOAL_DIST - (startingFromBar ? 10 : 8));
@@ -379,7 +379,7 @@ void backUpGoal(bool startingFromBar=false, bool intakeFully=true, bool reversed
 	moveGoalIntake(OUT);
 	driveStraight(startingFromBar ? 21 : 27);
 	driveAndGoal(startingFromBar ? 10 : 8, IN);
-	turn(direction * (startingFromBar ? 90 : 95);
+	turn(direction * (startingFromBar ? 90 : 95));
 	driveStraight(BAR_TO_LINE_DIST + LINE_TO_GOAL_DIST);
 	scoreGoal(false, false, intakeFully);
 }
@@ -497,6 +497,7 @@ task selfDestruct() {
 	//stopAllTasks();
 	stopTask(autonomous);
 	stopTask(skillz);
+	stopTask(antiMark);
 	stopAllMotors();
 }
 

@@ -77,7 +77,14 @@ task usercontrol() {
 		handleGoalIntakeInput();
 
 		#ifndef PASSIVE
-			if (!stacking) takeInput(roller);
+			if (!stacking)
+				if (AUTOSTACK_CONFIG)
+					if (vexRT[intakeBtn] == 1)
+						setPower(roller, (shift ? -1 : 1) * 127);
+					else
+						setPower(roller, ROLLER_STILL_SPEED);
+				else
+					takeInput(roller);
 		#endif
 
 		driveRuntime(drive);

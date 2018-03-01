@@ -10,6 +10,7 @@
 #define USE_ENC_CORR     true
 #define DOUBLE_DRIVER    false
 #define SONAR_STACKING   true
+#define AUTOSTACK_CONFIG false	//using autostacking-focused button config
 
 	//#subregion auton/skillz options
 #define SKILLZ_MODE      false	//skills
@@ -28,7 +29,7 @@
 
 	//#subregion testing - TODO: change parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
-int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol }
+int debugParameters[] = { -1, 1, -1, -1, -1, -1, 0 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol, coneSonarCol }
 	//#endsubregion
 //#endregion
 
@@ -177,7 +178,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 	#define LEFT_ENC      dgtl1
 	#define RIGHT_ENC     dgtl3
 	#define FRONT_SONAR   -1
-	#define CONE_SONAR    -1
+	#define CONE_SONAR    dgtl5
 
 	#define LEFT_LINE     -1	//not currently attached
 	#define BACK_LINE     -1
@@ -217,7 +218,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSen
 		//#endsubsubregion
 
 		//#subsubregion autostacking control
-	#define stackBtn   -1
+	#define stackBtn   Btn6D
 		//#endsubsubregion
 
 		//#subregion autopositioning
@@ -267,15 +268,15 @@ const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
 #define R_LINE_THRESHOLD  2960
 #define L_LINE_THRESHOLD  3060
 #define B_LINE_THRESHOLD  2870
-#define CONE_SONAR_THRESH 2000
+#define CONE_SONAR_THRESH 1000
 	//#endsubregion
 	//#subregion still speeds
-#define LIFT_STILL_SPEED  15
-#define L_AUTO_SS_MARGIN  50
-#define FB_STILL_SPEED    20
-#define FB_AUTO_SS_MARGIN 50
-#define GOAL_STILL_SPEED  0
-#define CONE_STILL_SPEED  15
+#define LIFT_STILL_SPEED   15
+#define L_AUTO_SS_MARGIN   50
+#define FB_STILL_SPEED     20
+#define FB_AUTO_SS_MARGIN  50
+#define GOAL_STILL_SPEED   0
+#define ROLLER_STILL_SPEED 15
 	//#endsubregion
 	//#subregion timing
 #define FB_MOVE_DURATION      700
@@ -335,8 +336,8 @@ void initializeStructs() {
 	#ifndef PASSIVE
 		initializeGroup(roller, NUM_ROLLER_MOTORS, rollerMotors);
 		if (SKILLZ_MODE)
-			configureButtonInput(roller, goalOuttakeBtn, goalIntakeBtn, CONE_STILL_SPEED);
+			configureButtonInput(roller, goalOuttakeBtn, goalIntakeBtn, ROLLER_STILL_SPEED);
 		else
-			configureButtonInput(roller, intakeBtn, outtakeBtn, CONE_STILL_SPEED);
+			configureButtonInput(roller, intakeBtn, outtakeBtn, ROLLER_STILL_SPEED);
 	#endif
 }

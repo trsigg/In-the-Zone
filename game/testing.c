@@ -3,6 +3,9 @@
 void logSensorVals() {
 	if (debugParameters[1] >= 0)
 		datalogAddValueWithTimeStamp(debugParameters[1], getPosition(lift));
+
+	if (debugParameters[6] >= 0)
+		datalogAddValueWithTimeStamp(debugParameters[6], SensorValue[CONE_SONAR]);
 }
 
 

@@ -6,6 +6,7 @@
 #pragma config(Sensor, in7,    hyro,           sensorGyro)
 #pragma config(Sensor, dgtl1,  leftEnc,        sensorQuadEncoder)
 #pragma config(Sensor, dgtl3,  rightEnc,       sensorQuadEncoder)
+#pragma config(Sensor, dgtl5,  coneSonar,      sensorSONAR_raw)
 #pragma config(Motor,  port1,           lift1,         tmotorVex393_HBridge, openLoop, reversed)
 #pragma config(Motor,  port2,           LDrive1,       tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port3,           LSwitchy,      tmotorVex393_MC29, openLoop)

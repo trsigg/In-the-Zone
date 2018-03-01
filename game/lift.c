@@ -58,7 +58,7 @@ bool liftUntilSonar(bool up, int timeout=25, int power=127, int lowPower=60, int
 	long timer = resetTimer();
 
 	while (time(timer) < timeout && !abort) {
-		if (sonarFartherThan(CONE_SONAR, CONE_SONAR_THRESH) == up) {
+		if (sonarFartherThan(CONE_SONAR, CONE_SONAR_THRESH, false) == up) {
 			setPower(lift, lowPower);
 		}
 		else {
@@ -72,7 +72,7 @@ bool liftUntilSonar(bool up, int timeout=25, int power=127, int lowPower=60, int
 		EndTimeSlice();
 	}
 	if (up) { generalDebug[0] = SensorValue[CONE_SONAR]; }
-	setToStillSpeed(lift);
+	setToStillSpeed(lift, false);
 
 	return abort;
 }

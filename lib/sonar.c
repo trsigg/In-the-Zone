@@ -18,8 +18,8 @@ distUnits getSonarType(tSensors sonar) {
 	}
 }
 
-bool sonarFartherThan(tSensors sonar, float dist, distUnits units=RAW_DIST) {
+bool sonarFartherThan(tSensors sonar, float dist, bool countNegAsFar=true, distUnits units=RAW_DIST) {
   int sonarDist = SensorValue[sonar]; //TODO: convertDist(SensorValue[sonar], units, getSonarType(sonar));
 
-  return (sonarDist == -1) || (sonarDist > dist);
+  return (sonarDist == -1) && countNegAsFar || (sonarDist > dist);
 }

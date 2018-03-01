@@ -9,7 +9,7 @@ void handleAutopositioningInput(bool shift) {
 
 void handleLiftInput(bool shift) {
 	if (!stacking) {
-		if (!shift && vexRT[stackBtn]==1) {
+		if (!shift && vexRT[stackBtn]==1 && AUTOSTACK_CONFIG) {
 			stackNewCone();
 		}
 		else {
