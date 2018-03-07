@@ -76,7 +76,7 @@ task usercontrol() {
 		handleLiftInput(shift);
 		handleGoalIntakeInput();
 
-		#ifndef PASSIVE
+		#ifdef ROLLER
 			if (!stacking)
 				if (AUTOSTACK_CONFIG)
 					if (vexRT[intakeBtn] == 1)

@@ -1,5 +1,6 @@
 //#define E_TEAM_PASSIVE
-#define E_TEAM_ROLLER
+//#define E_TEAM_ROLLER
+#define E_TEAM_PNEUMATIC
 //#define RUN_AUTON_AS_MAIN
 
 
@@ -131,8 +132,10 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, li
 #ifdef E_TEAM_ROLLER
 	#include "E_RollerPragmas.c"
 
+	#define ROLLER
+
 	//#subregion positions
-	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
+	/*enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
 	int liftPos[] = { 1310,  1310,    1670,   1330,       2500,   1900,   2910 };
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
@@ -224,6 +227,108 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, li
 		//#subregion autopositioning
 	#define defPosBtn   Btn8R
 	#define toggleFbBtn Btn8L
+		//#endsubregion
+	//#endsubregion*/
+#endif
+
+#ifdef E_TEAM_PNEUMATIC
+	#include "E_PneumaticPragmas.c"
+
+	#define PNEUMATIC true
+
+	//#subregion positions
+	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
+	int liftPos[] = { 1310,  1310,    1670,   1330,       2500,   1900,   2910 };
+
+	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
+	int fbPos[] = { 0,        0,       0,     0 };
+
+	enum goalState  { OUT,  MID,  IN };
+	int goalPos[] = { 3200, 2855, 1050 };
+	//#endsubregion
+
+	//#subregion motors
+	#define NUM_LIFT_MOTORS 3
+	tMotor liftMotors[NUM_LIFT_MOTORS] = { port1, port5, port10 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
+
+	#define NUM_FB_MOTORS 1
+	tMotor fourBarMotors[NUM_FB_MOTORS] = { port4 };
+
+	#define NUM_LEFT_MOTORS 3
+	tMotor leftMotors[NUM_LEFT_MOTORS] = { port2, port9, port3 };
+
+	#define NUM_RIGHT_MOTORS 2
+	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port6, port8 };
+
+	#define NUM_GOAL_MOTORS 2
+	tMotor goalMotors[NUM_GOAL_MOTORS] = { port3, port8 };
+
+	#define NUM_ROLLER_MOTORS 1
+	tMotor rollerMotors[NUM_ROLLER_MOTORS] = { port7 };
+	//#endsubregion
+
+	//#subregion sensors
+	#define L_SENS_REVERSED  false	//lift
+	#define FB_SENS_REVERSED false	//four bar
+	#define L_ENC_REVERSED   true	//drive
+	#define R_ENC_REVERSED   true
+
+	#define HYRO          in7
+	#define SIDE_POT      in4
+	#define MODE_POT      in5
+	#define LIFT_SENSOR   in1
+	#define GOAL_SENSOR   in6
+	#define GOAL_FOLLOWER in3
+	#define ROLLER_ENC    -1
+	#define LEFT_ENC      dgtl1
+	#define RIGHT_ENC     dgtl3
+	#define FRONT_SONAR   -1
+	#define CONE_SONAR    dgtl5
+
+	#define LEFT_LINE     -1	//not currently attached
+	#define BACK_LINE     -1
+	#define RIGHT_LINE    -1
+	#define FB_SENSOR     -1
+	//#endsubregion
+
+	//#region consts
+	#define SIDE_SWITCH_POS  1960	//middle of sidePos
+	#define OUTTAKE_DURATION 300
+	#define INTAKE_DURATION  600
+	//#endregion
+
+	//#subregion measurements
+	#define LIFT_LEN 16
+	#define CONE_HEIGHT 3.5
+	#define L_OFFSET    4
+	#define GOAL_TO_MID_DIST  18
+	#define LINE_TO_GOAL_DIST 22
+	#define BAR_TO_LINE_DIST  9
+	//#endsubregion
+
+	//#subregion cone counts
+	#define APATHY_CONES  0 //number of cones for which lift does not move
+	#define MAX_NUM_CONES 16
+	//#endsubregion
+
+	//#subregion specific buttons
+		//#subsubregion stack cycling
+	#define cycleInBtn      Btn6U
+	#define cycleOutBtn     Btn6D
+		//#endsubsubregion
+
+		//#subsubregion toggles
+	#define toggleFbBtn     Btn8D
+	#define toggleIntakeBtn Btn8U
+		//#endsubsubregion
+
+		//#subsubregion autostacking control
+	#define stackBtn        Btn6D
+		//#endsubsubregion
+
+		//#subregion autopositioning
+	#define defPosBtn       Btn8R
+	#define toggleFbBtn     Btn8L
 		//#endsubregion
 	//#endsubregion
 #endif
@@ -333,7 +438,7 @@ void initializeStructs() {
 		if (FB_SENSOR>=dgtl1) configureEncoderCorrection(fourBar, fbPos[FB_MAX]);
 	}
 
-	#ifndef PASSIVE
+	#ifdef ROLLER
 		initializeGroup(roller, NUM_ROLLER_MOTORS, rollerMotors);
 		if (SKILLZ_MODE)
 			configureButtonInput(roller, goalOuttakeBtn, goalIntakeBtn, ROLLER_STILL_SPEED);

@@ -28,7 +28,12 @@
 //#endregion
 
 
+enum cycleState { OUT, IN, DROP };
+
+
 //#region globals
+cycleState cycleProgress;
+
 motorGroup lift;
 motorGroup goalIntake;
 
@@ -55,10 +60,10 @@ void pre_auton()
 	initializeGroup(goalIntake, 2, goalMotors, Btn7U, Btn7D);
 
 	initializePneumaticGroup(coneIntake, intakeSol);
-	configureToggleInput(coneIntake, Btn6U);
+	//configureToggleInput(coneIntake, Btn6U);
 
 	initializePneumaticGroup(fourBar, fbSol);
-	configureToggleInput(fourBar, Btn6D);
+	//configureToggleInput(fourBar, Btn6D);
 }
 
 task autonomous() {
@@ -80,6 +85,28 @@ void updateMotorConfig(int goalPower) {
 
 void handleGoalInput() {
 	updateMotorConfig(takeInput(goalIntake));	//USE AUTOMOVEMENT QUALIFICATION FOR REAL CODE
+}
+
+void setStackState(cycleState state) {
+	switch (cycleProgress) {
+			case OUT:
+				setState(fourBar, true);
+				setState(coneIntake, true);
+				break;
+			case IN:
+				setState(fourBar, false);
+				setState(coneIntake, true);
+				break;
+			case DROP:
+				setState(fourBar, false);
+				setState(coneIntake, false);
+				break;
+		}
+}
+
+void handleStackCycleInput() {
+	if (newlyPressed(Btn6U))
+		setCycleState(++cycleProgress);
 }
 
 task usercontrol() {
