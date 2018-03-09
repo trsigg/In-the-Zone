@@ -1,27 +1,17 @@
-void handleAutopositioningInput(bool shift) {
-	if (!shift)
-		if (newlyPressed(defPosBtn[robot]))
-			setLiftState(L_SAFE/*L_DEF*/);
+void handleFbInput() {
+	bool intakeClosed = intake.isOpen;	//Confusing, I know. isOpen refers to the solenoid, intakeClosed refers to the intake.
 
-		if (newlyPressed(toggleFbBtn[robot]))
-			moveFourBar(!fbUp);
-}
-
-void handleLiftInput(bool shift) {
-	if (!stacking) {
-		if (!shift && vexRT[stackBtn]==1 && AUTOSTACK_CONFIG) {
-			stackNewCone();
-		}
-		else {
-			handleAutopositioningInput(shift);
-
-			//will only set power if not maintaining a position
-			//if there is input, activelyMaintaining will be set to false and normal control will resume
-			takeInput(lift, lift.moving==NO && !stacking);
-			
-			fbUp = !takeInput(fourBar);
-		}
+	if (newlyPressed(Btn6U)) {
+		setState(fourBar, !intakeClosed);
+		setState(intake, !(fbUp && intakeClosed));
+	}
+	else if (newlyPressed(Btn6D)) {
+		setState(fourBar, intake.isOpen);
+		setState(intake, fbUp || !intakeClosed);
+	}
+	else {
+		takeInput(fourBar);
 	}
 
-	executeManeuvers();
+	fbUp = fourBar.isOpen;
 }

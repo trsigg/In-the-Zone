@@ -12,6 +12,10 @@
 	#include "..\control\pneumaticControl.c"
 #endif
 
+
+bool movingToMax = false;
+
+
 void handleGoalIntakeInput() {
 	int goalPower = takeInput(goalIntake, false);
 
@@ -60,6 +64,43 @@ void handleAbortInput() {
 	}
 }
 
+void handleAutopositioningInput(bool shift) {
+	if (!shift) {
+		if (safePosBtn[robot]>=0 && newlyPressed(safePosBtn[robot])) {
+			setLiftState(L_SAFE);
+			movingToMax = false;
+		}
+
+		if (maxPosBtn[robot]>=0 && newlyPressed(maxPosBtn[robot])) {
+			setLiftState(SKILLZ_MODE ? L_SAFE : L_MAX);
+			movingToMax = true;
+		}
+	}
+
+	if (movingToMax && errorLessThan(lift, 100)) {
+		moveFourBar(true);
+
+		movingToMax = false;
+	}
+}
+
+void handleLiftInput(bool shift) {
+	if (!stacking) {
+		if (!shift && vexRT[stackBtn]==1 && AUTOSTACK_CONFIG) {
+			stackNewCone();
+		}
+		else {
+			handleAutopositioningInput(shift);
+
+			//will only set power if not maintaining a position
+			//if there is input, activelyMaintaining will be set to false and normal control will resume
+			takeInput(lift, lift.moving==NO && !stacking);
+		}
+	}
+
+	executeManeuvers();
+}
+
 task usercontrol() {
 	bool shift;
 
@@ -83,10 +124,15 @@ task usercontrol() {
 		handleAbortInput();
 
 		handleLiftInput(shift);
+		handleFbInput();
 		handleGoalIntakeInput();
 
 		#ifdef ROLLER
 			handleRollerInput();
+		#endif
+
+		#ifdef PNEUMATIC
+			takeInput(intake);
 		#endif
 
 		driveRuntime(drive);
