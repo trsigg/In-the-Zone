@@ -102,8 +102,8 @@ task usercontrol() {
   	handleStackCycleInput();
 
   	takeInput(lift);
-  	/*takeInput(fourBar);
-  	takeInput(coneIntake);*/
+  	takeInput(fourBar);
+  	takeInput(coneIntake);
   	driveRuntime(drive);
   }
 }

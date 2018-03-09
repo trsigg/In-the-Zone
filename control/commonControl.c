@@ -2,14 +2,20 @@
 
 #ifdef PASSIVE
 	#include "..\control\passiveControl.c"
-#else
+#endif
+
+#ifdef ROLLER
 	#include "..\control\rollerControl.c"
+#endif
+
+#ifdef PNEUMATIC
+	#include "..\control\pneumaticControl.c"
 #endif
 
 void handleGoalIntakeInput() {
 	int goalPower = takeInput(goalIntake, false);
 
-	if (getPosition(lift)>=liftPos[L_SAFE] || abs(goalPower)<=GOAL_STILL_SPEED) {
+	if (getPosition(lift)>=liftPos[L_SAFE] || abs(goalPower)<=goalStillSpeed[robot]) {
 		setPower(goalIntake, goalPower);
 		updateMotorConfig(goalPower);
 	}
@@ -20,9 +26,9 @@ void handleGoalIntakeInput() {
 
 void handleConeCountInput() {	//change cone count based on user input
 	//adjust cone count
-	if (newlyPressed(resetBtn))
+	if (newlyPressed(resetConesBtn))
 		numCones = 0;
-	else if (numCones<=MAX_NUM_CONES && newlyPressed(increaseConesBtn))
+	else if (numCones<=maxNumCones[robot] && newlyPressed(increaseConesBtn))
 		numCones++;
 	else if (numCones>0 && newlyPressed(decreaseConesBtn))
 		numCones--;
@@ -55,13 +61,16 @@ void handleAbortInput() {
 }
 
 task usercontrol() {
-	stopLiftTargeting();
-	setToStillSpeed(roller);
-	if (SKILLZ_MODE) moveLiftToSafePos(false);
+	bool shift;
 
+	stopLiftTargeting();
 	startAutoStacking();
 
-	bool shift;
+	if (SKILLZ_MODE) moveLiftToSafePos(false);
+
+	#ifdef ROLLER
+		setToStillSpeed(roller);
+	#endif
 
 	while (true) {
 		logSensorVals();
@@ -77,14 +86,7 @@ task usercontrol() {
 		handleGoalIntakeInput();
 
 		#ifdef ROLLER
-			if (!stacking)
-				if (AUTOSTACK_CONFIG)
-					if (vexRT[intakeBtn] == 1)
-						setPower(roller, (shift ? -1 : 1) * 127);
-					else
-						setPower(roller, ROLLER_STILL_SPEED);
-				else
-					takeInput(roller);
+			handleRollerInput();
 		#endif
 
 		driveRuntime(drive);

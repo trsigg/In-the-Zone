@@ -5,7 +5,7 @@ void logSensorVals() {
 		datalogAddValueWithTimeStamp(debugParameters[1], getPosition(lift));
 
 	if (debugParameters[6] >= 0)
-		datalogAddValueWithTimeStamp(debugParameters[6], SensorValue[CONE_SONAR]);
+		datalogAddValueWithTimeStamp(debugParameters[6], SensorValue[coneSonar[robot]]);
 }
 
 
@@ -60,7 +60,7 @@ void handlePIDinput(int index) {
 			moveFourBar(input==1/*, !waite*/);
 			break;
 		case 7:
-			SensorScale[HYRO] = input;
+			SensorScale[ hyro[robot] ] = input;
 			break;
 		case 8:
 			configureRamping(drive, input);
@@ -77,7 +77,7 @@ void testPIDs() {
 	int prevTargets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };	//TODO: fill automatically
 
 	while (!end) {
-		debugOut = SensorScale[HYRO];
+		debugOut = SensorScale[ hyro[robot] ];
 
 		for (int i=0; i<NUM_INPUTS; i++) {
 			if (prevTargets[i] != targets[i]) {

@@ -1,4 +1,5 @@
 #include "..\config\config.c"
+#include "..\lib\pneumaticGroup.c"
 
 
 bool fielding = true;	//whether robot is intaking cones from the driver load or field
@@ -8,15 +9,19 @@ int numCones = 0; //current number of stacked cones (mostly used in autostacking
 //#region sensors
 void resetLiftEncoders() {
 	resetEncoder(lift);
-	resetEncoder(fourBar);
+	#ifndef PNEUMATIC
+		resetEncoder(fourBar);
+	#endif
 }
 
 void handleEncoderCorrection() {
-	if (LIFT_SENSOR >= dgtl1)
+	if (liftSensor[robot] >= dgtl1)
 		correctEncVal(lift);
 
-	if (FB_SENSOR >= dgtl1)
-		correctEncVal(fourBar);
+	#ifndef PNEUMATIC
+		if (fbSensor[robot] >= dgtl1)
+			correctEncVal(fourBar);
+	#endif
 }
 //#endregion
 
@@ -40,9 +45,11 @@ void setLiftTargetAndPID(int target, bool resetIntegral=true) {	//sets lift targ
 	setTargetPosition(lift, limit(target, liftPos[L_MIN], liftPos[L_MAX]), resetIntegral);
 }
 
-void setLiftState(liftState state) {
+void setLiftState(liftState state, bool useManeuver=false) {
 	if (state == L_DEF)
-		setLiftState(fielding ? L_FIELD : D_LOAD);
+		setLiftState(fielding ? L_FIELD : D_LOAD, useManeuver);
+	else if (useManeuver)
+		createManeuver(lift, liftPos[state]);
 	else
 		setLiftTargetAndPID(liftPos[state]);
 }
@@ -58,7 +65,7 @@ bool liftUntilSonar(bool up, int timeout=25, int power=127, int lowPower=60, int
 	long timer = resetTimer();
 
 	while (time(timer) < timeout && !abort) {
-		if (sonarFartherThan(CONE_SONAR, CONE_SONAR_THRESH, false) == up) {
+		if (sonarFartherThan(coneSonar[robot], coneSonarThresh[robot], false) == up) {
 			setPower(lift, lowPower);
 		}
 		else {
@@ -71,7 +78,7 @@ bool liftUntilSonar(bool up, int timeout=25, int power=127, int lowPower=60, int
 
 		EndTimeSlice();
 	}
-	if (up) { generalDebug[0] = SensorValue[CONE_SONAR]; }
+	if (up) { generalDebug[0] = SensorValue[ coneSonar[robot] ]; }
 	setToStillSpeed(lift, false);
 
 	return abort;
@@ -81,49 +88,28 @@ bool liftUntilSonar(bool up, int timeout=25, int power=127, int lowPower=60, int
 const float heightOffset = sin((liftPos[L_ZERO] - liftPos[M_BASE_POS]) / RAD_TO_LIFT);
 
 float calcLiftTargetForHeight(float height) {
-	return limit(RAD_TO_LIFT * asin(height / 2 / LIFT_LEN - heightOffset) + liftPos[L_ZERO],
+	return limit(RAD_TO_LIFT * asin(height / 2 / liftLen[robot] - heightOffset) + liftPos[L_ZERO],
 						   liftPos[L_MIN], liftPos[L_MAX]);
 }
 
 float calcLiftHeight(int liftVal) {	//finds lift sensor val separated from liftVal by offset inches	- TODO: what?
-	return 2 * LIFT_LEN * (sin((liftVal - liftPos[L_ZERO]) / RAD_TO_LIFT) + heightOffset);
+	return 2 * liftLen[robot] * (sin((liftVal - liftPos[L_ZERO]) / RAD_TO_LIFT) + heightOffset);
 }
 	//#endsubregion
 //#endregion
 
 //#region four bar
-bool fbUp = false;
-
-void setFbPIDmode(bool high) {	//high is true for targets above FB_SAFE
-	if (MULTIPLE_PIDs)
-		if (high)
-			setTargetingPIDconsts(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 1.3*FB_CORR_FCTR);	//0.37, 0.002, 1.6
-		else
-			setTargetingPIDconsts(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 1.3*FB_CORR_FCTR);
-}
-
-void setFbTargetAndPID(int target, bool resetIntegral=true) {	//sets four bar target and adjusts PID consts
-	if (MULTIPLE_PIDs) {
-		if (target > fbPos[FB_SAFE])
-			setFbPIDmode(true);
-		else
-			setFbPIDmode(false);
-	}
-
-	setTargetPosition(fourBar, target, resetIntegral);
-}
-
-void setFbState(fbState state) {
-	if (state == FB_DEF)
-		setFbState(fielding ? FB_FIELD : FB_SAFE);
-	else
-		setFbTargetAndPID(fbPos[state]);
-}
+bool fbUp = true;
 
 void moveFourBar(bool up, bool runConcurrently=true, int power=127) {
 	fbUp = up;
-	fourBar.stillSpeedReversed = !up;
-	moveForDuration(fourBar, power*(up ? -1 : 1), FB_MOVE_DURATION, runConcurrently);
+
+	#ifdef PNEUMATIC
+		setState(fourBar, !up, runConcurrently);
+	#else
+		fourBar.stillSpeedReversed = !up;
+		moveForDuration(fourBar, power*(up ? -1 : 1), fbMoveDuration[robot], runConcurrently);
+	#endif
 }
 //#endregion
 
@@ -132,17 +118,18 @@ void executeManeuvers(bool autoStillSpeed=true) {	//TODO: argument doesn't do an
 	handleEncoderCorrection();
 
 	executeAutomovement(lift, debugParameters[0]);
-	executeAutomovement(fourBar, debugParameters[2]);
+	#ifndef PNEUMATIC
+		executeAutomovement(fourBar, debugParameters[2]);
+	#endif
 
 	//I know, this isn't really part of the lift... (TODO: reposition)
 	executeAutomovement(goalIntake);
-	executeAutomovement(roller);
+	#ifdef ROLLER
+		executeAutomovement(roller);
+	#endif
 
 	if (fbUpAfterLiftManeuver && (lift.moving==NO || lift.moving==TARGET && errorLessThan(lift, lift.waitErrorMargin))) {	//TODO: better targeting completion criterion?
-		if (FB_SENSOR >= 0)
-			setFbState(FB_SAFE);
-		else
-			moveFourBar(true);
+		moveFourBar(true);
 
 		fbUpAfterLiftManeuver = false;
 	}
@@ -155,7 +142,10 @@ void waitForLiftingToFinish(int timeout=100) {	//TODO: delete as soon as possibl
 
 void stopLiftTargeting() {
 	stopAutomovement(lift);
-	stopAutomovement(fourBar);
+
+	#ifndef PNEUMATIC
+		stopAutomovement(fourBar);
+	#endif
 }
 //#endregion
 
@@ -163,10 +153,7 @@ void moveLiftToSafePos(bool waite=true) {
 	if (lift.moving!=TARGET || lift.posPID.target<liftPos[L_SAFE])
 			setLiftTargetAndPID(liftPos[L_SAFE] + 50/L_CORR_FCTR);
 
-	if (FB_SENSOR >= 0)	//and fb not in?
-		setFbState(FB_SAFE);
-	else if (!fbUp)
-		moveFourBar(true);
+	moveFourBar(true);
 
 	if (waite)	//TODO: ensure fb in correct position?
 		while (getPosition(lift) < liftPos[L_SAFE])
@@ -174,5 +161,5 @@ void moveLiftToSafePos(bool waite=true) {
 }
 
 void liftToConeSafePos() {
-	setLiftTargetAndPID(max(calcLiftTargetForHeight(CONE_HEIGHT * numCones + 9), liftPos[L_SAFE]));
+	setLiftTargetAndPID(max(calcLiftTargetForHeight(coneHeight[robot] * numCones + 9), liftPos[L_SAFE]));
 }

@@ -5,6 +5,16 @@
 bool stacking = false;	//whether the robot is currently in the process of stacking
 bool goToSafe = false;	//whether lift & fb should go to safe pos (as opposed to def pos) after stacking
 
+void outtake() {
+	#ifdef ROLLER
+		setPower(roller, -127);
+	#endif
+
+	#ifdef PNEUMATIC
+		setState(intake, false);
+	#endif
+}
+
 //#region sonar autostacking
 //TODO: fix cone drops
 
@@ -21,12 +31,14 @@ task sonarAutoStacking() {
 		liftUntilSonar(false);
 
 		//outtake
-		setPower(roller, -127);
+		outtake();
 		liftUntilSonar(true);
 
 		//lift down
 		moveFourBar(goToSafe, false);
-		setToStillSpeed(roller);
+		#ifdef ROLLER
+			setToStillSpeed(roller);
+		#endif
 		setLiftState(goToSafe ? L_SAFE : L_DEF);
 
 		stacking = false;
@@ -38,7 +50,7 @@ task sonarAutoStacking() {
 int liftTarget, liftRelease;
 
 int adjustedNumCones() {
-	return limit(numCones-APATHY_CONES, 0, MAX_NUM_CONES-APATHY_CONES);
+	return limit(numCones-apathyCones[robot], 0, maxNumCones[robot]-apathyCones[robot]);
 }
 
 task kinematicAutoStacking() {
@@ -46,17 +58,13 @@ task kinematicAutoStacking() {
 		while (!stacking) EndTimeSlice();
 
 		setLiftTargetAndPID(liftTarget);	//TODO: if (getPosition(lift) < liftTarget)?
-		if (FB_SENSOR >= 0) setFbState(FB_SAFE);
 		while (getPosition(lift) < liftRelease) EndTimeSlice();	//wait for lift to move to stacking position
 
-		if (FB_SENSOR >= 0)
-			setFbState(STACK);
-		else
-			moveFourBar(true);
+		moveFourBar(true);
 
 		waitForLiftingToFinish();	//waitForMovementToFinish();
 
-		if (numCones>=MAX_NUM_CONES-1 && HOLD_LAST_CONE) {
+		if (numCones>=maxNumCones[robot]-1 && HOLD_LAST_CONE) {
 			stopAutomovement(lift);	//passively maintains lift position
 			lift.stillSpeedReversed = true;
 		}
@@ -65,40 +73,36 @@ task kinematicAutoStacking() {
 				stopAutomovement(lift);	//TODO: replace with maneuver?
 				setPower(lift, -127);
 
-				wait1Msec(250); //while (getPosition(lift) > liftRelease) EndTimeSlice();
-			#else
+				wait1Msec(outtakeDuration[robot]); //while (getPosition(lift) > liftRelease) EndTimeSlice();
+
 				/*stopAutomovement(lift);	//TODO: replace with maneuver?
 				setPower(lift, -127);
 
 				long stackTimer = resetTimer();
 				while (getPosition(lift) > liftRelease && time(stackTimer) < 150) EndTimeSlice();*/
+			#else
 				setLiftTargetAndPID(liftRelease);
 				waitForMovementToFinish(lift);
 
-				setPower(roller, -127);
+				outtake();
 				setLiftTargetAndPID(liftTarget);
 				waitForMovementToFinish(lift);
-				setToStillSpeed(roller);
+				#ifdef ROLLER
+					setToStillSpeed(roller);
+				#endif
 			#endif
 
-			if (FB_SENSOR >= 0)
-				setFbState(goToSafe ? FB_SAFE : FB_DEF);
-			else
-				moveFourBar(goToSafe);
+			moveFourBar(goToSafe);
 
 			waitForMovementToFinish(fourBar);
 			setLiftState(goToSafe ? L_SAFE : L_DEF);
-			setToStillSpeed(roller);
 		}
 
 		stacking = false;
 		numCones++;
 		speakNum(numCones);
 
-		/*if (FB_SENSOR >= 0)
-			setFbState(FB_DEF);
-		else
-			moveFourBar(true);*/
+		//moveFourBar(true);
 	}
 }
 //#endregion
@@ -106,17 +110,17 @@ task kinematicAutoStacking() {
 void startAutoStacking() {
 	stacking = false;
 
-	if (CONE_SONAR>=dgtl1 && SONAR_STACKING && !bIfiAutonomousMode)
+	if (coneSonar[robot]>=dgtl1 && SONAR_STACKING && !bIfiAutonomousMode)
 		startTask(sonarAutoStacking);
 	else
 		startTask(kinematicAutoStacking);
 }
 
 void stackNewCone(bool waite=false, bool safeAtEnd=bIfiAutonomousMode) {	//TODO: liftTarget and liftRelease
-	if (!(SONAR_STACKING && CONE_SONAR>=dgtl1)) {
-		float stackHeight = CONE_HEIGHT * adjustedNumCones();
+	if (!(SONAR_STACKING && coneSonar[robot]>=dgtl1)) {
+		float stackHeight = coneHeight[robot] * adjustedNumCones();
 
-		liftTarget = calcLiftTargetForHeight(stackHeight + L_OFFSET);	//TODO: noOffsetCones, etc?
+		liftTarget = calcLiftTargetForHeight(stackHeight + l_offset[robot]);	//TODO: noOffsetCones, etc?
 		liftRelease = calcLiftTargetForHeight(stackHeight);
 	}
 

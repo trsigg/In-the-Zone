@@ -18,23 +18,10 @@ void handleLiftInput(bool shift) {
 			//will only set power if not maintaining a position
 			//if there is input, activelyMaintaining will be set to false and normal control will resume
 			takeInput(lift, lift.moving==NO && !stacking);
-			int fbPower = takeInput(fourBar, fourBar.moving==NO);
-
-			if (fabs(fbPower) > fbStillSpeed[robot])	//update fbUp
-				fbUp = fbPower < 0;
+			
+			fbUp = !takeInput(fourBar);
 		}
 	}
 
 	executeManeuvers();
-}
-
-void handleRollerInput() {
-	if (!stacking)
-		if (AUTOSTACK_CONFIG)
-			if (vexRT[roller.posInput] == 1)
-				setPower(roller, (shift ? -1 : 1) * 127);
-			else
-				setPower(roller, rollerStillSpeed[robot]);
-		else
-			takeInput(roller);
 }

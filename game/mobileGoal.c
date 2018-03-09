@@ -7,12 +7,12 @@ void moveGoalIntake(goalState state, bool runConcurrently=false) {
   if (state != currGoalState) {
     currGoalState = state;
     //moveForDuration(goalIntake, 127*(state==IN ? 1 : -1), (state==IN ? GOAL_INTAKE_DURATION : GOAL_OUTTAKE_DURATION), runConcurrently);  //temp
-    createManeuver(goalIntake, goalPos[state], runConcurrently, GOAL_STILL_SPEED*(state==OUT ? -1 : 1));
+    createManeuver(goalIntake, goalPos[state], runConcurrently, goalStillSpeed[robot]*(state==OUT ? -1 : 1));
   }
 }
 
 bool isMobileGoalLoaded() {
-  return SensorValue[GOAL_FOLLOWER] < GOAL_FOLL_THRESH || GOAL_FOLLOWER < in1;
+  return SensorValue[ goalLine[robot] ] < goalLineThresh[robot] || goalLine[robot] < in1;
 }
 
 void updateMotorConfig(int goalPower=0) {

@@ -2,7 +2,7 @@ bool movingToMax = false;	//true if lifting up to MAX_POS - TODO: fb down after 
 
 void handleAutopositioningInput(bool shift) {
 	if (!shift) {
-		if (newlyPressed(defPosBtn)) {
+		if (newlyPressed(defPosBtn[robot])) {
 			setLiftState(L_DEF);
 			movingToMax = false;
 		}
@@ -14,10 +14,7 @@ void handleAutopositioningInput(bool shift) {
 	}
 
 	if (movingToMax && errorLessThan(lift, 100)) {
-		if (FB_SENSOR >= 0)
-			setFbState(STACK);
-		else
-			moveFourBar(true);
+		moveFourBar(true);
 
 		movingToMax = false;
 	}

@@ -1,7 +1,10 @@
 #include "autostacking.c"
 #include "mobileGoal.c"
-#include "rollers.c"
 #include "testing.c"
+
+#ifdef ROLLER
+	#include "rollers.c"
+#endif
 
 
 enum zoneType { FIVE, TEN, TWENTY };
@@ -25,8 +28,6 @@ void prepareForAuton() {
 	resetLiftEncoders();
 	stopLiftTargeting();
 	startAutoStacking();
-	setToStillSpeed(roller);
-	setPower(fourBar, FB_STILL_SPEED);
 	numCones = 0;
 
 	if (!USE_ENC_CORR) {
@@ -35,13 +36,20 @@ void prepareForAuton() {
 		driveDefaults.kD_c = 0;
 	}
 
+	#ifndef PNEUMATIC
+		setPower(fourBar, fbStillSpeed[robot]);
+	#endif
+
+	#ifdef ROLLER
+		setToStillSpeed(roller);
+	#endif
 }
 //#endregion
 
 //#region conditional abort
 void stopAllMotors() {	//TODO: reposition?
-	for (int id=port1; id<=port10; id++) {
-		motor[id] = 0;
+	for (tMotor port=port1; port<=port10; port++) {
+		motor[port] = 0;
 	}
 }
 
@@ -67,7 +75,7 @@ void alignToLine(int power=60, int brakePower=10, int brakeDuration=250) {	//bra
 
 	while (leftProgress<2 || rightProgress<2) {
 		if (leftProgress == 0) {
-			if (SensorValue[LEFT_LINE] < L_LINE_THRESHOLD) {
+			if (SensorValue[leftLine[robot]] < l_lineThresh[robot]) {
 				leftTimer = resetTimer();
 				setLeftPower(drive, -brakePower * sgn(power));
 				leftProgress = 1;
@@ -80,7 +88,7 @@ void alignToLine(int power=60, int brakePower=10, int brakeDuration=250) {	//bra
 		}
 
 		if (rightProgress == 0) {
-			if (SensorValue[RIGHT_LINE] < R_LINE_THRESHOLD) {
+			if (SensorValue[rightLine[robot]] < r_lineThresh[robot]) {
 				rightTimer = resetTimer();
 				setRightPower(drive, -brakePower * sgn(power));
 				rightProgress = 1;
@@ -100,9 +108,9 @@ void turnToLine(bool parallelToLine, int power, int brakePower=20, int brakeDura
 	setDrivePower(drive, power, -power);
 
 	if (parallelToLine)
-		while (SensorValue[LEFT_LINE]<L_LINE_THRESHOLD && SensorValue[RIGHT_LINE]<R_LINE_THRESHOLD) EndTimeSlice();
+		while (SensorValue[leftLine[robot]] < l_lineThresh && SensorValue[rightLine[robot]] < r_lineThresh[robot]) EndTimeSlice();
 	else
-		while (SensorValue[BACK_LINE] < B_LINE_THRESHOLD) EndTimeSlice();
+		while (SensorValue[backLine[robot]] < b_lineThresh[robot]) EndTimeSlice();
 
 	setDrivePower(drive, -brakePower*sgn(power), brakePower*sgn(power));
 
@@ -119,7 +127,7 @@ void turnQuicklyToLine(bool clockwise, bool parallelToLine) {
 
 void driveToSonarDist(int dist, int power=30, int brakePower=10, int brakeDuration=150) {
 	setDrivePower(drive, power, power);
-	while (SensorValue[FRONT_SONAR]>dist || SensorValue[FRONT_SONAR]==-1) EndTimeSlice();	//TODO: use drive sonar & sonarFartherThan()
+	while (SensorValue[frontSonar[robot]] > dist || SensorValue[frontSonar[robot]] == -1) EndTimeSlice();	//TODO: use drive sonar & sonarFartherThan()
 	setDrivePower(drive, -brakePower, -brakePower);
 	wait1Msec(brakeDuration);
 	setDrivePower(drive, 0, 0);
@@ -208,14 +216,14 @@ void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//b
 
 	if (align) {
 		alignToBar(true, (twentyPt ? 700 : 600));
-		driveStraight(-BAR_TO_LINE_DIST);
+		driveStraight(-barToLineDist[robot]);
 	}
 
 	//waitForMovementToFinish(goalIntake);	//if something breaks with the goal intake, uncomment this line
 	if (isMobileGoalLoaded() && numRetries<MAX_GOAL_RETRIES && RETRY_GOAL_FAILS) {
 		numRetries++;
 		playSound(soundBeepBeep);
-		autonDebug[1] = SensorValue[GOAL_FOLLOWER];
+		autonDebug[1] = SensorValue[ goalLine[robot] ];
 		scoreGoal(twentyPt, align, intakeFully);
 	}
 	else {
@@ -252,9 +260,11 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 
 			//intake
 			/*if (fbUp)*/ moveFourBar(false, false);
-			setPower(roller, 127);
-			setLiftState(L_FIELD);
-			waitForMovementToFinish(lift, INTAKE_DURATION);
+			#ifdef ROLLER
+				setPower(roller, 127);
+			#endif
+			setLiftState(L_FIELD, true);
+			waitForMovementToFinish(lift, intakeDuration[robot]);
 		}
 
 		stackNewCone();
@@ -310,10 +320,10 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=fal
 	moveLiftToSafePos();
 
 	moveGoalIntake(OUT, true);	//TODO: check if intake is out?
-	if (twentyPt && middle) driveStraight(BAR_TO_LINE_DIST);
+	if (twentyPt && middle) driveStraight(barToLineDist[robot]);
 	waitForMovementToFinish(goalIntake);
 
-	driveStraight(LINE_TO_GOAL_DIST + 9);
+	driveStraight(lineToGoalDist[robot] + 9);
 
 	driveAndGoal(-25, IN, false, true);
 
@@ -324,7 +334,7 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=fal
 
 	if (middle || twentyPt) {
 		turn(-90 * direction);
-		driveStraight(-GOAL_TO_MID_DIST - 3.5);
+		driveStraight(-goalToMidDist[robot] - 3.5);
 		turn(-90 * direction);
 	}
 	else {
@@ -339,7 +349,7 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=fal
 
 	if (align) {
 		alignToBar(true, (twentyPt ? 600 : 1200));
-		driveStraight(-BAR_TO_LINE_DIST);
+		driveStraight(-barToLineDist[robot]);
 	}
 }
 
@@ -357,7 +367,7 @@ void crossFieldGoal(bool twentyPt, bool neer, bool middle=false, bool clearCones
 		driveAndGoal(40+nearOffset, IN);
 
 		turn(-90);
-		driveStraight(GOAL_TO_MID_DIST-2);
+		driveStraight(goalToMidDist[robot]-2);
 		if (clearCones) moveGoalIntake(MID);	//to push cones to side
 		turn(90);
 		if (clearCones) moveGoalIntake(IN);
@@ -373,14 +383,14 @@ void backUpGoal(bool startingFromBar=false, bool intakeFully=true, bool reversed
 	int direction = (reversed ? -1 : 1);
 
 	moveGoalIntake(IN, true);
-	accuDrive(-LINE_TO_GOAL_DIST - (startingFromBar ? 10 : 8));
+	accuDrive(-lineToGoalDist[robot] - (startingFromBar ? 10 : 8));
 	waitForMovementToFinish(goalIntake);
 	turn(-direction * (startingFromBar ? 85 : 90));
 	moveGoalIntake(OUT);
 	driveStraight(startingFromBar ? 21 : 27);
 	driveAndGoal(startingFromBar ? 10 : 8, IN);
 	turn(direction * (startingFromBar ? 90 : 95));
-	driveStraight(BAR_TO_LINE_DIST + LINE_TO_GOAL_DIST);
+	driveStraight(barToLineDist[robot] + lineToGoalDist[robot]);
 	scoreGoal(false, false, intakeFully);
 }
 //#endregion
@@ -393,7 +403,7 @@ task skillz() {
 		sideGoal(TWENTY, false, 0, false, true, true, false);
 		//sideGoal();	//near left side goal to twenty
 
-		turnDriveTurn(85, GOAL_TO_MID_DIST-0.5, 82);
+		turnDriveTurn(85, goalToMidDist[robot]-0.5, 82);
 
 		middleGoal(true, false);	//near left middle goal to ten
 
@@ -402,7 +412,7 @@ task skillz() {
 	else {
 		middleGoal(true, true, true);	//near left middle goal to 20Pt zone
 
-		turnDriveTurn(-90, GOAL_TO_MID_DIST-0.5, -90);	//TODO: turnToLine() (& similar below)
+		turnDriveTurn(-90, goalToMidDist[robot]-0.5, -90);	//TODO: turnToLine() (& similar below)
 		moveGoalIntake(OUT);
 		//alignToBar(false, 1000);
 
@@ -415,7 +425,7 @@ task skillz() {
 
 	//far left middle goal to...
 	if (!SKILLZ_VARIANT) {
-		turnDriveTurn(-90, 2*GOAL_TO_MID_DIST-5, -90);
+		turnDriveTurn(-90, 2*goalToMidDist[robot]-5, -90);
 		moveGoalIntake(OUT);
 		//alignToBar(false, 1500);
 	}
@@ -512,12 +522,12 @@ task autonomous() {
 
 	if (ABORT_AFTER_15) startTask(selfDestruct);
 
-	int sidePos = SensorValue[SIDE_POT];
-	int modePos = SensorValue[MODE_POT];
+	int sidePos = SensorValue[ sidePot[robot] ];
+	int modePos = SensorValue[ modePot[robot] ];
 	autonTimer = resetTimer();
 
-	turnDefaults.reversed = sidePos < SIDE_SWITCH_POS;	//TODO: put this val in config
-	variant = abs(sidePos - SIDE_SWITCH_POS) < 1500;
+	turnDefaults.reversed = sidePos < sideSwitchPos[robot];	//TODO: put this val in config
+	variant = abs(sidePos - sideSwitchPos[robot]) < 1500;
 
 	if (SKILLZ_MODE) {
 		startTask(skillz);

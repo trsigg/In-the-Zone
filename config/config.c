@@ -1,5 +1,8 @@
+#include "..\lib\pd_autoMove.c"
+#include "..\lib\pneumaticGroup.c"
+
+
 enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
-robotId robot;
 #define NUM_ROBOTS 3	//number of configurable robots
 
 //#define E_TEAM_PASSIVE
@@ -15,6 +18,7 @@ robotId robot;
 #define USE_ENC_CORR     true
 #define DOUBLE_DRIVER    false
 #define SONAR_STACKING   true
+#define MAX_GOAL_RETRIES 2
 #define AUTOSTACK_CONFIG false	//using autostacking-focused button config
 
 	//#subregion auton/skillz options
@@ -38,105 +42,16 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, li
 	//#endsubregion
 //#endregion
 
-#include "..\lib\pd_autoMove.c"
-
-//#region sensors
-	//#subregion config
-bool liftSensReversed[NUM_ROBOTS]  = { false, false, false };
-bool fbSensReversed[NUM_ROBOTS]    = { false, false, false };
-bool L_EncReversed[NUM_ROBOTS]     = { false, true,  true };
-bool R_EncReversed[NUM_ROBOTS]     = { true,  true,  true };
-	//#endsubregion
-
-	//#subregion ports
-tSensors hyro[NUM_ROBOTS] =       { in1,   in7,   -1 };
-tSensors liftSensor[NUM_ROBOTS] = { in4,   in1,   in1 };
-tSensors goalSensor[NUM_ROBOTS] = { in5,   in6,   in2 };
-tSensors fbSensor[NUM_ROBOTS] =   { -1,    -1,    -1 };
-tSensors sidePot[NUM_ROBOTS] =    { in2,   in4,   -1 };
-tSensors modePot[NUM_ROBOTS] =    { in3,   in5,   -1 };
-tSensors leftEnc[NUM_ROBOTS] =    { dgtl1, dgtl1, dgtl3 };
-tSensors rightEnc[NUM_ROBOTS] =   { dgtl3, dgtl3, dgtl1 };
-tSensors coneSonar[NUM_ROBOTS] =  { -1,    dgtl5, -1 };
-tSensors frontSonar[NUM_ROBOTS] = { dgtl6, -1,    -1 };
-tSensors goalLine[NUM_ROBOTS] =   { in6,   in3,   in3 };
-tSensors leftLine[NUM_ROBOTS] =   { -1,    -1,    -1 };
-tSensors rightLine[NUM_ROBOTS] =  { -1,    -1,    -1 };
-tSensors backLine[NUM_ROBOTS] =   { -1,    -1,    -1 };
-	//#endsubregion
-//#endregion
-
-//#region consts
-int sideSwitchPos[NUM_ROBOTS] = { 1845, 1960, 1960 };
-//#endregion
-
-//#region measurements
-float liftLen[NUM_ROBOTS]        = { 14.75, 16,  16 };
-float coneHeight[NUM_ROBOTS]     = { 3.5,   3.5, 3.5 };
-float l_offset[NUM_ROBOTS]       = { 3.5,   4,   4 };
-float goalToMidDist[NUM_ROBOTS]  = { 17,    18,  18 };	//distance from field diagonal to mid goal
-float lineToGoalDist[NUM_ROBOTS] = { 26,    22,  22 };	//distance from line to mid goal - TODO: wtf?
-float barToLineDist[NUM_ROBOTS]  = { 9,     9,   9 };
-//#endregion
-
-//#region cone counts
-int apathyCones[NUM_ROBOTS] = { 0,  0,  0 };
-int maxNumCones[NUM_ROBOTS] = { 16, 16, 16 };
-//#endregion
-
-//#region timing
-int fbMoveDuration[NUM_ROBOTS]  = { 700, 700, 400 };
-int outtakeDuration[NUM_ROBOTS] = { 250, 300, 300 };
-int intakeDuration[NUM_ROBOTS]  = { -1,  300, 300 };
-//#endregion
-
-//#region buttons
-	//#subregion variable buttons
-tVexJoysticks fbInBtn[NUM_ROBOTS]     = { Btn6U, Btn8D, -1 };
-tVexJoysticks fbOutBtn[NUM_ROBOTS]    = { Btn6D, Btn8U, -1 };
-tVexJoysticks stackBtn[NUM_ROBOTS]    = { Btn8U, Btn6D, Btn6D };
-tVexJoysticks defPosBtn[NUM_ROBOTS]   = { Btn8D, Btn8R, Btn8R };
-tVexJoysticks maxPosBtn[NUM_ROBOTS]   = { Btn8L, -1,    -1 };
-tVexJoysticks intakeBtn[NUM_ROBOTS]   = { -1,    Btn6U, -1 };
-tVexJoysticks outtakeBtn[NUM_ROBOTS]  = { -1,    Btn6D, -1 };
-tVexJoysticks toggleFbBtn[NUM_ROBOTS] = { -1,    Btn8L, Btn8D };
-tVexJoysticks cycleInBtn[NUM_ROBOTS]  = { -1,    -1,    Btn6U };
-tVexJoysticks cycleOutBtn[NUM_ROBOTS] = { -1,    -1,    Btn6D };
-	//#endsubregion
-
-	//#subregion common buttons
-#define abortManeuversBtn Btn7L
-#define shiftBtn          Btn7R
-#define sayConeNumberBtn  Btn8L	//with shift
-
-		//#subsubregion goal intake
-#define goalIntakeBtn     Btn7D
-#define goalOuttakeBtn    Btn7U
-		//#endsubregion
-
-		//#subsubregion lift
-#define liftUpBtn         Btn5U
-#define liftDownBtn       Btn5D
-		//#endsubsubregion
-
-		//#subsubregion autostacking control
-#define toggleFieldingBtn Btn7D
-#define resetConesBtn     Btn8R	//all cone count adjustment with shift
-#define increaseConesBtn  Btn8U
-#define decreaseConesBtn  Btn8D
-		//#endsubsubregion
-	//#endsubregion
-//#endregion
-
 
 //#region E Team
 #ifdef E_TEAM_PASSIVE
 	#include "E_PassivePragmas.c"
 
 	#define PASSIVE true
+	robotId robot = E_PASSIVE;
 
-	//#subregion positions
-	/*enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
+	/*//#subregion positions
+	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
 	int liftPos[] = { 565,   565,     850,    565,        1180,   1200,   2050 };
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
@@ -160,78 +75,18 @@ tVexJoysticks cycleOutBtn[NUM_ROBOTS] = { -1,    -1,    Btn6D };
 	tMotor leftMotors[NUM_LEFT_MOTORS] = { port4, port6 };
 
 	#define NUM_GOAL_MOTORS 2
-	tMotor goalMotors[NUM_GOAL_MOTORS] = { port3, port8 };
+	tMotor goalMotors[NUM_GOAL_MOTORS] = { port3, port8 };*/
 	//#endsubregion
-
-	//#subregion sensors
-	#define L_SENS_REVERSED  false	//lift
-	#define FB_SENS_REVERSED false	//four bar
-	#define L_ENC_REVERSED   false	//drive
-	#define R_ENC_REVERSED   true
-
-	#define HYRO          in1
-	#define SIDE_POT      in2
-	#define MODE_POT      in3
-	#define LIFT_SENSOR   in4
-	#define GOAL_SENSOR   in5
-	#define GOAL_FOLLOWER in6
-	#define LEFT_ENC      dgtl1
-	#define RIGHT_ENC     dgtl3
-	#define FRONT_SONAR   dgtl6
-	#define CONE_SONAR    -1
-
-	#define LEFT_LINE   in1	//not currently attached
-	#define BACK_LINE   in1
-	#define RIGHT_LINE  in1
-	#define FB_SENSOR   -1	//-1 if not attached
-	//#endsubregion
-
-	//#subregion measurements
-	#define LIFT_LEN 14.75	//botton section-14"; top section-15.5"
-	#define CONE_HEIGHT 3.5
-	#define L_OFFSET    3.5
-	#define GOAL_TO_MID_DIST  17	//distance from field diagonal to mid goal
-	#define LINE_TO_GOAL_DIST 26	//distance from line to mid goal - TODO: wtf?
-	#define BAR_TO_LINE_DIST  9
-	//#endsubregion
-
-		//#subregion consts
-		#define SIDE_SWITCH_POS 1845	//middle of sidePos
-		//#endsubregion
-
-	//#subregion cone counts
-	#define APATHY_CONES  0 //number of cones for which lift does not move
-	#define MAX_NUM_CONES 16
-	//#endsubregion
-
-	//#subregion timing
-	#define FB_MOVE_DURATION 700
-	//#endsubregion
-
-	//#subregion specific buttons
-		//#subsubregion fb
-	#define fbInBtn   Btn6U
-	#define fbOutBtn  Btn6D
-		//#endsubsubregion
-
-		//#subsubregion autostacking control
-	#define stackBtn  Btn8U
-		//#endsubsubregion
-
-		//#subsubregion autopositioning
-	#define defPosBtn Btn8D	//takes lift to default position
-	#define maxPosBtn Btn8L //takes lift to maximum position
-		//#endsubsubregion
-	//#endsubregion*/
 #endif
 
 #ifdef E_TEAM_ROLLER
 	#include "E_RollerPragmas.c"
 
 	#define ROLLER true
+	robotId robot = E_ROLLER;
 
 	//#subregion positions
-	/*enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
+	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
 	int liftPos[] = { 1310,  1310,    1670,   1330,       2500,   1900,   2910 };
 
 	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
@@ -260,88 +115,17 @@ tVexJoysticks cycleOutBtn[NUM_ROBOTS] = { -1,    -1,    Btn6D };
 	#define NUM_ROLLER_MOTORS 1
 	tMotor rollerMotors[NUM_ROLLER_MOTORS] = { port7 };
 	//#endsubregion
-
-	//#subregion sensors
-	#define L_SENS_REVERSED  false	//lift
-	#define FB_SENS_REVERSED false	//four bar
-	#define L_ENC_REVERSED   true	//drive
-	#define R_ENC_REVERSED   true
-
-	#define HYRO          in7
-	#define SIDE_POT      in4
-	#define MODE_POT      in5
-	#define LIFT_SENSOR   in1
-	#define GOAL_SENSOR   in6
-	#define GOAL_FOLLOWER in3
-	#define ROLLER_ENC    -1
-	#define LEFT_ENC      dgtl1
-	#define RIGHT_ENC     dgtl3
-	#define FRONT_SONAR   -1
-	#define CONE_SONAR    dgtl5
-
-	#define LEFT_LINE     -1	//not currently attached
-	#define BACK_LINE     -1
-	#define RIGHT_LINE    -1
-	#define FB_SENSOR     -1
-	//#endsubregion
-
-	//#subregion consts
-	#define SIDE_SWITCH_POS  1960	//middle of sidePos
-	#define OUTTAKE_DURATION 300
-	#define INTAKE_DURATION  600
-	//#endsubregion
-
-	//#subregion measurements
-	#define LIFT_LEN 16
-	#define CONE_HEIGHT 3.5
-	#define L_OFFSET    4
-	#define GOAL_TO_MID_DIST  18
-	#define LINE_TO_GOAL_DIST 22
-	#define BAR_TO_LINE_DIST  9
-	//#endsubregion
-
-	//#subregion cone counts
-	#define APATHY_CONES  0 //number of cones for which lift does not move
-	#define MAX_NUM_CONES 16
-	//#endsubregion
-
-	//#subregion timing
-	#define FB_MOVE_DURATION 700
-	//#endsubregion
-
-	//#subregion specific buttons
-		//#subsubregion rollers
-	#define intakeBtn  Btn6U
-	#define outtakeBtn Btn6D
-		//#endsubsubregion
-
-		//#subsubregion fb
-	#define fbInBtn    Btn8D
-	#define fbOutBtn   Btn8U
-		//#endsubsubregion
-
-		//#subsubregion autostacking control
-	#define stackBtn   Btn6D
-		//#endsubsubregion
-
-		//#subregion autopositioning
-	#define defPosBtn   Btn8R
-	#define toggleFbBtn Btn8L
-		//#endsubregion
-	//#endsubregion*/
 #endif
 
 #ifdef E_TEAM_PNEUMATIC
 	#include "E_PneumaticPragmas.c"
 
 	#define PNEUMATIC true
+	robotId robot = E_PNEUMATIC;
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
 	int liftPos[] = { 1310,  1310,    1670,   1330,       2500,   1900,   2910 };
-
-	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
-	int fbPos[] = { 0,        0,       0,     0 };
 
 	enum goalState  { OUT,  MID,  IN };
 	int goalPos[] = { 3200, 2855, 1050 };
@@ -368,137 +152,137 @@ tVexJoysticks cycleOutBtn[NUM_ROBOTS] = { -1,    -1,    Btn6D };
 	#define NUM_INTAKE_SOLS 1
 	tSensors intakeSols[NUM_INTAKE_SOLS] = { dgtl6 };
 	//#endsubregion
-
-	//#subregion sensors
-	#define L_SENS_REVERSED  false	//lift
-	#define FB_SENS_REVERSED false	//four bar
-	#define L_ENC_REVERSED   true	//drive
-	#define R_ENC_REVERSED   true
-
-	#define HYRO          -1
-	#define SIDE_POT      -1
-	#define MODE_POT      -1
-	#define LIFT_SENSOR   in1
-	#define GOAL_SENSOR   in2
-	#define GOAL_FOLLOWER in3
-	#define ROLLER_ENC    -1
-	#define LEFT_ENC      dgtl3
-	#define RIGHT_ENC     dgtl1
-	#define FRONT_SONAR   -1
-	#define CONE_SONAR    -1
-
-	#define LEFT_LINE     -1	//not currently attached
-	#define BACK_LINE     -1
-	#define RIGHT_LINE    -1
-	#define FB_SENSOR     -1
-	//#endsubregion
-
-	//#subregion consts
-	#define SIDE_SWITCH_POS  1960	//middle of sidePos
-	//#endsubregion
-
-	//#subregion measurements
-	#define LIFT_LEN          16
-	#define CONE_HEIGHT       3.5
-	#define L_OFFSET          4
-	#define GOAL_TO_MID_DIST  18
-	#define LINE_TO_GOAL_DIST 22
-	#define BAR_TO_LINE_DIST  9
-	//#endsubregion
-
-	//#subregion cone counts
-	#define APATHY_CONES  0 //number of cones for which lift does not move
-	#define MAX_NUM_CONES 16
-	//#endsubregion
-
-	//#subregion timing
-	#define FB_MOVE_DURATION 400
-	#define OUTTAKE_DURATION 300
-	#define INTAKE_DURATION  600
-	//#endsubregion
-
-	//#subregion specific buttons
-		//#subsubregion stack cycling
-	#define cycleInBtn      Btn6U
-	#define cycleOutBtn     Btn6D
-		//#endsubsubregion
-
-		//#subsubregion toggles
-	#define toggleFbBtn     Btn8D
-	#define toggleIntakeBtn Btn8U
-		//#endsubsubregion
-
-		//#subsubregion autostacking control
-	#define stackBtn        Btn6D
-		//#endsubsubregion
-
-		//#subregion autopositioning
-	#define defPosBtn       Btn8R
-		//#endsubregion
-	//#endsubregion
 #endif
 //#endregion
 
+//#region sensors
+	//#subregion config
+bool liftSensReversed[NUM_ROBOTS]  = { false, false, false };
+bool fbSensReversed[NUM_ROBOTS]    = { false, false, false };
+bool L_EncReversed[NUM_ROBOTS]     = { false, true,  true };
+bool R_EncReversed[NUM_ROBOTS]     = { true,  true,  true };
+	//#endsubregion
 
-//#region common buttons
+	//#subregion ports
+tSensors hyro[NUM_ROBOTS]       = { in1,   in7,   -1 };
+tSensors liftSensor[NUM_ROBOTS] = { in4,   in1,   in1 };
+tSensors goalSensor[NUM_ROBOTS] = { in5,   in6,   in2 };
+tSensors fbSensor[NUM_ROBOTS]   = { -1,    -1,    -1 };
+tSensors sidePot[NUM_ROBOTS]    = { in2,   in4,   -1 };
+tSensors modePot[NUM_ROBOTS]    = { in3,   in5,   -1 };
+tSensors leftEnc[NUM_ROBOTS]    = { dgtl1, dgtl1, dgtl3 };
+tSensors rightEnc[NUM_ROBOTS]   = { dgtl3, dgtl3, dgtl1 };
+tSensors coneSonar[NUM_ROBOTS]  = { -1,    dgtl5, -1 };
+tSensors frontSonar[NUM_ROBOTS] = { dgtl6, -1,    -1 };
+tSensors goalLine[NUM_ROBOTS]   = { in6,   in3,   in3 };
+tSensors leftLine[NUM_ROBOTS]   = { -1,    -1,    -1 };
+tSensors rightLine[NUM_ROBOTS]  = { -1,    -1,    -1 };
+tSensors backLine[NUM_ROBOTS]   = { -1,    -1,    -1 };
+	//#endsubregion
+//#endregion
+
+//#region consts
+int sideSwitchPos[NUM_ROBOTS] = { 1845, 1960, 1960 };
+
+	//#subregion sensor consts
+int goalLineThresh[NUM_ROBOTS]  = { -1,   2950, 2950 };
+int l_lineThresh[NUM_ROBOTS]    = { 3060, -1,   -1 };
+int r_lineThresh[NUM_ROBOTS]    = { 2960, -1,   -1 };
+int b_lineThresh[NUM_ROBOTS]    = { 2870, -1,   -1 };
+int coneSonarThresh[NUM_ROBOTS] = { 1000, 1000, 1000 };
+float liftGearRatio[NUM_ROBOTS] = { 5,    5,    5 };	//gear ratio between lift bar angle and sensors
+
+#define RAD_TO_POT 880.1      //conversion factor between radians and potentiometer values
+#define RAD_TO_ENC (180 / PI) //conversion factor between radians and encoder values
+const float RAD_TO_LIFT  = (liftSensor[robot]>=dgtl1 ? RAD_TO_ENC*liftGearRatio[robot] : RAD_TO_POT);
+const float L_CORR_FCTR  = (liftSensor[robot]>=dgtl1 ? RAD_TO_POT/RAD_TO_LIFT : 1);
+const float FB_CORR_FCTR = (fbSensor[robot]>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
+	//#endsubregion
+	//#subregion still speeds
+int l_StillSpeed[NUM_ROBOTS]     = { 15, 15, 15 };
+int l_AutoSSMargin[NUM_ROBOTS]   = { 50, -1, -1 };
+int fbStillSpeed[NUM_ROBOTS]     = { 15, 20, -1 };
+int fbAutoSSMargin[NUM_ROBOTS]   = { 50, -1, -1 };
+int goalStillSpeed[NUM_ROBOTS]   = { 15, 15, 0 };
+int rollerStillSpeed[NUM_ROBOTS] = { -1, 15, -1 };
+	//#endsubregion
+//#endregion
+
+//#region measurements
+float liftLen[NUM_ROBOTS]        = { 14.75, 16,  16 };
+float coneHeight[NUM_ROBOTS]     = { 3.5,   3.5, 3.5 };
+float l_offset[NUM_ROBOTS]       = { 3.5,   4,   4 };
+float goalToMidDist[NUM_ROBOTS]  = { 17,    18,  18 };	//distance from field diagonal to mid goal
+float lineToGoalDist[NUM_ROBOTS] = { 26,    22,  22 };	//distance from line to mid goal - TODO: wtf?
+float barToLineDist[NUM_ROBOTS]  = { 9,     9,   9 };
+//#endregion
+
+//#region cone counts
+int apathyCones[NUM_ROBOTS] = { 0,  0,  0 };
+int maxNumCones[NUM_ROBOTS] = { 16, 16, 16 };
+//#endregion
+
+//#region timing
+int fbMoveDuration[NUM_ROBOTS]  = { 700,  700,  400 };
+int outtakeDuration[NUM_ROBOTS] = { 250,  300,  300 };
+int intakeDuration[NUM_ROBOTS]  = { -1,   300,  300 };
+int goalOutDuration[NUM_ROBOTS] = { 1500, 1500, 1500 };
+int goalinDuration[NUM_ROBOTS]  = { 1250, 1250, 1250 };
+//#endregion
+
+//#region buttons
+	//#subregion variable buttons
+//c is for comp mode, s for skills
+TVexJoysticks c_fbInBtn[NUM_ROBOTS]     = { Btn6U, Btn8D, -1 };
+TVexJoysticks c_fbOutBtn[NUM_ROBOTS]    = { Btn6D, Btn8U, -1 };
+TVexJoysticks s_fbInBtn[NUM_ROBOTS]     = { Btn7D, Btn8D, -1 };
+TVexJoysticks s_fbOutBtn[NUM_ROBOTS]    = { Btn7U, Btn8U, -1 };
+TVexJoysticks stackBtn[NUM_ROBOTS]      = { Btn8U, Btn6D, Btn6D };
+TVexJoysticks defPosBtn[NUM_ROBOTS]     = { Btn8D, Btn8R, Btn8R };
+TVexJoysticks maxPosBtn[NUM_ROBOTS]     = { Btn8L, -1,    -1 };
+TVexJoysticks c_intakeBtn[NUM_ROBOTS]   = { -1,    Btn6U, -1 };
+TVexJoysticks c_outtakeBtn[NUM_ROBOTS]  = { -1,    Btn6D, -1 };
+TVexJoysticks s_intakeBtn[NUM_ROBOTS]   = { -1,    Btn7U, -1 };
+TVexJoysticks s_outtakeBtn[NUM_ROBOTS]  = { -1,    Btn7D, -1 };
+TVexJoysticks toggleFbBtn[NUM_ROBOTS]   = { -1,    Btn8L, Btn8D };
+TVexJoysticks c_cycleInBtn[NUM_ROBOTS]  = { -1,    -1,    Btn6U };
+TVexJoysticks c_cycleOutBtn[NUM_ROBOTS] = { -1,    -1,    Btn6D };
+TVexJoysticks s_cycleInBtn[NUM_ROBOTS]  = { -1,    -1,    Btn7U };
+TVexJoysticks s_cycleOutBtn[NUM_ROBOTS] = { -1,    -1,    Btn7D };
+	//#endsubregion
+
+	//#subregion common buttons
 #define abortManeuversBtn Btn7L
 #define shiftBtn          Btn7R
 #define sayConeNumberBtn  Btn8L	//with shift
 
-	//#subregion goal intake
-#define goalIntakeBtn     Btn7D
-#define goalOuttakeBtn    Btn7U
-	//#endsubregion
+		//#subsubregion goal intake
+#define c_goalIntakeBtn    Btn7D
+#define c_goalOuttakeBtn   Btn7U
+#define s_goalIntakeBtn    Btn6U
+#define s_goalOuttakeBtn   Btn6D
+		//#endsubregion
 
-	//#subregion lift
+		//#subsubregion lift
 #define liftUpBtn         Btn5U
 #define liftDownBtn       Btn5D
-	//#endsubregion
+		//#endsubsubregion
 
-	//#subregion autostacking control
+		//#subsubregion autostacking control
 #define toggleFieldingBtn Btn7D
-		//#subsubregion cone count adjustment (all with shift)
-#define resetConesBtn     Btn8R
+#define resetConesBtn     Btn8R	//all cone count adjustment with shift
 #define increaseConesBtn  Btn8U
 #define decreaseConesBtn  Btn8D
 		//#endsubsubregion
 	//#endsubregion
 //#endregion
 
-//#region constants
-#define MAX_GOAL_RETRIES 2
-	//#subregion sensor consts
-#define RAD_TO_POT   880.1    //conversion factor between radians and potentiometer values
-#define L_GEAR_RATIO 5	//gear ratio between lift bar angle and sensors
-#define RAD_TO_ENC   (180 / PI) //conversion factor between radians and encoder values
-const float RAD_TO_LIFT =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_ENC*L_GEAR_RATIO : RAD_TO_POT);
-const float L_CORR_FCTR =  (LIFT_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_LIFT : 1);
-const float FB_CORR_FCTR = (FB_SENSOR>=dgtl1 ? RAD_TO_POT/RAD_TO_ENC : 1);
-#define GOAL_FOLL_THRESH  2950
-#define R_LINE_THRESHOLD  2960
-#define L_LINE_THRESHOLD  3060
-#define B_LINE_THRESHOLD  2870
-#define CONE_SONAR_THRESH 1000
-	//#endsubregion
-	//#subregion still speeds
-#define LIFT_STILL_SPEED   15
-#define L_AUTO_SS_MARGIN   50
-#define FB_STILL_SPEED     20
-#define FB_AUTO_SS_MARGIN  50
-#define GOAL_STILL_SPEED   0
-#define ROLLER_STILL_SPEED 15
-	//#endsubregion
-	//#subregion timing
-#define GOAL_INTAKE_DURATION  1500
-#define GOAL_OUTTAKE_DURATION 1250
-	//#endsubregion
-//#endregion
 
 //#region struct declaration
 motorGroup goalIntake;
 motorGroup lift;
 
-#ifdef PASSIVE
+#ifdef PNEUMATIC
 	pneumaticGroup fourBar;
 	pneumaticGroup intake;
 #else
@@ -516,52 +300,57 @@ float generalDebug[] = { 0, 0 };
 
 void initializeStructs() {
 	//arrayCopy(groupWaitList, defGroupWaitList, DEF_WAIT_LIST_LEN);
-	SensorScale[HYRO] = 145;
+	SensorScale[ hyro[robot] ] = 145;
 
   //drive
 	initializeDrive(drive, NUM_LEFT_MOTORS, leftMotors, NUM_RIGHT_MOTORS, rightMotors, true, 40);
-	attachEncoder(drive, LEFT_ENC, LEFT, L_ENC_REVERSED);
-	attachEncoder(drive, RIGHT_ENC, RIGHT, R_ENC_REVERSED, 3.25);
-	attachUltrasonic(drive, FRONT_SONAR);
-	attachGyro(drive, HYRO);
+	attachEncoder(drive, leftEnc[robot], LEFT, L_EncReversed[robot]);
+	attachEncoder(drive, rightEnc[robot], RIGHT, R_EncReversed[robot], 3.25);
+	attachUltrasonic(drive, frontSonar[robot]);
+	attachGyro(drive, hyro[robot]);
 
 	//lift
-  initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors, liftUpBtn, liftDownBtn, LIFT_STILL_SPEED);
+  initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors, liftUpBtn, liftDownBtn, l_StillSpeed[robot]);
 	configureBtnDependentStillSpeed(lift);
 	initializeTargetingPID(lift, 0.3*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 32*L_CORR_FCTR, 75/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
-	//configureAutoStillSpeed(lift, 30);.35, 30
-	addSensor(lift, LIFT_SENSOR, L_SENS_REVERSED);
-	if (LIFT_SENSOR>=dgtl1) configureEncoderCorrection(lift, liftPos[L_MAX]);
+	configureAutoStillSpeed(lift, l_AutoSSMargin[robot]);
+	addSensor(lift, liftSensor[robot], liftSensReversed[robot]);
+	if (liftSensor[robot]>=dgtl1) configureEncoderCorrection(lift, liftPos[L_MAX]);
 
 	//mobile goal intake
 	initializeGroup(goalIntake, NUM_GOAL_MOTORS, goalMotors);
 	if (SKILLZ_MODE)
-		configureButtonInput(goalIntake, outtakeBtn, intakeBtn);
+		configureButtonInput(goalIntake, s_goalOuttakeBtn, s_goalIntakeBtn);
 	else
-		configureButtonInput(goalIntake, goalOuttakeBtn, goalIntakeBtn);
-	configureBtnDependentStillSpeed(goalIntake, GOAL_STILL_SPEED);
-	addSensor(goalIntake, GOAL_SENSOR);
+		configureButtonInput(goalIntake, c_goalOuttakeBtn, c_goalIntakeBtn);
+	configureBtnDependentStillSpeed(goalIntake, goalStillSpeed[robot]);
+	addSensor(goalIntake, goalSensor[robot]);
 
 	//top four bar
 	#ifdef PNEUMATIC
-		initializePneumaticGroup();
+		initializePneumaticGroup(fourBar, NUM_FB_SOLS, fourBarSols, fbMoveDuration[robot]);
+		configureToggleInput(fourBar, toggleFbBtn[robot]);
 	#else
 		initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors);
-		configureButtonInput(fourBar, fbOutBtn, fbInBtn);
-		configureBtnDependentStillSpeed(fourBar, FB_STILL_SPEED);
+		if (SKILLZ_MODE)
+			configureButtonInput(fourBar, s_fbOutBtn[robot], s_fbInBtn[robot]);
+		else
+			configureButtonInput(fourBar, c_fbOutBtn[robot], c_fbInBtn[robot]);
+		configureBtnDependentStillSpeed(fourBar, fbStillSpeed[robot]);
 
-		if (FB_SENSOR >= 0) {
+		if (fbSensor[robot] >= 0) {
 			initializeTargetingPID(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 13*FB_CORR_FCTR, 100/FB_CORR_FCTR);
-			addSensor(fourBar, FB_SENSOR, FB_SENS_REVERSED);
-			if (FB_SENSOR>=dgtl1) configureEncoderCorrection(fourBar, fbPos[FB_MAX]);
+			addSensor(fourBar, fbSensor[robot], fbSensReversed[robot]);
+			if (fbSensor[robot]>=dgtl1) configureEncoderCorrection(fourBar, fbPos[FB_MAX]);
 		}
 	#endif
 
+	//roller intake
 	#ifdef ROLLER
 		initializeGroup(roller, NUM_ROLLER_MOTORS, rollerMotors);
-		if (SKILLZ_MODE)
-			configureButtonInput(roller, goalOuttakeBtn, goalIntakeBtn, ROLLER_STILL_SPEED);
+		if (SKILLZ_MODE)	//be careful, usercontrol()'s behavior depends on the order of these buttons
+			configureButtonInput(roller, s_intakeBtn[robot], s_outtakeBtn[robot], rollerStillSpeed[robot]);
 		else
-			configureButtonInput(roller, intakeBtn, outtakeBtn, ROLLER_STILL_SPEED);
+			configureButtonInput(roller, c_intakeBtn[robot], c_outtakeBtn[robot], rollerStillSpeed[robot]);
 	#endif
 }
