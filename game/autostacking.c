@@ -15,6 +15,16 @@ void outtake() {
 	#endif
 }
 
+void prepareToLiftDown() {
+	#ifdef ROLLER
+		setToStillSpeed(roller);
+	#endif
+
+	#ifdef PNEUMATIC
+		setState(intake, true);
+	#endif
+}
+
 //#region sonar autostacking
 //TODO: fix cone drops
 
@@ -36,10 +46,8 @@ task sonarAutoStacking() {
 
 		//lift down
 		moveFourBar(goToSafe, false);
-		#ifdef ROLLER
-			setToStillSpeed(roller);
-		#endif
-		setLiftState(goToSafe ? L_SAFE : L_DEF);
+		prepareToLiftDown();
+		setLiftState(goToSafe ? L_SAFE : L_DEF, true);
 
 		stacking = false;
 	}
@@ -67,6 +75,10 @@ task kinematicAutoStacking() {
 		if (numCones>=maxNumCones[robot]-1 && HOLD_LAST_CONE) {
 			stopAutomovement(lift);	//passively maintains lift position
 			lift.stillSpeedReversed = true;
+
+			#ifdef PASSIVE
+				setState(intake, false);
+			#endif
 		}
 		else {
 			#ifdef PASSIVE
@@ -87,15 +99,13 @@ task kinematicAutoStacking() {
 				outtake();
 				setLiftTargetAndPID(liftTarget);
 				waitForMovementToFinish(lift);
-				#ifdef ROLLER
-					setToStillSpeed(roller);
-				#endif
 			#endif
 
 			moveFourBar(goToSafe);
-
 			waitForMovementToFinish(fourBar);
-			setLiftState(goToSafe ? L_SAFE : L_DEF);
+
+			prepareToLiftDown();
+			setLiftState(goToSafe ? L_SAFE : L_DEF, true);
 		}
 
 		stacking = false;

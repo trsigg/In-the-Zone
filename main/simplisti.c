@@ -91,7 +91,7 @@ void handleStackCycleInput() {
 		setState(coneIntake, fbOut || !intakeClosed);
 	}
 	else if (newlyPressed(Btn6D)) {
-		setState(fourBar, coneIntake.isOpen);
+		setState(fourBar, !intakeClosed);
 		setState(coneIntake, !(fbOut && intakeClosed));
 	}
 }

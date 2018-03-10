@@ -19,7 +19,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define DOUBLE_DRIVER    false
 #define SONAR_STACKING   true
 #define MAX_GOAL_RETRIES 2
-#define AUTOSTACK_CONFIG false	//using autostacking-focused button config
+#define AUTOSTACK_CONFIG false	//using autostacking-focused button config (currently nonfunctional)
 
 	//#subregion auton/skillz options
 #define SKILLZ_MODE      false	//skills
@@ -37,8 +37,8 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 	//#endsubregion
 
 	//#subregion testing - TODO: change parameter scheme
-#define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
-int debugParameters[] = { 0, -1, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol, coneSonarCol }
+#define TESTING 1	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
+int debugParameters[] = { 0, 7, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol, coneSonarCol }
 	//#endsubregion
 //#endregion
 
@@ -85,7 +85,7 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, li
 	#define ROLLER true
 	robotId robot = E_ROLLER;
 
-	//#subregion positions
+	/*//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
 	int liftPos[] = { 1310,  1310,    1670,   1330,       2500,   1900,   2910 };
 
@@ -114,7 +114,7 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, li
 
 	#define NUM_ROLLER_MOTORS 1
 	tMotor rollerMotors[NUM_ROLLER_MOTORS] = { port7 };
-	//#endsubregion
+	//#endsubregion*/
 #endif
 
 #ifdef E_TEAM_PNEUMATIC
@@ -125,7 +125,7 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, li
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1310,  1310,    1670,   1330,       2500,   1900,   2910 };
+	int liftPos[] = { 1190,  1275,    1560,   1300,       2020,   1860,   3100 };
 
 	enum goalState  { OUT,  MID,  IN };
 	int goalPos[] = { 3200, 2855, 1050 };
@@ -164,17 +164,17 @@ bool R_EncReversed[NUM_ROBOTS]     = { true,  true,  true };
 	//#endsubregion
 
 	//#subregion ports
-tSensors hyro[NUM_ROBOTS]       = { in1,   in7,   -1 };
+tSensors hyro[NUM_ROBOTS]       = { in1,   in7,   in3 };
 tSensors liftSensor[NUM_ROBOTS] = { in4,   in1,   in1 };
-tSensors goalSensor[NUM_ROBOTS] = { in5,   in6,   in2 };
+tSensors goalSensor[NUM_ROBOTS] = { in5,   in6,   in6 };
 tSensors fbSensor[NUM_ROBOTS]   = { -1,    -1,    -1 };
-tSensors sidePot[NUM_ROBOTS]    = { in2,   in4,   -1 };
-tSensors modePot[NUM_ROBOTS]    = { in3,   in5,   -1 };
+tSensors sidePot[NUM_ROBOTS]    = { in2,   in4,   in4 };
+tSensors modePot[NUM_ROBOTS]    = { in3,   in5,   in5 };
 tSensors leftEnc[NUM_ROBOTS]    = { dgtl1, dgtl1, dgtl3 };
 tSensors rightEnc[NUM_ROBOTS]   = { dgtl3, dgtl3, dgtl1 };
 tSensors coneSonar[NUM_ROBOTS]  = { -1,    dgtl5, -1 };
 tSensors frontSonar[NUM_ROBOTS] = { dgtl6, -1,    -1 };
-tSensors goalLine[NUM_ROBOTS]   = { in6,   in3,   in3 };
+tSensors goalLine[NUM_ROBOTS]   = { in6,   in3,   in2 };
 tSensors leftLine[NUM_ROBOTS]   = { -1,    -1,    -1 };
 tSensors rightLine[NUM_ROBOTS]  = { -1,    -1,    -1 };
 tSensors backLine[NUM_ROBOTS]   = { -1,    -1,    -1 };
@@ -209,9 +209,9 @@ int rollerStillSpeed[NUM_ROBOTS] = { -1, 15, -1 };
 //#endregion
 
 //#region measurements
-float liftLen[NUM_ROBOTS]        = { 14.75, 16,  16 };
-float coneHeight[NUM_ROBOTS]     = { 3.5,   3.5, 3.5 };
-float l_offset[NUM_ROBOTS]       = { 3.5,   4,   4 };
+float liftLen[NUM_ROBOTS]        = { 14.75, 16,  15.5 };
+float coneHeight[NUM_ROBOTS]     = { 3.5,   3.5, 3.25 };
+float l_offset[NUM_ROBOTS]       = { 3.5,   4,   5 };
 float goalToMidDist[NUM_ROBOTS]  = { 17,    18,  18 };	//distance from field diagonal to mid goal
 float lineToGoalDist[NUM_ROBOTS] = { 26,    22,  22 };	//distance from line to mid goal - TODO: wtf?
 float barToLineDist[NUM_ROBOTS]  = { 9,     9,   9 };
@@ -223,7 +223,7 @@ int maxNumCones[NUM_ROBOTS] = { 16, 16, 16 };
 //#endregion
 
 //#region timing
-int fbMoveDuration[NUM_ROBOTS]  = { 700,  700,  400 };
+int fbMoveDuration[NUM_ROBOTS]  = { 700,  700,  200 };
 int outtakeDuration[NUM_ROBOTS] = { 250,  300,  300 };
 int intakeDuration[NUM_ROBOTS]  = { -1,   300,  300 };
 int goalOutDuration[NUM_ROBOTS] = { 1500, 1500, 1500 };
@@ -237,10 +237,10 @@ TVexJoysticks c_fbInBtn[NUM_ROBOTS]     = { Btn6U, Btn8D, -1 };
 TVexJoysticks c_fbOutBtn[NUM_ROBOTS]    = { Btn6D, Btn8U, -1 };
 TVexJoysticks s_fbInBtn[NUM_ROBOTS]     = { Btn7D, Btn8D, -1 };
 TVexJoysticks s_fbOutBtn[NUM_ROBOTS]    = { Btn7U, Btn8U, -1 };
-TVexJoysticks stackBtn[NUM_ROBOTS]      = { Btn8U, Btn6D, Btn6D };
+TVexJoysticks stackBtn[NUM_ROBOTS]      = { Btn8U, Btn6D, Btn8U };
 TVexJoysticks safePosBtn[NUM_ROBOTS]    = { Btn8D, Btn8R, Btn8R };
 TVexJoysticks maxPosBtn[NUM_ROBOTS]     = { Btn8L, -1,    -1 };
-TVexJoysticks c_intakeBtn[NUM_ROBOTS]   = { -1,    Btn6U, -1 };
+TVexJoysticks c_intakeBtn[NUM_ROBOTS]   = { -1,    Btn6U, Btn8L };
 TVexJoysticks c_outtakeBtn[NUM_ROBOTS]  = { -1,    Btn6D, -1 };
 TVexJoysticks s_intakeBtn[NUM_ROBOTS]   = { -1,    Btn7U, -1 };
 TVexJoysticks s_outtakeBtn[NUM_ROBOTS]  = { -1,    Btn7D, -1 };
@@ -330,6 +330,9 @@ void initializeStructs() {
 	#ifdef PNEUMATIC
 		initializePneumaticGroup(fourBar, NUM_FB_SOLS, fourBarSols, fbMoveDuration[robot]);
 		configureToggleInput(fourBar, toggleFbBtn[robot]);
+
+		initializePneumaticGroup(intake, NUM_INTAKE_SOLS, intakeSols);
+		configureToggleInput(intake, c_intakeBtn[robot]);
 	#else
 		initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors);
 		if (SKILLZ_MODE)

@@ -86,7 +86,7 @@ void handleAutopositioningInput(bool shift) {
 
 void handleLiftInput(bool shift) {
 	if (!stacking) {
-		if (!shift && vexRT[stackBtn]==1 && AUTOSTACK_CONFIG) {
+		if (!shift && vexRT[stackBtn[robot]]==1 && stackBtn[robot]>=0) {	//TODO: AUTOSTACK_CONFIG?
 			stackNewCone();
 		}
 		else {
@@ -94,11 +94,9 @@ void handleLiftInput(bool shift) {
 
 			//will only set power if not maintaining a position
 			//if there is input, activelyMaintaining will be set to false and normal control will resume
-			takeInput(lift, lift.moving==NO && !stacking);
+			takeInput(lift, lift.moving==NO);
 		}
 	}
-
-	executeManeuvers();
 }
 
 task usercontrol() {
@@ -111,6 +109,10 @@ task usercontrol() {
 
 	#ifdef ROLLER
 		setToStillSpeed(roller);
+	#endif
+
+	#ifdef PNEUMATIC
+		setState(intake, true);
 	#endif
 
 	while (true) {
@@ -136,6 +138,8 @@ task usercontrol() {
 		#endif
 
 		driveRuntime(drive);
+
+		executeManeuvers();
 
 		EndTimeSlice();
 	}

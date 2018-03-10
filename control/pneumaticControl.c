@@ -6,12 +6,12 @@ void handleFbInput() {
 		setState(intake, !(fbUp && intakeClosed));
 	}
 	else if (newlyPressed(Btn6D)) {
-		setState(fourBar, intake.isOpen);
+		setState(fourBar, intakeClosed);
 		setState(intake, fbUp || !intakeClosed);
 	}
 	else {
 		takeInput(fourBar);
 	}
 
-	fbUp = fourBar.isOpen;
+	fbUp = !fourBar.isOpen;
 }
