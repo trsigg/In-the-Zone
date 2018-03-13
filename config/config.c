@@ -28,7 +28,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define CROSS_FIELD_SKLZ false
 #define SKILLZ_5PT       false
 #define TURN_CHEAT       true	//general
-#define ABORT_AFTER_15   false
+#define ABORT_AFTER_15   true
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL false
 #define RETRY_GOAL_FAILS true
@@ -37,7 +37,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 	//#endsubregion
 
 	//#subregion testing - TODO: change parameter scheme
-#define TESTING 1	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
+#define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
 int debugParameters[] = { 0, 7, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol, coneSonarCol }
 	//#endsubregion
 //#endregion
@@ -125,10 +125,10 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, lif
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1190,  1275,    1560,   1300,       2020,   1860,   3100 };
+	int liftPos[] = { 1245,  1275,    1560,   1300,       2020,   1860,   3100 };
 
 	enum goalState  { OUT,  MID,  IN };
-	int goalPos[] = { 3200, 2855, 1050 };
+	int goalPos[] = { 3600, 2770, 920 };
 	//#endsubregion
 
 	//#subregion motors
@@ -146,8 +146,8 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, lif
 	//#endsubregion
 
 	//#subregion pneumatics
-	#define NUM_FB_SOLS 1
-	tSensors fourBarSols[NUM_FB_SOLS] = { dgtl5 };
+	#define NUM_FB_SOLS 2
+	tSensors fourBarSols[NUM_FB_SOLS] = { dgtl5, dgtl7 };
 
 	#define NUM_INTAKE_SOLS 1
 	tSensors intakeSols[NUM_INTAKE_SOLS] = { dgtl6 };
@@ -160,7 +160,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, lif
 bool liftSensReversed[NUM_ROBOTS]  = { false, false, false };
 bool fbSensReversed[NUM_ROBOTS]    = { false, false, false };
 bool L_EncReversed[NUM_ROBOTS]     = { false, true,  true };
-bool R_EncReversed[NUM_ROBOTS]     = { true,  true,  true };
+bool R_EncReversed[NUM_ROBOTS]     = { true,  true,  false };
 	//#endsubregion
 
 	//#subregion ports
@@ -168,8 +168,8 @@ tSensors hyro[NUM_ROBOTS]       = { in1,   in7,   in3 };
 tSensors liftSensor[NUM_ROBOTS] = { in4,   in1,   in1 };
 tSensors goalSensor[NUM_ROBOTS] = { in5,   in6,   in6 };
 tSensors fbSensor[NUM_ROBOTS]   = { -1,    -1,    -1 };
-tSensors sidePot[NUM_ROBOTS]    = { in2,   in4,   in4 };
-tSensors modePot[NUM_ROBOTS]    = { in3,   in5,   in5 };
+tSensors sidePot[NUM_ROBOTS]    = { in2,   in4,   in5 };
+tSensors modePot[NUM_ROBOTS]    = { in3,   in5,   in4 };
 tSensors leftEnc[NUM_ROBOTS]    = { dgtl1, dgtl1, dgtl3 };
 tSensors rightEnc[NUM_ROBOTS]   = { dgtl3, dgtl3, dgtl1 };
 tSensors coneSonar[NUM_ROBOTS]  = { -1,    dgtl5, -1 };
@@ -182,7 +182,7 @@ tSensors backLine[NUM_ROBOTS]   = { -1,    -1,    -1 };
 //#endregion
 
 //#region consts
-int sideSwitchPos[NUM_ROBOTS] = { 1845, 1960, 1960 };
+int sideSwitchPos[NUM_ROBOTS] = { 1845, 1960, 1910 };
 
 	//#subregion sensor consts
 int goalLineThresh[NUM_ROBOTS]  = { -1,   2950, 2950 };
@@ -203,7 +203,7 @@ int l_StillSpeed[NUM_ROBOTS]     = { 15, 15, 15 };
 int l_AutoSSMargin[NUM_ROBOTS]   = { 50, -1, -1 };
 int fbStillSpeed[NUM_ROBOTS]     = { 15, 20, -1 };
 int fbAutoSSMargin[NUM_ROBOTS]   = { 50, -1, -1 };
-int goalStillSpeed[NUM_ROBOTS]   = { 15, 15, 0 };
+int goalStillSpeed[NUM_ROBOTS]   = { 15, 0,  0 };
 int rollerStillSpeed[NUM_ROBOTS] = { -1, 15, -1 };
 	//#endsubregion
 //#endregion
@@ -212,7 +212,7 @@ int rollerStillSpeed[NUM_ROBOTS] = { -1, 15, -1 };
 float liftLen[NUM_ROBOTS]        = { 14.75, 16,  15.5 };
 float coneHeight[NUM_ROBOTS]     = { 3.5,   3.5, 3.25 };
 float l_offset[NUM_ROBOTS]       = { 3.5,   4,   5 };
-float goalToMidDist[NUM_ROBOTS]  = { 17,    18,  18 };	//distance from field diagonal to mid goal
+float goalToMidDist[NUM_ROBOTS]  = { 17,    18,  17 };	//distance from field diagonal to mid goal
 float lineToGoalDist[NUM_ROBOTS] = { 26,    22,  22 };	//distance from line to mid goal - TODO: wtf?
 float barToLineDist[NUM_ROBOTS]  = { 9,     9,   9 };
 //#endregion
@@ -305,7 +305,7 @@ void initializeStructs() {
   //drive
 	initializeDrive(drive, NUM_LEFT_MOTORS, leftMotors, NUM_RIGHT_MOTORS, rightMotors, true, 40);
 	attachEncoder(drive, leftEnc[robot], LEFT, L_EncReversed[robot]);
-	attachEncoder(drive, rightEnc[robot], RIGHT, R_EncReversed[robot], 3.25);
+	attachEncoder(drive, rightEnc[robot], RIGHT, R_EncReversed[robot], 4);
 	attachUltrasonic(drive, frontSonar[robot]);
 	attachGyro(drive, hyro[robot]);
 

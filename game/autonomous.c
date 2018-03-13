@@ -36,7 +36,10 @@ void prepareForAuton() {
 		driveDefaults.kD_c = 0;
 	}
 
-	#ifndef PNEUMATIC
+	#ifdef PNEUMATIC
+		setState(intake, true);
+		setState(fourBar, false);
+	#else
 		setPower(fourBar, fbStillSpeed[robot]);
 	#endif
 
@@ -241,9 +244,9 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 	if (SKILLZ_MODE)
 		driveAndGoal(23, OUT);
 	else
-		driveAndGoal((startingFromBar ? 20 : 10), OUT, false, true);
+		driveAndGoal((startingFromBar ? 23 : 10), OUT, false, true);
 
-	quadDrive(startingFromBar ? 19 : 20);
+	quadDrive(startingFromBar ? 21 : 20);
 
 	//position robot facing middle of 10pt bar
 	if (numExtraCones > 0) {
@@ -300,7 +303,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			turn(-direction * 45);	//turnDriveTurn?
 		}
 
-		driveStraight(middle||zone==TWENTY ? -27 : -7, true);
+		driveStraight(middle||zone==TWENTY ? -25 : -7, true);
 		while (driveData.totalDist < 5) EndTimeSlice();
 		if (numExtraCones == 0) stackNewCone();
 		while (driveData.isDriving) EndTimeSlice();
@@ -338,7 +341,7 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=fal
 		turn(-90 * direction);
 	}
 	else {
-		turn(165);
+		turn(150);
 		//driveForDuration(1250, 40);	//align to 10pt bar
 	}
 
@@ -383,7 +386,7 @@ void backUpGoal(bool startingFromBar=false, bool intakeFully=true, bool reversed
 	int direction = (reversed ? -1 : 1);
 
 	moveGoalIntake(IN, true);
-	accuDrive(-lineToGoalDist[robot] - (startingFromBar ? 10 : 8));
+	accuDrive(-lineToGoalDist[robot] - (startingFromBar ? 8 : 6));
 	waitForMovementToFinish(goalIntake);
 	turn(-direction * (startingFromBar ? 85 : 90));
 	moveGoalIntake(OUT);
@@ -403,7 +406,7 @@ task skillz() {
 		sideGoal(TWENTY, false, 0, false, true, true, false);
 		//sideGoal();	//near left side goal to twenty
 
-		turnDriveTurn(85, goalToMidDist[robot]-0.5, 82);
+		turnDriveTurn(90, goalToMidDist[robot], 90);
 
 		middleGoal(true, false);	//near left middle goal to ten
 
@@ -478,11 +481,11 @@ task skillz() {
 task antiMark() {
 	if (ANTI_MARK == 1) {
 		wait1Msec(DEFENSIVE_DELAY);
-		driveStraight(11);
-		turn(50);
+		driveStraight(13);
+		turn(45);
 		driveStraight(75);
-		driveAndGoal(-40, OUT);
-		turn(35);
+		driveAndGoal(-40, OUT, false, false, 1250);
+		turn(30);
 		driveStraight(20);
 		moveGoalIntake(IN, false);
 		stackNewCone(false, false);
@@ -526,21 +529,21 @@ task autonomous() {
 	int modePos = SensorValue[ modePot[robot] ];
 	autonTimer = resetTimer();
 
-	turnDefaults.reversed = sidePos < sideSwitchPos[robot];	//TODO: put this val in config
-	variant = abs(sidePos - sideSwitchPos[robot]) < 1500;
+	turnDefaults.reversed = sidePos > sideSwitchPos[robot];	//TODO: put this val in config
+	variant = abs(sidePos - sideSwitchPos[robot]) < 1600;
 
 	if (SKILLZ_MODE) {
 		startTask(skillz);
 	}
-	else if (modePos > 1500) {	//side goal
+	else if (modePos < 2520) {	//side goal
 		zoneType zone;
 		int extraCones;
 
-		if (modePos > 3560) {
+		if (modePos < 530) {
 			zone = TWENTY;
 			extraCones = 1;
 		}
-		else if (modePos > 2225) {
+		else if (modePos < 1620) {
 			zone = TEN;
 			extraCones = 1;
 		}
@@ -569,7 +572,7 @@ task autonomous() {
 			driveStraight(-75);
 		//}
 	}
-	else if (modePos > 305) {	//defensive
+	else if (modePos < 3820) {	//defensive
 		if (variant)
 			startTask(antiMark);
 		else
