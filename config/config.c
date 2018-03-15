@@ -15,9 +15,10 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 //#define HAS_SPEAKER
 #define MULTIPLE_PIDs    false //if lift uses different PID consts for movement in different locations or directions
 #define HOLD_LAST_CONE   true	//if lift stays up after stacking last cone
-#define USE_ENC_CORR     true
+#define USE_ENC_CORR     false
 #define DOUBLE_DRIVER    false
 #define SONAR_STACKING   true
+#define LIMIT_GOAL_MVMNT false //if goal won't move unless lifted up
 #define MAX_GOAL_RETRIES 2
 #define AUTOSTACK_CONFIG false	//using autostacking-focused button config (currently nonfunctional)
 
@@ -28,7 +29,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define CROSS_FIELD_SKLZ false
 #define SKILLZ_5PT       false
 #define TURN_CHEAT       true	//general
-#define ABORT_AFTER_15   true
+#define ABORT_AFTER_15   false
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL false
 #define RETRY_GOAL_FAILS true
@@ -125,7 +126,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, lif
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1245,  1275,    1560,   1300,       2020,   1860,   3100 };
+	int liftPos[] = { 1245,  1275,    1560,   1300,       2020,   1860,   2900 };
 
 	enum goalState  { OUT,  MID,  IN };
 	int goalPos[] = { 3600, 2770, 920 };

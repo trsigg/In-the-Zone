@@ -19,7 +19,7 @@ bool movingToMax = false;
 void handleGoalIntakeInput() {
 	int goalPower = takeInput(goalIntake, false);
 
-	if (getPosition(lift)>=liftPos[L_SAFE] || abs(goalPower)<=goalStillSpeed[robot]) {
+	if (abs(goalPower)<=goalStillSpeed[robot] || getPosition(lift)>=liftPos[L_SAFE] || !LIMIT_GOAL_MVMNT) {
 		setPower(goalIntake, goalPower);
 		updateMotorConfig(goalPower);
 	}
@@ -67,7 +67,7 @@ void handleAbortInput() {
 void handleAutopositioningInput(bool shift) {
 	if (!shift) {
 		if (safePosBtn[robot]>=0 && newlyPressed(safePosBtn[robot])) {
-			setLiftState(L_SAFE);
+			setLiftTargetAndPID(liftPos[L_SAFE] + 100);	//TODO: make offset a config variable
 			movingToMax = false;
 		}
 
