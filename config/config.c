@@ -31,7 +31,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define TURN_CHEAT       true	//general
 #define ABORT_AFTER_15   false
 #define ANTI_MARK        1
-#define ABORT_IF_NO_GOAL false
+#define ABORT_IF_NO_GOAL true
 #define RETRY_GOAL_FAILS true
 #define STACK_SIDE_CONES true
 #define DEFENSIVE_DELAY  2000
@@ -39,7 +39,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 
 	//#subregion testing - TODO: change parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
-int debugParameters[] = { 0, 7, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol, coneSonarCol }
+int debugParameters[] = { -1, 7, -1, -1, -1, -1, -1, 0 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol, coneSonarCol, goalPotCol }
 	//#endsubregion
 //#endregion
 
@@ -129,7 +129,7 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, lif
 	int liftPos[] = { 1245,  1275,    1560,   1300,       2020,   1860,   2900 };
 
 	enum goalState  { OUT,  MID,  IN };
-	int goalPos[] = { 3600, 2770, 920 };
+	int goalPos[] = { 3300, 2770, 920 };
 	//#endsubregion
 
 	//#subregion motors
@@ -152,6 +152,9 @@ int debugParameters[] = { 0, 7, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, lif
 
 	#define NUM_INTAKE_SOLS 1
 	tSensors intakeSols[NUM_INTAKE_SOLS] = { dgtl6 };
+
+	#define NUM_BRAKE_SOLS 1
+	tSensors brakeSols[NUM_BRAKE_SOLS] = { dgtl8 };
 	//#endsubregion
 #endif
 //#endregion
@@ -186,7 +189,7 @@ tSensors backLine[NUM_ROBOTS]   = { -1,    -1,    -1 };
 int sideSwitchPos[NUM_ROBOTS] = { 1845, 1960, 1910 };
 
 	//#subregion sensor consts
-int goalLineThresh[NUM_ROBOTS]  = { -1,   2950, 2950 };
+int goalLineThresh[NUM_ROBOTS]  = { -1,   2950, 2960 };
 int l_lineThresh[NUM_ROBOTS]    = { 3060, -1,   -1 };
 int r_lineThresh[NUM_ROBOTS]    = { 2960, -1,   -1 };
 int b_lineThresh[NUM_ROBOTS]    = { 2870, -1,   -1 };
@@ -238,7 +241,7 @@ TVexJoysticks c_fbInBtn[NUM_ROBOTS]     = { Btn6U, Btn8D, -1 };
 TVexJoysticks c_fbOutBtn[NUM_ROBOTS]    = { Btn6D, Btn8U, -1 };
 TVexJoysticks s_fbInBtn[NUM_ROBOTS]     = { Btn7D, Btn8D, -1 };
 TVexJoysticks s_fbOutBtn[NUM_ROBOTS]    = { Btn7U, Btn8U, -1 };
-TVexJoysticks stackBtn[NUM_ROBOTS]      = { Btn8U, Btn6D, Btn8U };
+TVexJoysticks stackBtn[NUM_ROBOTS]      = { Btn8U, Btn6D, -1 };
 TVexJoysticks safePosBtn[NUM_ROBOTS]    = { Btn8D, Btn8R, Btn8R };
 TVexJoysticks maxPosBtn[NUM_ROBOTS]     = { Btn8L, -1,    -1 };
 TVexJoysticks c_intakeBtn[NUM_ROBOTS]   = { -1,    Btn6U, Btn8L };
@@ -246,6 +249,8 @@ TVexJoysticks c_outtakeBtn[NUM_ROBOTS]  = { -1,    Btn6D, -1 };
 TVexJoysticks s_intakeBtn[NUM_ROBOTS]   = { -1,    Btn7U, -1 };
 TVexJoysticks s_outtakeBtn[NUM_ROBOTS]  = { -1,    Btn7D, -1 };
 TVexJoysticks toggleFbBtn[NUM_ROBOTS]   = { -1,    Btn8L, Btn8D };
+TVexJoysticks brakeBtn[NUM_ROBOTS]      = { -1,    -1,    Btn8U };
+TVexJoysticks toggleModeBtn[NUM_ROBOTS] = { Btn7D, Btn7D, Btn7D };
 TVexJoysticks c_cycleInBtn[NUM_ROBOTS]  = { -1,    -1,    Btn6U };
 TVexJoysticks c_cycleOutBtn[NUM_ROBOTS] = { -1,    -1,    Btn6D };
 TVexJoysticks s_cycleInBtn[NUM_ROBOTS]  = { -1,    -1,    Btn7U };
@@ -270,7 +275,6 @@ TVexJoysticks s_cycleOutBtn[NUM_ROBOTS] = { -1,    -1,    Btn7D };
 		//#endsubsubregion
 
 		//#subsubregion autostacking control
-#define toggleFieldingBtn Btn7D
 #define resetConesBtn     Btn8R	//all cone count adjustment with shift
 #define increaseConesBtn  Btn8U
 #define decreaseConesBtn  Btn8D
@@ -286,6 +290,7 @@ motorGroup lift;
 #ifdef PNEUMATIC
 	pneumaticGroup fourBar;
 	pneumaticGroup intake;
+	pneumaticGroup brakes;
 #else
 	motorGroup fourBar;
 #endif
@@ -334,6 +339,9 @@ void initializeStructs() {
 
 		initializePneumaticGroup(intake, NUM_INTAKE_SOLS, intakeSols);
 		configureToggleInput(intake, c_intakeBtn[robot]);
+
+		initializePneumaticGroup(brakes, NUM_BRAKE_SOLS, brakeSols);
+		configureToggleInput(brakes, brakeBtn[robot]);
 	#else
 		initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors);
 		if (SKILLZ_MODE)

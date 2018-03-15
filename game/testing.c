@@ -6,6 +6,9 @@ void logSensorVals() {
 
 	if (debugParameters[6] >= 0)
 		datalogAddValueWithTimeStamp(debugParameters[6], SensorValue[coneSonar[robot]]);
+
+	if (debugParameters[7] >= 0)
+		datalogAddValueWithTimeStamp(debugParameters[7], getPosition(goalIntake));
 }
 
 

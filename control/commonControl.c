@@ -42,7 +42,7 @@ void handleConeCountInput() {	//change cone count based on user input
 }
 
 void handleModeInput(bool shift) {
-	if (shift && newlyPressed(toggleFieldingBtn)) {
+	if (shift && newlyPressed(toggleModeBtn[robot])) {
 		fielding = !fielding;
 
 		if (fielding)
@@ -135,6 +135,7 @@ task usercontrol() {
 
 		#ifdef PNEUMATIC
 			takeInput(intake);
+			takeInput(brakes);
 		#endif
 
 		driveRuntime(drive);

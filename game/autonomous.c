@@ -183,7 +183,7 @@ void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp
 	else
 		driveStraight(dist, true);
 
-	waitForMovementToFinish(goalIntake);
+	waitForMovementToFinish(goalIntake);playSound(soundBeepBeep);
 
 	if (stackCone) stackNewCone();
 
@@ -565,7 +565,7 @@ task autonomous() {
 					turnDriveTurn(90, 13);
 					break;
 				case TWENTY:
-					turnDriveTurn(90, 30);
+					turnDriveTurn(90, 25);
 					break;
 			}
 
