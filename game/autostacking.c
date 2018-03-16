@@ -38,11 +38,13 @@ task sonarAutoStacking() {
 		moveFourBar(true, false);
 
 		//lift down
-		liftUntilSonar(false);
+		//liftUntilSonar(false);
+		moveForDuration(lift, -60, 150, false);
 
 		//outtake
 		outtake();
-		liftUntilSonar(true);
+		moveForDuration(lift, 127, 250, false);
+		//liftUntilSonar(true);
 
 		//lift down
 		moveFourBar(goToSafe, false);

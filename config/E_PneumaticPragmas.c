@@ -10,6 +10,7 @@
 #pragma config(Sensor, dgtl6,  intakeSol,      sensorDigitalOut)
 #pragma config(Sensor, dgtl7,  fbSol2,         sensorDigitalOut)
 #pragma config(Sensor, dgtl8,  brakeSol,       sensorDigitalOut)
+#pragma config(Sensor, dgtl9,  coneSonar,      sensorSONAR_raw)
 #pragma config(Motor,  port1,           LDrive1,       tmotorVex393_HBridge, openLoop)
 #pragma config(Motor,  port2,           LSwitchy,      tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port3,           LDrive2,       tmotorVex393_MC29, openLoop)

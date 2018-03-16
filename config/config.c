@@ -39,7 +39,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 
 	//#subregion testing - TODO: change parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
-int debugParameters[] = { -1, 7, -1, -1, -1, -1, -1, 0 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol, coneSonarCol, goalPotCol }
+int debugParameters[] = { -1, 7, -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol, coneSonarCol, goalPotCol }
 	//#endsubregion
 //#endregion
 
@@ -176,7 +176,7 @@ tSensors sidePot[NUM_ROBOTS]    = { in2,   in4,   in5 };
 tSensors modePot[NUM_ROBOTS]    = { in3,   in5,   in4 };
 tSensors leftEnc[NUM_ROBOTS]    = { dgtl1, dgtl1, dgtl3 };
 tSensors rightEnc[NUM_ROBOTS]   = { dgtl3, dgtl3, dgtl1 };
-tSensors coneSonar[NUM_ROBOTS]  = { -1,    dgtl5, -1 };
+tSensors coneSonar[NUM_ROBOTS]  = { -1,    dgtl5, dgtl9 };
 tSensors frontSonar[NUM_ROBOTS] = { dgtl6, -1,    -1 };
 tSensors goalLine[NUM_ROBOTS]   = { in6,   in3,   in2 };
 tSensors leftLine[NUM_ROBOTS]   = { -1,    -1,    -1 };
@@ -193,7 +193,7 @@ int goalLineThresh[NUM_ROBOTS]  = { -1,   2950, 2960 };
 int l_lineThresh[NUM_ROBOTS]    = { 3060, -1,   -1 };
 int r_lineThresh[NUM_ROBOTS]    = { 2960, -1,   -1 };
 int b_lineThresh[NUM_ROBOTS]    = { 2870, -1,   -1 };
-int coneSonarThresh[NUM_ROBOTS] = { 1000, 1000, 1000 };
+int coneSonarThresh[NUM_ROBOTS] = { 1000, 1000, 2500 };
 float liftGearRatio[NUM_ROBOTS] = { 5,    5,    5 };	//gear ratio between lift bar angle and sensors
 
 #define RAD_TO_POT 880.1      //conversion factor between radians and potentiometer values
@@ -241,14 +241,14 @@ TVexJoysticks c_fbInBtn[NUM_ROBOTS]     = { Btn6U, Btn8D, -1 };
 TVexJoysticks c_fbOutBtn[NUM_ROBOTS]    = { Btn6D, Btn8U, -1 };
 TVexJoysticks s_fbInBtn[NUM_ROBOTS]     = { Btn7D, Btn8D, -1 };
 TVexJoysticks s_fbOutBtn[NUM_ROBOTS]    = { Btn7U, Btn8U, -1 };
-TVexJoysticks stackBtn[NUM_ROBOTS]      = { Btn8U, Btn6D, -1 };
-TVexJoysticks safePosBtn[NUM_ROBOTS]    = { Btn8D, Btn8R, Btn8R };
+TVexJoysticks stackBtn[NUM_ROBOTS]      = { Btn8U, Btn6D, Btn8D };
+TVexJoysticks safePosBtn[NUM_ROBOTS]    = { Btn8D, Btn8R, -1 };
 TVexJoysticks maxPosBtn[NUM_ROBOTS]     = { Btn8L, -1,    -1 };
-TVexJoysticks c_intakeBtn[NUM_ROBOTS]   = { -1,    Btn6U, Btn8L };
+TVexJoysticks c_intakeBtn[NUM_ROBOTS]   = { -1,    Btn6U, Btn8R };
 TVexJoysticks c_outtakeBtn[NUM_ROBOTS]  = { -1,    Btn6D, -1 };
 TVexJoysticks s_intakeBtn[NUM_ROBOTS]   = { -1,    Btn7U, -1 };
 TVexJoysticks s_outtakeBtn[NUM_ROBOTS]  = { -1,    Btn7D, -1 };
-TVexJoysticks toggleFbBtn[NUM_ROBOTS]   = { -1,    Btn8L, Btn8D };
+TVexJoysticks toggleFbBtn[NUM_ROBOTS]   = { -1,    Btn8L, Btn8L };
 TVexJoysticks brakeBtn[NUM_ROBOTS]      = { -1,    -1,    Btn8U };
 TVexJoysticks toggleModeBtn[NUM_ROBOTS] = { Btn7D, Btn7D, Btn7D };
 TVexJoysticks c_cycleInBtn[NUM_ROBOTS]  = { -1,    -1,    Btn6U };
