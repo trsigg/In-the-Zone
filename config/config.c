@@ -6,8 +6,8 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define NUM_ROBOTS 3	//number of configurable robots
 
 //#define E_TEAM_PASSIVE
-//#define E_TEAM_ROLLER
-#define E_TEAM_PNEUMATIC
+#define E_TEAM_ROLLER
+//#define E_TEAM_PNEUMATIC
 //#define RUN_AUTON_AS_MAIN
 
 
@@ -86,7 +86,7 @@ int debugParameters[] = { -1, 7, -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol,
 	#define ROLLER true
 	robotId robot = E_ROLLER;
 
-	/*//#subregion positions
+	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
 	int liftPos[] = { 1310,  1310,    1670,   1330,       2500,   1900,   2910 };
 
@@ -99,23 +99,23 @@ int debugParameters[] = { -1, 7, -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol,
 
 	//#subregion motors
 	#define NUM_LIFT_MOTORS 3
-	tMotor liftMotors[NUM_LIFT_MOTORS] = { port1, port5, port10 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
+	tMotor liftMotors[NUM_LIFT_MOTORS] = { port4, port5, port7 };  //ROBOTC PRAGMAS! YOU DROVE ME TO DO THIS!
 
 	#define NUM_FB_MOTORS 1
-	tMotor fourBarMotors[NUM_FB_MOTORS] = { port4 };
+	tMotor fourBarMotors[NUM_FB_MOTORS] = { port10 };
 
 	#define NUM_LEFT_MOTORS 3
-	tMotor leftMotors[NUM_LEFT_MOTORS] = { port2, port9, port3 };
+	tMotor leftMotors[NUM_LEFT_MOTORS] = { port1, port3, port2 };
 
 	#define NUM_RIGHT_MOTORS 2
-	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port6, port8 };
+	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port6, port9 };
 
 	#define NUM_GOAL_MOTORS 2
-	tMotor goalMotors[NUM_GOAL_MOTORS] = { port3, port8 };
+	tMotor goalMotors[NUM_GOAL_MOTORS] = { port2, port9 };
 
 	#define NUM_ROLLER_MOTORS 1
-	tMotor rollerMotors[NUM_ROLLER_MOTORS] = { port7 };
-	//#endsubregion*/
+	tMotor rollerMotors[NUM_ROLLER_MOTORS] = { port8 };
+	//#endsubregion
 #endif
 
 #ifdef E_TEAM_PNEUMATIC
@@ -125,7 +125,7 @@ int debugParameters[] = { -1, 7, -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol,
 	robotId robot = E_PNEUMATIC;
 
 	//#subregion positions
-	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
+	/*enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
 	int liftPos[] = { 1245,  1275,    1560,   1300,       2020,   1860,   2900 };
 
 	enum goalState  { OUT,  MID,  IN };
@@ -154,7 +154,7 @@ int debugParameters[] = { -1, 7, -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol,
 	tSensors intakeSols[NUM_INTAKE_SOLS] = { dgtl6 };
 
 	#define NUM_BRAKE_SOLS 1
-	tSensors brakeSols[NUM_BRAKE_SOLS] = { dgtl8 };
+	tSensors brakeSols[NUM_BRAKE_SOLS] = { dgtl8 };*/
 	//#endsubregion
 #endif
 //#endregion
@@ -164,21 +164,21 @@ int debugParameters[] = { -1, 7, -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol,
 bool liftSensReversed[NUM_ROBOTS]  = { false, false, false };
 bool fbSensReversed[NUM_ROBOTS]    = { false, false, false };
 bool L_EncReversed[NUM_ROBOTS]     = { false, true,  true };
-bool R_EncReversed[NUM_ROBOTS]     = { true,  true,  false };
+bool R_EncReversed[NUM_ROBOTS]     = { true,  false, false };
 	//#endsubregion
 
 	//#subregion ports
-tSensors hyro[NUM_ROBOTS]       = { in1,   in7,   in3 };
+tSensors hyro[NUM_ROBOTS]       = { in1,   in3,   in3 };
 tSensors liftSensor[NUM_ROBOTS] = { in4,   in1,   in1 };
 tSensors goalSensor[NUM_ROBOTS] = { in5,   in6,   in6 };
 tSensors fbSensor[NUM_ROBOTS]   = { -1,    -1,    -1 };
-tSensors sidePot[NUM_ROBOTS]    = { in2,   in4,   in5 };
-tSensors modePot[NUM_ROBOTS]    = { in3,   in5,   in4 };
-tSensors leftEnc[NUM_ROBOTS]    = { dgtl1, dgtl1, dgtl3 };
-tSensors rightEnc[NUM_ROBOTS]   = { dgtl3, dgtl3, dgtl1 };
-tSensors coneSonar[NUM_ROBOTS]  = { -1,    dgtl5, dgtl9 };
+tSensors sidePot[NUM_ROBOTS]    = { in2,   in5,   in5 };
+tSensors modePot[NUM_ROBOTS]    = { in3,   in4,   in4 };
+tSensors leftEnc[NUM_ROBOTS]    = { dgtl1, dgtl3, dgtl3 };
+tSensors rightEnc[NUM_ROBOTS]   = { dgtl3, dgtl1, dgtl1 };
+tSensors coneSonar[NUM_ROBOTS]  = { -1,    dgtl9, -1 };
 tSensors frontSonar[NUM_ROBOTS] = { dgtl6, -1,    -1 };
-tSensors goalLine[NUM_ROBOTS]   = { in6,   in3,   in2 };
+tSensors goalLine[NUM_ROBOTS]   = { in6,   in2,   in2 };
 tSensors leftLine[NUM_ROBOTS]   = { -1,    -1,    -1 };
 tSensors rightLine[NUM_ROBOTS]  = { -1,    -1,    -1 };
 tSensors backLine[NUM_ROBOTS]   = { -1,    -1,    -1 };
@@ -186,14 +186,14 @@ tSensors backLine[NUM_ROBOTS]   = { -1,    -1,    -1 };
 //#endregion
 
 //#region consts
-int sideSwitchPos[NUM_ROBOTS] = { 1845, 1960, 1910 };
+int sideSwitchPos[NUM_ROBOTS] = { 1845, 1910, 1910 };
 
 	//#subregion sensor consts
-int goalLineThresh[NUM_ROBOTS]  = { -1,   2950, 2960 };
+int goalLineThresh[NUM_ROBOTS]  = { -1,   2960, 2960 };
 int l_lineThresh[NUM_ROBOTS]    = { 3060, -1,   -1 };
 int r_lineThresh[NUM_ROBOTS]    = { 2960, -1,   -1 };
 int b_lineThresh[NUM_ROBOTS]    = { 2870, -1,   -1 };
-int coneSonarThresh[NUM_ROBOTS] = { 1000, 1000, 2500 };
+int coneSonarThresh[NUM_ROBOTS] = { 1000, 2500, 2500 };
 float liftGearRatio[NUM_ROBOTS] = { 5,    5,    5 };	//gear ratio between lift bar angle and sensors
 
 #define RAD_TO_POT 880.1      //conversion factor between radians and potentiometer values
@@ -213,12 +213,12 @@ int rollerStillSpeed[NUM_ROBOTS] = { -1, 15, -1 };
 //#endregion
 
 //#region measurements
-float liftLen[NUM_ROBOTS]        = { 14.75, 16,  15.5 };
-float coneHeight[NUM_ROBOTS]     = { 3.5,   3.5, 3.25 };
-float l_offset[NUM_ROBOTS]       = { 3.5,   4,   5 };
-float goalToMidDist[NUM_ROBOTS]  = { 17,    18,  17 };	//distance from field diagonal to mid goal
-float lineToGoalDist[NUM_ROBOTS] = { 26,    22,  22 };	//distance from line to mid goal - TODO: wtf?
-float barToLineDist[NUM_ROBOTS]  = { 9,     9,   9 };
+float liftLen[NUM_ROBOTS]        = { 14.75, 15.5, 15.5 };
+float coneHeight[NUM_ROBOTS]     = { 3.5,   3.25, 3.25 };
+float l_offset[NUM_ROBOTS]       = { 3.5,   5,    5 };
+float goalToMidDist[NUM_ROBOTS]  = { 17,    17,   17 };	//distance from field diagonal to mid goal
+float lineToGoalDist[NUM_ROBOTS] = { 26,    22,   22 };	//distance from line to mid goal - TODO: wtf?
+float barToLineDist[NUM_ROBOTS]  = { 9,     9,    9 };
 //#endregion
 
 //#region cone counts
@@ -227,7 +227,7 @@ int maxNumCones[NUM_ROBOTS] = { 16, 16, 16 };
 //#endregion
 
 //#region timing
-int fbMoveDuration[NUM_ROBOTS]  = { 700,  700,  200 };
+int fbMoveDuration[NUM_ROBOTS]  = { 700,  500,  200 };
 int outtakeDuration[NUM_ROBOTS] = { 250,  300,  300 };
 int intakeDuration[NUM_ROBOTS]  = { -1,   300,  300 };
 int goalOutDuration[NUM_ROBOTS] = { 1500, 1500, 1500 };
