@@ -20,7 +20,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define SONAR_STACKING   true
 #define LIMIT_GOAL_MVMNT false //if goal won't move unless lifted up
 #define MAX_GOAL_RETRIES 2
-#define AUTOSTACK_CONFIG false	//using autostacking-focused button config (currently nonfunctional)
+#define AUTOSTACK_CONFIG false	//using autostacking-focused button config (currently nonfunctional) (TODO: change to shift reverse intake)
 
 	//#subregion auton/skillz options
 #define SKILLZ_MODE      false	//skills
@@ -161,10 +161,10 @@ int debugParameters[] = { -1, 7, -1, -1, -1, -1, 0, -1 };	//{ liftDebugStartCol,
 
 //#region sensors
 	//#subregion config
-bool liftSensReversed[NUM_ROBOTS]  = { false, false, false };
-bool fbSensReversed[NUM_ROBOTS]    = { false, false, false };
-bool L_EncReversed[NUM_ROBOTS]     = { false, true,  true };
-bool R_EncReversed[NUM_ROBOTS]     = { true,  false, false };
+bool liftSensReversed[NUM_ROBOTS] = { false, false, false };
+bool fbSensReversed[NUM_ROBOTS]   = { false, false, false };
+bool L_EncReversed[NUM_ROBOTS]    = { false, true,  true };
+bool R_EncReversed[NUM_ROBOTS]    = { true,  false, false };
 	//#endsubregion
 
 	//#subregion ports
@@ -176,7 +176,7 @@ tSensors sidePot[NUM_ROBOTS]    = { in2,   in5,   in5 };
 tSensors modePot[NUM_ROBOTS]    = { in3,   in4,   in4 };
 tSensors leftEnc[NUM_ROBOTS]    = { dgtl1, dgtl3, dgtl3 };
 tSensors rightEnc[NUM_ROBOTS]   = { dgtl3, dgtl1, dgtl1 };
-tSensors coneSonar[NUM_ROBOTS]  = { -1,    dgtl9, -1 };
+tSensors coneSonar[NUM_ROBOTS]  = { -1,    dgtl5, -1 };
 tSensors frontSonar[NUM_ROBOTS] = { dgtl6, -1,    -1 };
 tSensors goalLine[NUM_ROBOTS]   = { in6,   in2,   in2 };
 tSensors leftLine[NUM_ROBOTS]   = { -1,    -1,    -1 };
@@ -193,7 +193,7 @@ int goalLineThresh[NUM_ROBOTS]  = { -1,   2960, 2960 };
 int l_lineThresh[NUM_ROBOTS]    = { 3060, -1,   -1 };
 int r_lineThresh[NUM_ROBOTS]    = { 2960, -1,   -1 };
 int b_lineThresh[NUM_ROBOTS]    = { 2870, -1,   -1 };
-int coneSonarThresh[NUM_ROBOTS] = { 1000, 2500, 2500 };
+int coneSonarThresh[NUM_ROBOTS] = { 1000, 1500, 2500 };
 float liftGearRatio[NUM_ROBOTS] = { 5,    5,    5 };	//gear ratio between lift bar angle and sensors
 
 #define RAD_TO_POT 880.1      //conversion factor between radians and potentiometer values
@@ -241,8 +241,8 @@ TVexJoysticks c_fbInBtn[NUM_ROBOTS]     = { Btn6U, Btn8D, -1 };
 TVexJoysticks c_fbOutBtn[NUM_ROBOTS]    = { Btn6D, Btn8U, -1 };
 TVexJoysticks s_fbInBtn[NUM_ROBOTS]     = { Btn7D, Btn8D, -1 };
 TVexJoysticks s_fbOutBtn[NUM_ROBOTS]    = { Btn7U, Btn8U, -1 };
-TVexJoysticks stackBtn[NUM_ROBOTS]      = { Btn8U, Btn6D, Btn8D };
-TVexJoysticks safePosBtn[NUM_ROBOTS]    = { Btn8D, Btn8R, -1 };
+TVexJoysticks stackBtn[NUM_ROBOTS]      = { Btn8U, Btn8R, Btn8D };
+TVexJoysticks safePosBtn[NUM_ROBOTS]    = { Btn8D, -1,    -1 };
 TVexJoysticks maxPosBtn[NUM_ROBOTS]     = { Btn8L, -1,    -1 };
 TVexJoysticks c_intakeBtn[NUM_ROBOTS]   = { -1,    Btn6U, Btn8R };
 TVexJoysticks c_outtakeBtn[NUM_ROBOTS]  = { -1,    Btn6D, -1 };

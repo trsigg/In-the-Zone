@@ -86,7 +86,7 @@ void handleAutopositioningInput(bool shift) {
 
 void handleLiftInput(bool shift) {
 	if (!stacking) {
-		if (!shift && vexRT[stackBtn[robot]]==1 && AUTOSTACK_CONFIG) {	//TODO: AUTOSTACK_CONFIG?
+		if (!shift && vexRT[stackBtn[robot]]==1 /*&& AUTOSTACK_CONFIG*/) {	//TODO: AUTOSTACK_CONFIG?
 			stackNewCone();
 		}
 		else {

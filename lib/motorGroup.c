@@ -213,7 +213,7 @@ void configureBtnDependentStillSpeed(motorGroup *group, int stillSpeed=0) {
 	group->stillSpeedType = 2;
 }
 
-int calcStillSpeed(motorGroup *group, bool posForBtnSS=true) {
+int calcStillSpeed(motorGroup *group, bool posForBtnSS=true, bool setReversed=true) {
 	bool reversed;
 
 	switch (group->stillSpeedType) {
@@ -227,6 +227,8 @@ int calcStillSpeed(motorGroup *group, bool posForBtnSS=true) {
 			reversed = !posForBtnSS;
 			break;
 	}
+
+	if (setReversed) group->stillSpeedReversed = reversed;
 
 	return group->stillSpeed * (reversed ? -1 : 1);
 }
