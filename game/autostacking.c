@@ -43,8 +43,8 @@ task sonarAutoStacking() {
 
 		//outtake
 		outtake();
-		moveForDuration(lift, 127, 250, false);
-		//liftUntilSonar(true);
+		//moveForDuration(lift, 127, 250, false);
+		liftUntilSonar(true);	//TODO: or above where it dropped cone off (use dangerPos mechanism?)
 
 		//lift down
 		moveFourBar(goToSafe, false);
@@ -129,7 +129,7 @@ void startAutoStacking() {
 }
 
 void stackNewCone(bool waite=false, bool safeAtEnd=bIfiAutonomousMode) {	//TODO: liftTarget and liftRelease
-	if (!(SONAR_STACKING && coneSonar[robot]>=dgtl1)) {
+	if (!(SONAR_STACKING && coneSonar[robot]>=dgtl1) || bIfiAutonomousMode) {
 		float stackHeight = coneHeight[robot] * adjustedNumCones();
 
 		liftTarget = calcLiftTargetForHeight(stackHeight + l_offset[robot]);	//TODO: noOffsetCones, etc?

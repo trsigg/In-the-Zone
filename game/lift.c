@@ -161,5 +161,5 @@ void moveLiftToSafePos(bool waite=true) {
 }
 
 void liftToConeSafePos() {
-	setLiftTargetAndPID(max(calcLiftTargetForHeight(coneHeight[robot] * numCones + 3), liftPos[L_SAFE]));
+	setLiftTargetAndPID(max(calcLiftTargetForHeight(coneHeight[robot] * numCones + 9), liftPos[L_SAFE]));
 }

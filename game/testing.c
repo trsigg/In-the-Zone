@@ -2,7 +2,7 @@
 
 void logSensorVals() {
 	if (debugParameters[1] >= 0)
-		datalogAddValueWithTimeStamp(debugParameters[1], getPosition(lift));
+		datalogAddValueWithTimeStamp(debugParameters[1], SensorValue[lift.potentiometer]/*getPosition(lift)*/);
 
 	if (debugParameters[6] >= 0)
 		datalogAddValueWithTimeStamp(debugParameters[6], SensorValue[coneSonar[robot]]);

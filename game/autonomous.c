@@ -183,7 +183,7 @@ void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp
 	else
 		driveStraight(dist, true);
 
-	waitForMovementToFinish(goalIntake);playSound(soundBeepBeep);
+	waitForMovementToFinish(goalIntake);
 
 	if (stackCone) stackNewCone();
 
@@ -272,12 +272,12 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 
 		stackNewCone();
 
-		driveStraight(-40 + distAdjustment);
+		driveStraight(-44 + distAdjustment);
 
 		//while (stacking) EndTimeSlice();
 	}
 	else {
-		driveAndGoal(-40 + distAdjustment, IN);
+		driveAndGoal(-44 + distAdjustment, IN);
 
 		maybeAbort();
 	}
@@ -562,10 +562,10 @@ task autonomous() {
 					turn(35);
 					break;
 				case TEN:
-					turnDriveTurn(90, 13);
+					turnDriveTurn(90, 7);
 					break;
 				case TWENTY:
-					turnDriveTurn(90, 25);
+					turnDriveTurn(90, 21);
 					break;
 			}
 

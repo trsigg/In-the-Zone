@@ -9,6 +9,15 @@
 #include "..\control\commonControl.c"
 
 
+void initializeGyro() {
+	SensorType[gyro] = sensorNone;
+	wait1Msec(2000);
+	SensorType[gyro] = sensorGyro;
+
+	SensorScale[ hyro[robot] ] = 140;
+	SensorBias[ hyro[robot] ] = 1858;
+}
+
 void pre_auton() {
 	#ifndef RUN_AUTON_AS_MAIN
 		bStopTasksBetweenModes = true;
