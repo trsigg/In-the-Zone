@@ -4,6 +4,7 @@
 #pragma config(Sensor, in4,    modePot,        sensorPotentiometer)
 #pragma config(Sensor, in5,    sidePot,        sensorPotentiometer)
 #pragma config(Sensor, in6,    goalPot,        sensorPotentiometer)
+#pragma config(Sensor, in7,    fbPot,          sensorPotentiometer)
 #pragma config(Sensor, dgtl1,  leftEnc,        sensorQuadEncoder)
 #pragma config(Sensor, dgtl3,  rightEnc,       sensorQuadEncoder)
 #pragma config(Sensor, dgtl5,  coneSonar,      sensorSONAR_raw)

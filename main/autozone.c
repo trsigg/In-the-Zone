@@ -10,9 +10,9 @@
 
 
 void initializeGyro() {
-	SensorType[gyro] = sensorNone;
+	SensorType[ hyro[robot] ] = sensorNone;
 	wait1Msec(2000);
-	SensorType[gyro] = sensorGyro;
+	SensorType[ hyro[robot] ] = sensorGyro;
 
 	SensorScale[ hyro[robot] ] = 140;
 	SensorBias[ hyro[robot] ] = 1858;
@@ -24,6 +24,7 @@ void pre_auton() {
 	#endif
 
 	initializeStructs();
+	initializeGyro();
 
 	initializeAutoMovement();
 	driveDefaults.debugStartCol = debugParameters[4];

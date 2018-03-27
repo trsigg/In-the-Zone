@@ -90,8 +90,8 @@ int debugParameters[] = { -1, -1, -1, -1, 0, -1, -1, -1 };	//{ liftDebugStartCol
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
 	int liftPos[] = { 1300,  1320,    1555,   1320,       2000,   1915,   3010 };
 
-	enum fbState  { FB_FIELD, FB_SAFE, STACK, FB_MAX, FB_DEF };
-	int fbPos[] = { 0,        0,       0,     0 };
+	enum fbState  { FB_UP, FB_DOWN };
+	int fbPos[] = { 700,   2400 };
 
 	enum goalState  { OUT,  MID,  IN };
 	int goalPos[] = { 3200, 2675, 1015 };
@@ -172,7 +172,7 @@ bool R_EncReversed[NUM_ROBOTS]    = { true,  false, false };
 tSensors hyro[NUM_ROBOTS]       = { in1,   in3,   in3 };
 tSensors liftSensor[NUM_ROBOTS] = { in4,   in1,   in1 };
 tSensors goalSensor[NUM_ROBOTS] = { in5,   in6,   in6 };
-tSensors fbSensor[NUM_ROBOTS]   = { -1,    -1,    -1 };
+tSensors fbSensor[NUM_ROBOTS]   = { -1,    in7,   -1 };
 tSensors sidePot[NUM_ROBOTS]    = { in2,   in5,   in5 };
 tSensors modePot[NUM_ROBOTS]    = { in3,   in4,   in4 };
 tSensors leftEnc[NUM_ROBOTS]    = { dgtl1, dgtl3, dgtl3 };
@@ -344,16 +344,18 @@ void initializeStructs() {
 		configureToggleInput(brakes, brakeBtn[robot]);
 	#else
 		initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors);
+
 		if (SKILLZ_MODE)
 			configureButtonInput(fourBar, s_fbOutBtn[robot], s_fbInBtn[robot]);
 		else
 			configureButtonInput(fourBar, c_fbOutBtn[robot], c_fbInBtn[robot]);
+
 		configureBtnDependentStillSpeed(fourBar, fbStillSpeed[robot]);
 
 		if (fbSensor[robot] >= 0) {
-			initializeTargetingPID(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 13*FB_CORR_FCTR, 100/FB_CORR_FCTR);
+			//initializeTargetingPID(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 13*FB_CORR_FCTR, 100/FB_CORR_FCTR);
 			addSensor(fourBar, fbSensor[robot], fbSensReversed[robot]);
-			if (fbSensor[robot]>=dgtl1) configureEncoderCorrection(fourBar, fbPos[FB_MAX]);
+			if (fbSensor[robot]>=dgtl1) configureEncoderCorrection(fourBar, fbPos[FB_UP]);
 		}
 	#endif
 

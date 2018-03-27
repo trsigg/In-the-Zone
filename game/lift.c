@@ -108,7 +108,12 @@ void moveFourBar(bool up, bool runConcurrently=true, int power=127) {
 		setState(fourBar, !up, runConcurrently);
 	#else
 		fourBar.stillSpeedReversed = !up;
-		moveForDuration(fourBar, power*(up ? -1 : 1), fbMoveDuration[robot], runConcurrently);
+		power *= (up ? -1 : 1);
+
+		if (fbSensor[robot] >= 0)
+			createManeuver(fourBar, fbPos[up ? FB_UP : FB_DOWN], runConcurrently, power);
+		else
+			moveForDuration(fourBar, power*(up ? -1 : 1), fbMoveDuration[robot], runConcurrently);
 	#endif
 }
 //#endregion
