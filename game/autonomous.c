@@ -40,7 +40,7 @@ void prepareForAuton() {
 		setState(intake, true);
 		setState(fourBar, false);
 	#else
-		setPower(fourBar, fbStillSpeed[robot]);
+		setPower(fourBar, -fbStillSpeed[robot]);
 	#endif
 
 	#ifdef ROLLER
@@ -545,7 +545,7 @@ task autonomous() {
 		}
 		else if (modePos < 1620) {
 			zone = TEN;
-			extraCones = 1;
+			extraCones = 2;
 		}
 		else {
 			zone = FIVE;

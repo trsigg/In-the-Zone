@@ -29,7 +29,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define CROSS_FIELD_SKLZ false
 #define SKILLZ_5PT       false
 #define TURN_CHEAT       true	//general
-#define ABORT_AFTER_15   false
+#define ABORT_AFTER_15   true
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL true
 #define RETRY_GOAL_FAILS true
@@ -229,8 +229,8 @@ int maxNumCones[NUM_ROBOTS] = { 16, 16, 16 };
 
 //#region timing
 int fbMoveDuration[NUM_ROBOTS]  = { 700,  600,  200 };
-int outtakeDuration[NUM_ROBOTS] = { 250,  300,  300 };
-int intakeDuration[NUM_ROBOTS]  = { -1,   500,  300 };
+int outtakeDuration[NUM_ROBOTS] = { 250,  250,  300 };
+int intakeDuration[NUM_ROBOTS]  = { -1,   300,  300 };
 int goalOutDuration[NUM_ROBOTS] = { 1500, 1500, 1500 };
 int goalinDuration[NUM_ROBOTS]  = { 1250, 1250, 1250 };
 //#endregion

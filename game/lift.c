@@ -104,17 +104,19 @@ bool fbUp = true;
 void moveFourBar(bool up, bool runConcurrently=true, int power=127) {
 	fbUp = up;
 
-	#ifdef PNEUMATIC
-		setState(fourBar, !up, runConcurrently);
-	#else
-		fourBar.stillSpeedReversed = !up;
-		power *= (up ? -1 : 1);
+	if ((getPosition(fourBar) <= fbPos[FB_UP]) != up) {
+		#ifdef PNEUMATIC
+			setState(fourBar, !up, runConcurrently);
+		#else
+			fourBar.stillSpeedReversed = !up;
+			power *= (up ? -1 : 1);
 
-		if (fbSensor[robot] >= 0)
-			createManeuver(fourBar, fbPos[up ? FB_UP : FB_DOWN], runConcurrently, power);
-		else
-			moveForDuration(fourBar, power*(up ? -1 : 1), fbMoveDuration[robot], runConcurrently);
-	#endif
+			if (fbSensor[robot] >= 0)
+				createManeuver(fourBar, fbPos[up ? FB_UP : FB_DOWN], runConcurrently, power, );
+			else
+				moveForDuration(fourBar, power, fbMoveDuration[robot], runConcurrently);
+		#endif
+	}
 }
 //#endregion
 
@@ -154,11 +156,11 @@ void stopLiftTargeting() {
 }
 //#endregion
 
-void moveLiftToSafePos(bool waite=true) {
+void moveLiftToSafePos(bool waite=true, bool moveFb=true) {
 	if (lift.moving!=TARGET || lift.posPID.target<liftPos[L_SAFE])
 			setLiftTargetAndPID(liftPos[L_SAFE] + 50/L_CORR_FCTR);
 
-	moveFourBar(true);
+	if (moveFb) moveFourBar(true);
 
 	if (waite)	//TODO: ensure fb in correct position?
 		while (getPosition(lift) < liftPos[L_SAFE])

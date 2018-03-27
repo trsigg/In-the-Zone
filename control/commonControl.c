@@ -24,7 +24,7 @@ void handleGoalIntakeInput() {
 		updateMotorConfig(goalPower);
 	}
 	else {
-		moveLiftToSafePos(false);
+		moveLiftToSafePos(false, false);
 	}
 }
 

@@ -15,7 +15,9 @@ void outtake() {
 	#endif
 }
 
-void prepareToLiftDown() {
+void liftDown() {
+	moveFourBar(goToSafe, false);
+	
 	#ifdef ROLLER
 		setToStillSpeed(roller);
 	#endif
@@ -23,6 +25,11 @@ void prepareToLiftDown() {
 	#ifdef PNEUMATIC
 		setState(intake, true);
 	#endif
+
+	if (goToSafe)
+		liftToConeSafePos();
+	else
+		setLiftState(L_DEF, true);
 }
 
 //#region sonar autostacking
@@ -47,9 +54,7 @@ task sonarAutoStacking() {
 		liftUntilSonar(true);	//TODO: or above where it dropped cone off (use dangerPos mechanism?)
 
 		//lift down
-		moveFourBar(goToSafe, false);
-		prepareToLiftDown();
-		setLiftState(goToSafe ? L_SAFE : L_DEF, true);
+		liftDown();
 
 		stacking = false;
 	}
@@ -103,11 +108,7 @@ task kinematicAutoStacking() {
 				waitForMovementToFinish(lift);
 			#endif
 
-			moveFourBar(goToSafe);
-			waitForMovementToFinish(fourBar);
-
-			prepareToLiftDown();
-			setLiftState(goToSafe ? L_SAFE : L_DEF, true);
+			liftDown();
 		}
 
 		stacking = false;
