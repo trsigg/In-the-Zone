@@ -119,6 +119,15 @@ void attachGyro(parallel_drive *drive, tSensors gyro, bool reversed=true, gyroCo
 	if (setAbsAngle) drive->angleOffset = drive->position.theta - SensorValue[gyro];
 }
 
+void initializeGyro(parallel_drive *drive, int scale, int bias) {
+	SensorType[ drive->gyro ] = sensorNone;
+	wait1Msec(2000);
+	SensorType[ drive->gyro ] = sensorGyro;
+
+	SensorScale[ drive->gyro ] = scale;
+	SensorBias[ drive->gyro ] = bias;
+}
+
 void attachUltrasonic(parallel_drive *drive, tSensors ultrasonic) {
 	drive->hasUltrasonic = true;
 	drive->ultrasonic = ultrasonic;

@@ -209,7 +209,7 @@ int l_AutoSSMargin[NUM_ROBOTS]   = { 50, -1, -1 };
 int fbStillSpeed[NUM_ROBOTS]     = { 15, 20, -1 };
 int fbAutoSSMargin[NUM_ROBOTS]   = { 50, -1, -1 };
 int goalStillSpeed[NUM_ROBOTS]   = { 15, 0,  0 };
-int rollerStillSpeed[NUM_ROBOTS] = { -1, 15, -1 };
+int rollerStillSpeed[NUM_ROBOTS] = { -1, 20, -1 };
 	//#endsubregion
 //#endregion
 
@@ -314,6 +314,7 @@ void initializeStructs() {
 	attachEncoder(drive, rightEnc[robot], RIGHT, R_EncReversed[robot], 4);
 	attachUltrasonic(drive, frontSonar[robot]);
 	attachGyro(drive, hyro[robot]);
+	initializeGyro(drive, 140, 1858);
 
 	//lift
   initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors, liftUpBtn, liftDownBtn, l_StillSpeed[robot]);

@@ -9,22 +9,12 @@
 #include "..\control\commonControl.c"
 
 
-void initializeGyro() {
-	SensorType[ hyro[robot] ] = sensorNone;
-	wait1Msec(2000);
-	SensorType[ hyro[robot] ] = sensorGyro;
-
-	SensorScale[ hyro[robot] ] = 140;
-	SensorBias[ hyro[robot] ] = 1858;
-}
-
 void pre_auton() {
 	#ifndef RUN_AUTON_AS_MAIN
 		bStopTasksBetweenModes = true;
 	#endif
 
 	initializeStructs();
-	initializeGyro();
 
 	initializeAutoMovement();
 	driveDefaults.debugStartCol = debugParameters[4];

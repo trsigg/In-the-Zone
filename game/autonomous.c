@@ -194,9 +194,10 @@ void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp
 //#region routine portions
 void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//behind 10pt bar -> aligned with tape (approx)
 	if (twentyPt) {
+		moveGoalIntake(OUT, true);
 		driveForDuration(1000, 90, 20);	//drive over bar
-		moveGoalIntake(OUT);
-		driveForDuration(250);	//push goal to back of zone
+		waitForMovementToFinish(goalIntake);
+		//driveForDuration(250);	//push goal to back of zone
 		driveForDuration(375, -127);
 	}
 	else {
@@ -246,7 +247,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 	else
 		driveAndGoal((startingFromBar ? 23 : 10), OUT, false, true);
 
-	quadDrive(startingFromBar ? 21 : 20);
+	quadDrive(startingFromBar ? 19 : 20, true);
 
 	//position robot facing middle of 10pt bar
 	if (numExtraCones > 0) {
@@ -256,7 +257,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 
 		for (int i=0; i<numExtraCones; i++) {
 			stackNewCone();
-			driveStraight(9);
+			driveStraight(8);
 
 			goToSafe = false;
 			while (stacking) EndTimeSlice();
@@ -272,12 +273,12 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 
 		stackNewCone();
 
-		driveStraight(-44 + distAdjustment);
+		driveStraight(-43 + distAdjustment);
 
 		//while (stacking) EndTimeSlice();
 	}
 	else {
-		driveAndGoal(-44 + distAdjustment, IN);
+		driveAndGoal(-43 + distAdjustment, IN);
 
 		maybeAbort();
 	}
@@ -303,7 +304,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			turn(-direction * 45);	//turnDriveTurn?
 		}
 
-		driveStraight(middle||zone==TWENTY ? -25 : -7, true);
+		driveStraight(middle||zone==TWENTY ? -23 : -7, true);
 		while (driveData.totalDist < 5) EndTimeSlice();
 		if (numExtraCones == 0) stackNewCone();
 		while (driveData.isDriving) EndTimeSlice();
@@ -541,7 +542,7 @@ task autonomous() {
 
 		if (modePos < 530) {
 			zone = TWENTY;
-			extraCones = 1;
+			extraCones = 2;
 		}
 		else if (modePos < 1620) {
 			zone = TEN;

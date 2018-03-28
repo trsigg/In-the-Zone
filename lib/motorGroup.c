@@ -2,7 +2,7 @@
 #include "PID.c"
 #include "timer.c"
 
-#define DEF_WAIT_TIMEOUT  100
+#define DEF_WAIT_TIMEOUT  50
 #define DEF_WAIT_LIST_LEN 1
 
 enum controlType { NONE, BUTTON, JOYSTICK };
