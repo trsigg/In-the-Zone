@@ -102,9 +102,9 @@ float calcLiftHeight(int liftVal) {	//finds lift sensor val separated from liftV
 bool fbUp = true;
 
 void moveFourBar(bool up, bool runConcurrently=true, int power=127) {
-	fbUp = up;
+	if (fbUp != up) {
+		fbUp = up;
 
-	if ((getPosition(fourBar) <= fbPos[FB_UP]) != up) {
 		#ifdef PNEUMATIC
 			setState(fourBar, !up, runConcurrently);
 		#else
@@ -168,5 +168,5 @@ void moveLiftToSafePos(bool waite=true, bool moveFb=true) {
 }
 
 void liftToConeSafePos() {
-	setLiftTargetAndPID(max(calcLiftTargetForHeight(coneHeight[robot] * numCones + 9), liftPos[L_SAFE]));
+	setLiftTargetAndPID(max(calcLiftTargetForHeight(coneHeight[robot] * numCones + 6), liftPos[L_SAFE]));
 }

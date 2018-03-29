@@ -238,7 +238,7 @@ void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//b
 
 void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool reversed=false, bool startingFromBar=true, bool align=false, bool intakeFully=true) {	//touching bar, aligned with goal -> aligned with tape (approx)
 	int direction = (reversed ? -1 : 1);
-	int distAdjustment = (zone==FIVE ? 7 : 0) - 7 * numExtraCones;
+	int distAdjustment = (zone==FIVE ? 8 : 0) - interConeDist[robot] * numExtraCones;
 	moveLiftToSafePos();
 
 	//pick up side goal
@@ -247,28 +247,39 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 	else
 		driveAndGoal((startingFromBar ? 23 : 10), OUT, false, true);
 
-	quadDrive(startingFromBar ? 19 : 20, true);
+	quadDrive(startingFromBar ? 19 : 20);
 
 	//position robot facing middle of 10pt bar
 	if (numExtraCones > 0) {
-		moveGoalIntake(IN);
-
-		maybeAbort();
-
 		for (int i=0; i<numExtraCones; i++) {
-			stackNewCone();
-			driveStraight(8);
+			driveStraight(interConeDist[robot], true);
 
-			goToSafe = false;
-			while (stacking) EndTimeSlice();
+			if (i == 0) {
+				moveGoalIntake(IN);
+				maybeAbort();
+			}
+
+			stackNewCone();
+
+			while (driveData.isDriving) EndTimeSlice();
+
+			while (stacking) {
+				goToSafe = false;
+				EndTimeSlice();
+			}
 
 			//intake
-			/*if (fbUp)*/ moveFourBar(false, false);
 			#ifdef ROLLER
 				setPower(roller, 127);
 			#endif
-			setLiftState(L_FIELD, true);
-			waitForMovementToFinish(lift, intakeDuration[robot]);
+
+			if (goToSafe) {
+				moveFourBar(false, false);
+				setLiftState(L_FIELD, true);
+			}
+
+			waitForMovementToFinish(lift);
+			wait1Msec(intakeDuration[robot]);
 		}
 
 		stackNewCone();
@@ -304,7 +315,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			turn(-direction * 45);	//turnDriveTurn?
 		}
 
-		driveStraight(middle||zone==TWENTY ? -23 : -7, true);
+		driveStraight(middle||zone==TWENTY ? -22 : -7, true);
 		while (driveData.totalDist < 5) EndTimeSlice();
 		if (numExtraCones == 0) stackNewCone();
 		while (driveData.isDriving) EndTimeSlice();

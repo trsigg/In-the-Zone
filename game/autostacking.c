@@ -17,7 +17,7 @@ void outtake() {
 
 void liftDown() {
 	moveFourBar(goToSafe, false);
-	
+
 	#ifdef ROLLER
 		setToStillSpeed(roller);
 	#endif
@@ -105,7 +105,7 @@ task kinematicAutoStacking() {
 
 				outtake();
 				setLiftTargetAndPID(liftTarget);
-				waitForMovementToFinish(lift);
+				waitForMovementToFinish(lift, outtakeDuration[robot]);
 			#endif
 
 			liftDown();

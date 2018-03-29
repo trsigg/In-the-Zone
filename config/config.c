@@ -39,7 +39,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 
 	//#subregion testing - TODO: change parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
-int debugParameters[] = { -1, -1, -1, -1, 0, -1, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol, coneSonarCol, goalPotCol }
+int debugParameters[] = { 0, -1, -1, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol, coneSonarCol, goalPotCol }
 	//#endsubregion
 //#endregion
 
@@ -220,6 +220,7 @@ float l_offset[NUM_ROBOTS]       = { 3.5,   2.5,  5 };
 float goalToMidDist[NUM_ROBOTS]  = { 17,    17,   17 };	//distance from field diagonal to mid goal
 float lineToGoalDist[NUM_ROBOTS] = { 26,    22,   22 };	//distance from line to mid goal - TODO: wtf?
 float barToLineDist[NUM_ROBOTS]  = { 9,     9,    9 };
+float interConeDist[NUM_ROBOTS]  = { 9,     9,    9 }
 //#endregion
 
 //#region cone counts
@@ -229,8 +230,8 @@ int maxNumCones[NUM_ROBOTS] = { 16, 16, 16 };
 
 //#region timing
 int fbMoveDuration[NUM_ROBOTS]  = { 700,  600,  200 };
-int outtakeDuration[NUM_ROBOTS] = { 250,  250,  300 };
-int intakeDuration[NUM_ROBOTS]  = { -1,   300,  300 };
+int outtakeDuration[NUM_ROBOTS] = { 250,  100,  300 };
+int intakeDuration[NUM_ROBOTS]  = { -1,   100,  300 };
 int goalOutDuration[NUM_ROBOTS] = { 1500, 1500, 1500 };
 int goalinDuration[NUM_ROBOTS]  = { 1250, 1250, 1250 };
 //#endregion
@@ -319,7 +320,7 @@ void initializeStructs() {
 	//lift
   initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors, liftUpBtn, liftDownBtn, l_StillSpeed[robot]);
 	configureBtnDependentStillSpeed(lift);
-	initializeTargetingPID(lift, 0.2*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 10*L_CORR_FCTR, 75/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
+	initializeTargetingPID(lift, 0.3*L_CORR_FCTR, 0.0001*L_CORR_FCTR, 30*L_CORR_FCTR, 100/L_CORR_FCTR);	//gain setup in setLiftPIDmode when MULTIPLE_PIDs is true
 	configureAutoStillSpeed(lift, l_AutoSSMargin[robot]);
 	addSensor(lift, liftSensor[robot], liftSensReversed[robot]);
 	if (liftSensor[robot]>=dgtl1) configureEncoderCorrection(lift, liftPos[L_MAX]);
