@@ -116,7 +116,7 @@ task usercontrol() {
 	#endif
 
 	while (true) {
-		logSensorVals();
+		logData();
 		shift = vexRT[shiftBtn]==1;
 
 		if (shift) handleConeCountInput();

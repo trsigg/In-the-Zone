@@ -16,17 +16,19 @@ bool isMobileGoalLoaded() {
 }
 
 void updateMotorConfig(int goalPower=0) {
-  if (goalPower == 0 && goalIntake.moving == NO) {
-    setNumMotors(drive, NUM_LEFT_MOTORS, NUM_RIGHT_MOTORS);
-		stopPowerLimiting(drive);
-  }
-  else {
-		setNumMotors(drive, NUM_LEFT_MOTORS-1, NUM_RIGHT_MOTORS-1);
+  if (!SKILLZ_MODE) {
+    if (goalPower == 0 && goalIntake.moving == NO) {
+      setNumMotors(drive, NUM_LEFT_MOTORS, NUM_RIGHT_MOTORS);
+  		stopPowerLimiting(drive);
+    }
+    else {
+  		setNumMotors(drive, NUM_LEFT_MOTORS-1, NUM_RIGHT_MOTORS-1);
 
-		bool goalOut = goalPower > 0;
-    int oppLimit = (bIfiAutonomousMode ? 30 : 0);
-		setPowerLimits(drive, (goalOut ? -127 : -oppLimit), (goalOut ? oppLimit : 127));
-	}
+  		bool goalOut = goalPower > 0;
+      int oppLimit = (bIfiAutonomousMode ? 30 : 0);
+  		setPowerLimits(drive, (goalOut ? -127 : -oppLimit), (goalOut ? oppLimit : 127));
+  	}
+  }
 }
 
 /*void moveGoalIntake(bool in, bool runConcurrently=false, bool checkPos=true) {

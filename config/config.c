@@ -23,7 +23,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define AUTOSTACK_CONFIG false	//using autostacking-focused button config (currently nonfunctional) (TODO: change to shift reverse intake)
 
 	//#subregion auton/skillz options
-#define SKILLZ_MODE      false	//skills
+#define SKILLZ_MODE      true	//skills
 #define SKILLZ_VARIANT   true
 #define PARK_IN_SKILLS   false
 #define CROSS_FIELD_SKLZ false
@@ -38,8 +38,12 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 	//#endsubregion
 
 	//#subregion testing - TODO: change parameter scheme
-#define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
-int debugParameters[] = { 0, -1, -1, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol, liftSensorCol, fbDebugStartCol, fbSensorCol, driveRampCol, turnRampCol, coneSonarCol, goalPotCol }
+#define TESTING 1	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
+int debugParameters[] = { -1,      -1,       -1,    -1,     -1,        0,        -1,        -1,      -1,      -1,    -1,      -1,       -1,      -1 };
+//                      { liftPID, liftSens, fbpid, fbSens, driveRamp, turnRamp, coneSonar, goalPot, liftPow, fbPow, leftPow, rightPow, goalPow, customPow }
+
+#define NUM_DEBUG_PORTS 5
+int debugPorts[NUM_DEBUG_PORTS] = { port1, port2, port3, port6, port9 };
 	//#endsubregion
 //#endregion
 
@@ -105,7 +109,7 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol
 	tMotor fourBarMotors[NUM_FB_MOTORS] = { port10 };
 
 	#define NUM_LEFT_MOTORS 3
-	tMotor leftMotors[NUM_LEFT_MOTORS] = { port1, port3, port2 };
+	tMotor leftMotors[NUM_LEFT_MOTORS] = { port3, port8, port2 };
 
 	#define NUM_RIGHT_MOTORS 2
 	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port6, port9 };
@@ -114,7 +118,7 @@ int debugParameters[] = { 0, -1, -1, -1, -1, -1, -1, -1 };	//{ liftDebugStartCol
 	tMotor goalMotors[NUM_GOAL_MOTORS] = { port2, port9 };
 
 	#define NUM_ROLLER_MOTORS 1
-	tMotor rollerMotors[NUM_ROLLER_MOTORS] = { port8 };
+	tMotor rollerMotors[NUM_ROLLER_MOTORS] = { port1 };
 	//#endsubregion
 #endif
 
@@ -310,12 +314,23 @@ void initializeStructs() {
 	//arrayCopy(groupWaitList, defGroupWaitList, DEF_WAIT_LIST_LEN);
 
   //drive
-	initializeDrive(drive, NUM_LEFT_MOTORS, leftMotors, NUM_RIGHT_MOTORS, rightMotors, true, 40);
+	int skillzAdjustment = (SKILLZ_MODE ? 1 : 0);
+	initializeDrive(drive, NUM_LEFT_MOTORS-skillzAdjustment, leftMotors, NUM_RIGHT_MOTORS-skillzAdjustment, rightMotors, true, 40);
 	attachEncoder(drive, leftEnc[robot], LEFT, L_EncReversed[robot]);
 	attachEncoder(drive, rightEnc[robot], RIGHT, R_EncReversed[robot], 4);
 	attachUltrasonic(drive, frontSonar[robot]);
 	attachGyro(drive, hyro[robot]);
 	initializeGyro(drive, 140, 1858);
+
+	if (SKILLZ_MODE) {
+		driveDefaults.rampConst1 = 25;
+		driveDefaults.rampConst1 = 0.5;
+		driveDefaults.rampConst1 = 70;
+
+		turnDefaults.rampConst1 = 5.75;
+		turnDefaults.rampConst1 = 0.1;
+		turnDefaults.rampConst1 = 20;
+	}
 
 	//lift
   initializeGroup(lift, NUM_LIFT_MOTORS, liftMotors, liftUpBtn, liftDownBtn, l_StillSpeed[robot]);

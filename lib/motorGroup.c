@@ -11,6 +11,7 @@ enum automovementType { NO, TARGET, MANEUVER, DURATION };
 typedef struct {
 	tMotor motors[10];
 	int numMotors;
+	int prevPower;
 	controlType controlType;
 	bool controlActive;
 	TVexJoysticks posInput, negInput; //inputs. NegInput only assigned if using button control
@@ -183,21 +184,21 @@ int setPower(motorGroup *group, int power, bool overrideAbsolutes=false) {	//TOD
 	power = limit(power, (group->hasMinPow ? group->minPow : -128), (group->hasMaxPow ? group->maxPow : 128));
 
 	if (!overrideAbsolutes) {
-		if (group->hasAbsMin && getPosition(group) <= group->absMin && power < -group->maxPowerAtAbs)
+		if (group->hasAbsMin && (getPosition(group) <= group->absMin) && (power < -group->maxPowerAtAbs))
 			power = -group->defPowerAtAbs;
 
-		if (group->hasAbsMax && getPosition(group) >= group->absMax && power > group->maxPowerAtAbs)
+		if (group->hasAbsMax && (getPosition(group) >= group->absMax) && (power > group->maxPowerAtAbs))
 			power = group->defPowerAtAbs;
 	}
 
 	for (int i=0; i<group->numMotors; i++) //set motors
 		motor[group->motors[i]] = power;
 
-	return power;
+	return group->prevPower = power;
 }
 
 int getPower(motorGroup *group) {
-	return group->motors[0];
+	return group->prevPower/*motor[ group->motors[0] ]*/;
 }
 //#endregion
 

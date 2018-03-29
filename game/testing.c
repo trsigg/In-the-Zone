@@ -1,14 +1,37 @@
 #include "lift.c"
 
-void logSensorVals() {
+
+void logData() {
+	//sensors
 	if (debugParameters[1] >= 0)
-		datalogAddValueWithTimeStamp(debugParameters[1], SensorValue[lift.potentiometer]/*getPosition(lift)*/);
+		datalogAddValueWithTimeStamp(debugParameters[1], getPosition(lift));
 
 	if (debugParameters[6] >= 0)
 		datalogAddValueWithTimeStamp(debugParameters[6], SensorValue[coneSonar[robot]]);
 
 	if (debugParameters[7] >= 0)
 		datalogAddValueWithTimeStamp(debugParameters[7], getPosition(goalIntake));
+
+	//motors
+	if (debugParameters[8] >= 0)
+		datalogAddValueWithTimeStamp(debugParameters[8], getPower(lift));
+
+	if (debugParameters[9] >= 0)
+		datalogAddValueWithTimeStamp(debugParameters[9], getPower(fourBar));
+
+	if (debugParameters[10] >= 0)
+		datalogAddValueWithTimeStamp(debugParameters[10], getPower(drive.leftDrive));
+
+	if (debugParameters[11] >= 0)
+		datalogAddValueWithTimeStamp(debugParameters[11], -getPower(drive.rightDrive));
+
+	if (debugParameters[12] >= 0)
+		datalogAddValueWithTimeStamp(debugParameters[12], getPower(goalIntake));
+
+	if (debugParameters[13] >= 0) {
+		for (int i=0; i<NUM_DEBUG_PORTS; i++)
+			datalogAddValueWithTimeStamp(debugParameters[13]+i, motor[ debugPorts[i] ]);
+	}
 }
 
 
@@ -89,7 +112,7 @@ void testPIDs() {
 			}
 		}
 
-		logSensorVals();
+		logData();
 
 		if (abort) {
 			stacking = false;

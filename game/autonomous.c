@@ -18,7 +18,7 @@ task autonUpdateTask() {
 	while (true) {
 		executeManeuvers();
 		updateMotorConfig();
-		logSensorVals();
+		logData();
 		EndTimeSlice();
 	}
 }
@@ -242,12 +242,14 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 	moveLiftToSafePos();
 
 	//pick up side goal
-	if (SKILLZ_MODE)
-		driveAndGoal(23, OUT);
-	else
+	if (SKILLZ_MODE) {
+		driveAndGoal(43, OUT);
+	}
+	else {
 		driveAndGoal((startingFromBar ? 23 : 10), OUT, false, true);
 
-	quadDrive(startingFromBar ? 19 : 20);
+		quadDrive(startingFromBar ? 19 : 20);
+	}
 
 	//position robot facing middle of 10pt bar
 	if (numExtraCones > 0) {
@@ -284,12 +286,12 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 
 		stackNewCone();
 
-		driveStraight(-43 + distAdjustment);
+		driveStraight(-42 + distAdjustment);
 
 		//while (stacking) EndTimeSlice();
 	}
 	else {
-		driveAndGoal(-43 + distAdjustment, IN);
+		driveAndGoal(-42 + distAdjustment, IN);
 
 		maybeAbort();
 	}
@@ -353,7 +355,7 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=fal
 		turn(-90 * direction);
 	}
 	else {
-		turn(150);
+		turn(180);
 		//driveForDuration(1250, 40);	//align to 10pt bar
 	}
 
