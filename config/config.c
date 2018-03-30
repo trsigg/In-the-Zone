@@ -23,13 +23,13 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define AUTOSTACK_CONFIG false	//using autostacking-focused button config (currently nonfunctional) (TODO: change to shift reverse intake)
 
 	//#subregion auton/skillz options
-#define SKILLZ_MODE      true	//skills
+#define SKILLZ_MODE      false	//skills
 #define SKILLZ_VARIANT   true
 #define PARK_IN_SKILLS   false
 #define CROSS_FIELD_SKLZ false
 #define SKILLZ_5PT       false
 #define TURN_CHEAT       true	//general
-#define ABORT_AFTER_15   true
+#define ABORT_AFTER_15   false
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL true
 #define RETRY_GOAL_FAILS true
@@ -38,7 +38,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 	//#endsubregion
 
 	//#subregion testing - TODO: change parameter scheme
-#define TESTING 1	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
+#define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
 int debugParameters[] = { -1,      -1,       -1,    -1,     -1,        0,        -1,        -1,      -1,      -1,    -1,      -1,       -1,      -1 };
 //                      { liftPID, liftSens, fbpid, fbSens, driveRamp, turnRamp, coneSonar, goalPot, liftPow, fbPow, leftPow, rightPow, goalPow, customPow }
 
@@ -212,7 +212,7 @@ int l_StillSpeed[NUM_ROBOTS]     = { 15, 15, 15 };
 int l_AutoSSMargin[NUM_ROBOTS]   = { 50, -1, -1 };
 int fbStillSpeed[NUM_ROBOTS]     = { 15, 20, -1 };
 int fbAutoSSMargin[NUM_ROBOTS]   = { 50, -1, -1 };
-int goalStillSpeed[NUM_ROBOTS]   = { 15, 0,  0 };
+int goalStillSpeed[NUM_ROBOTS]   = { 15, 15, 0 };
 int rollerStillSpeed[NUM_ROBOTS] = { -1, 20, -1 };
 	//#endsubregion
 //#endregion
@@ -224,7 +224,7 @@ float l_offset[NUM_ROBOTS]       = { 3.5,   2.5,  5 };
 float goalToMidDist[NUM_ROBOTS]  = { 17,    17,   17 };	//distance from field diagonal to mid goal
 float lineToGoalDist[NUM_ROBOTS] = { 26,    22,   22 };	//distance from line to mid goal - TODO: wtf?
 float barToLineDist[NUM_ROBOTS]  = { 9,     9,    9 };
-float interConeDist[NUM_ROBOTS]  = { 9,     9,    9 }
+float interConeDist[NUM_ROBOTS]  = { 9,     9.5,   9 }
 //#endregion
 
 //#region cone counts
@@ -346,7 +346,7 @@ void initializeStructs() {
 		configureButtonInput(goalIntake, s_goalOuttakeBtn, s_goalIntakeBtn);
 	else
 		configureButtonInput(goalIntake, c_goalOuttakeBtn, c_goalIntakeBtn);
-	configureBtnDependentStillSpeed(goalIntake, goalStillSpeed[robot]);
+	configureBtnDependentStillSpeed(goalIntake, (SKILLZ_MODE ? goalStillSpeed[robot] : 0));
 	addSensor(goalIntake, goalSensor[robot], goalSensReversed[robot]);
 
 	//top four bar
