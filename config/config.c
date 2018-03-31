@@ -19,11 +19,10 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define DOUBLE_DRIVER    false
 #define SONAR_STACKING   true
 #define LIMIT_GOAL_MVMNT true //if goal won't move unless lifted up
-#define MAX_GOAL_RETRIES 2
 #define AUTOSTACK_CONFIG false	//using autostacking-focused button config (currently nonfunctional) (TODO: change to shift reverse intake)
 
 	//#subregion auton/skillz options
-#define SKILLZ_MODE      false	//skills
+#define SKILLZ_MODE      true	//skills
 #define SKILLZ_VARIANT   true
 #define PARK_IN_SKILLS   false
 #define CROSS_FIELD_SKLZ false
@@ -32,7 +31,8 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define ABORT_AFTER_15   false
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL true
-#define RETRY_GOAL_FAILS true
+#define RETRY_GOAL_FAILS false
+#define MAX_GOAL_RETRIES 2
 #define STACK_SIDE_CONES true
 #define DEFENSIVE_DELAY  2000
 	//#endsubregion
@@ -221,7 +221,7 @@ int rollerStillSpeed[NUM_ROBOTS] = { -1, 20, -1 };
 float liftLen[NUM_ROBOTS]        = { 14.75, 15.5, 15.5 };
 float coneHeight[NUM_ROBOTS]     = { 3.5,   3.25, 3.25 };
 float l_offset[NUM_ROBOTS]       = { 3.5,   2.5,  5 };
-float goalToMidDist[NUM_ROBOTS]  = { 17,    17,   17 };	//distance from field diagonal to mid goal
+float goalToMidDist[NUM_ROBOTS]  = { 17,    12,   17 };	//distance from field diagonal to mid goal
 float lineToGoalDist[NUM_ROBOTS] = { 26,    22,   22 };	//distance from line to mid goal - TODO: wtf?
 float barToLineDist[NUM_ROBOTS]  = { 9,     9,    9 };
 float interConeDist[NUM_ROBOTS]  = { 9,     9.5,   9 }
@@ -320,16 +320,18 @@ void initializeStructs() {
 	attachEncoder(drive, rightEnc[robot], RIGHT, R_EncReversed[robot], 4);
 	attachUltrasonic(drive, frontSonar[robot]);
 	attachGyro(drive, hyro[robot]);
-	initializeGyro(drive, 140, 1858);
+	initializeGyro(drive, 128, 1858);
 
 	if (SKILLZ_MODE) {
-		driveDefaults.rampConst1 = 25;
-		driveDefaults.rampConst1 = 0.5;
-		driveDefaults.rampConst1 = 70;
+		driveDefaults.rampConst1 = 15;
+		driveDefaults.rampConst2 = 0.005;
+		driveDefaults.rampConst3 = 20;
+		driveDefaults.rampConst5 = 300;
 
-		turnDefaults.rampConst1 = 5.75;
-		turnDefaults.rampConst1 = 0.1;
-		turnDefaults.rampConst1 = 20;
+		turnDefaults.rampConst1 = 6;
+		turnDefaults.rampConst2 = 0.05;
+		turnDefaults.rampConst3 = 22;
+		turnDefaults.rampConst5 = 300;
 	}
 
 	//lift

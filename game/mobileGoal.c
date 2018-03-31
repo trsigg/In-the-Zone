@@ -7,7 +7,7 @@ void moveGoalIntake(goalState state, bool runConcurrently=false, int power=127) 
   if (state != currGoalState) {
     currGoalState = state;
     //moveForDuration(goalIntake, 127*(state==IN ? 1 : -1), (state==IN ? GOAL_INTAKE_DURATION : GOAL_OUTTAKE_DURATION), runConcurrently);  //temp
-    createManeuver(goalIntake, goalPos[state], runConcurrently, power, goalStillSpeed[robot]*(state==OUT ? -1 : 1));
+    createManeuver(goalIntake, goalPos[state], runConcurrently, power, goalIntake.stillSpeed*(state==OUT ? -1 : 1));
   }
 }
 

@@ -14,11 +14,11 @@ void pre_auton() {
 		bStopTasksBetweenModes = true;
 	#endif
 
-	initializeStructs();
-
 	initializeAutoMovement();
 	driveDefaults.debugStartCol = debugParameters[4];
 	turnDefaults.debugStartCol = debugParameters[5];
+
+	initializeStructs();
 
 	#ifdef HAS_SPEAKER
 		initializeAudio();

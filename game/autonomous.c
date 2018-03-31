@@ -243,7 +243,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 
 	//pick up side goal
 	if (SKILLZ_MODE) {
-		driveAndGoal(43, OUT);
+		driveAndGoal(50, OUT);
 	}
 	else {
 		driveAndGoal((startingFromBar ? 23 : 10), OUT, false, true);
@@ -317,7 +317,11 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			turn(-direction * 45);	//turnDriveTurn?
 		}
 
-		driveStraight(middle||zone==TWENTY ? -22 : -7, true);
+		if (SKILLZ_MODE)
+			driveStraight(-25);
+		else
+			driveStraight(middle||zone==TWENTY ? -22 : -7, true);
+
 		while (driveData.totalDist < 5) EndTimeSlice();
 		if (numExtraCones == 0) stackNewCone();
 		while (driveData.isDriving) EndTimeSlice();
@@ -399,14 +403,14 @@ void crossFieldGoal(bool twentyPt, bool neer, bool middle=false, bool clearCones
 void backUpGoal(bool startingFromBar=false, bool intakeFully=true, bool reversed=false) {
 	int direction = (reversed ? -1 : 1);
 
-	moveGoalIntake(IN, true);
+	moveGoalIntake(MID, true);
 	accuDrive(-lineToGoalDist[robot] - (startingFromBar ? 8 : 6));
 	waitForMovementToFinish(goalIntake);
-	turn(-direction * (startingFromBar ? 85 : 90));
+	turn(-direction * (startingFromBar ? 90 : 90));
 	moveGoalIntake(OUT);
 	driveStraight(startingFromBar ? 21 : 27);
 	driveAndGoal(startingFromBar ? 10 : 8, IN);
-	turn(direction * (startingFromBar ? 90 : 95));
+	turn(direction * (startingFromBar ? 90 : 90));
 	driveStraight(barToLineDist[robot] + lineToGoalDist[robot]);
 	scoreGoal(false, false, intakeFully);
 }
@@ -417,10 +421,10 @@ task skillz() {
 	turnDefaults.reversed = false;
 
 	if (SKILLZ_VARIANT) {
-		sideGoal(TWENTY, false, 0, false, true, true, false);
+		sideGoal(TWENTY, false, 0, false, true, false, false);
 		//sideGoal();	//near left side goal to twenty
 
-		turnDriveTurn(90, goalToMidDist[robot], 90);
+		turnDriveTurn(100, goalToMidDist[robot], 100);
 
 		middleGoal(true, false);	//near left middle goal to ten
 
