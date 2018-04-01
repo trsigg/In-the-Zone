@@ -204,14 +204,14 @@ void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//b
 		moveGoalIntake(OUT, true);
 		alignToBar();
 		waitForMovementToFinish(goalIntake);
-		driveStraight(-9);	//back out
+		driveStraight(-7);	//back out
 	}
 
 	moveGoalIntake(intakeFully ? IN : MID);
 	//wait1Msec(200);	//while (getPosition(goalIntake) < goalPos[MID]) EndTimeSlice();
 
 	if (twentyPt) {
-		driveStraight(align ? -11 : -15);	//back out
+		driveStraight(align ? -11 : -9);	//back out
 		/*if (align)
 			driveStraight(-15);
 		else
@@ -308,7 +308,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 	}
 	else {	//ten or twenty
 		if (TURN_CHEAT) {
-			turn(-direction * 45, true/*, false, 40, 127, -30, 250, 20, false*/);
+			turn(-direction * 45, true, 6.25, 0.2/*, 40, 127, -20, 250, 20, false*/);
 			long timer = resetTimer();
 			while (turnData.isTurning && time(timer) < 1000) EndTimeSlice();
 			turnData.isTurning = false;
@@ -317,10 +317,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			turn(-direction * 45);	//turnDriveTurn?
 		}
 
-		if (SKILLZ_MODE)
-			driveStraight(-25);
-		else
-			driveStraight(middle||zone==TWENTY ? -22 : -7, true);
+		driveStraight(middle||zone==TWENTY ? -20 : -7, true);
 
 		while (driveData.totalDist < 5) EndTimeSlice();
 		if (numExtraCones == 0) stackNewCone();
@@ -340,13 +337,10 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=fal
 
 	moveLiftToSafePos();
 
-	moveGoalIntake(OUT, true);	//TODO: check if intake is out?
-	if (twentyPt && middle) driveStraight(barToLineDist[robot]);
-	waitForMovementToFinish(goalIntake);
+	if (getPosition(goalIntake) < goalPos[OUT]) moveGoalIntake(OUT, true);	//TODO: check if intake is out?
+	driveStraight(barToLineDist[robot] + lineToGoalDist[robot]);
 
-	driveStraight(lineToGoalDist[robot] + 9);
-
-	driveAndGoal(-25, IN, false, true);
+	driveAndGoal(-22, IN, false, true);
 
 	if (twentyPt) {	//preload
 		stackNewCone();
@@ -359,7 +353,7 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=fal
 		turn(-90 * direction);
 	}
 	else {
-		turn(180);
+		turn(-180);
 		//driveForDuration(1250, 40);	//align to 10pt bar
 	}
 
@@ -377,15 +371,15 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=fal
 void crossFieldGoal(bool twentyPt, bool neer, bool middle=false, bool clearCones=false, bool align=false) {	//aligned to tape -> aligned with tape (other side)
 	int nearOffset = neer ? 50 : 0;	//meant to be near. It doesn't work if you spell it correctly. I'm serious.
 
-	moveGoalIntake(OUT/*, true*/);
-	if (!neer) driveForDuration(500, -45, 0);	//alignToBar(false, 1500);
-	waitForMovementToFinish(goalIntake);
-	wait1Msec(50);
+	moveGoalIntake(OUT, true);
+	//if (!neer) driveForDuration(1000, -50, 0);	//alignToBar(false, 1500);
+	/*waitForMovementToFinish(goalIntake);
+	wait1Msec(50);*/
 
-	driveStraight(75 - nearOffset);
+	driveStraight(55 - nearOffset);
 
 	if (twentyPt || middle) {
-		driveAndGoal(40+nearOffset, IN);
+		driveAndGoal(40+nearOffset, MID);
 
 		turn(-90);
 		driveStraight(goalToMidDist[robot]-2);
@@ -394,23 +388,23 @@ void crossFieldGoal(bool twentyPt, bool neer, bool middle=false, bool clearCones
 		if (clearCones) moveGoalIntake(IN);
 	}
 	else {
-		driveAndGoal(31+nearOffset, IN);
+		driveAndGoal(31+nearOffset, MID);
 	}
 
 	scoreGoal(twentyPt, align, false);
 }
 
-void backUpGoal(bool startingFromBar=false, bool intakeFully=true, bool reversed=false) {
+void backUpGoal(bool redSide, bool intakeFully=false, bool reversed=false) {
 	int direction = (reversed ? -1 : 1);
 
 	moveGoalIntake(MID, true);
-	accuDrive(-lineToGoalDist[robot] - (startingFromBar ? 8 : 6));
+	driveStraight(-lineToGoalDist[robot] - (redSide ? 8 : 10));	//accuDrive?
 	waitForMovementToFinish(goalIntake);
-	turn(-direction * (startingFromBar ? 90 : 90));
+	turn(-direction * (redSide ? 92 : 90));
 	moveGoalIntake(OUT);
-	driveStraight(startingFromBar ? 21 : 27);
-	driveAndGoal(startingFromBar ? 10 : 8, IN);
-	turn(direction * (startingFromBar ? 90 : 90));
+	driveStraight(redSide ? 23 : 20);
+	driveAndGoal(redSide ? 5 : 5, IN);
+	turn(direction * (redSide ? 100 : 90));
 	driveStraight(barToLineDist[robot] + lineToGoalDist[robot]);
 	scoreGoal(false, false, intakeFully);
 }
@@ -420,78 +414,34 @@ void backUpGoal(bool startingFromBar=false, bool intakeFully=true, bool reversed
 task skillz() {
 	turnDefaults.reversed = false;
 
-	if (SKILLZ_VARIANT) {
-		sideGoal(TWENTY, false, 0, false, true, false, false);
-		//sideGoal();	//near left side goal to twenty
+	sideGoal(TWENTY, false, 0, false, true, false, false);	//near left side goal to twenty
 
-		turnDriveTurn(100, goalToMidDist[robot], 100);
+	moveGoalIntake(OUT, true);
+	turnDriveTurn(90, goalToMidDist[robot], 90);	//near left middle goal to ten
 
-		middleGoal(true, false);	//near left middle goal to ten
+	middleGoal(true, false);
 
-		backUpGoal(); //near right middle goal
-	}
-	else {
-		middleGoal(true, true, true);	//near left middle goal to 20Pt zone
-
-		turnDriveTurn(-90, goalToMidDist[robot]-0.5, -90);	//TODO: turnToLine() (& similar below)
-		moveGoalIntake(OUT);
-		//alignToBar(false, 1000);
-
-		middleGoal(false, false, false, false);	//near right middle goal to right 10pt
-	}
+	backUpGoal(true); //near right middle goal
 
 	turn(-175);
 
 	crossFieldGoal(CROSS_FIELD_SKLZ, false);	//far right middle goal to 10pt
 
-	//far left middle goal to...
-	if (!SKILLZ_VARIANT) {
-		turnDriveTurn(-90, 2*goalToMidDist[robot]-5, -90);
-		moveGoalIntake(OUT);
-		//alignToBar(false, 1500);
-	}
+	//far left middle goal to far right
+	backUpGoal(false);
 
-	if (CROSS_FIELD_SKLZ) {	//...near left
-		crossFieldGoal(false, true);
+	//far left side goal to middle ten
+	turn(-130);
+	driveAndGoal(50, OUT);
+	driveAndGoal(-50, IN);
+	turn(30);
+	driveStraight(-19);
+	turn(90);
+	scoreGoal(true, false);
 
-		//temp (repetitive)
-		turnDriveTurn(-90, 18, -45);
-
-		sideGoal((SKILLZ_5PT ? FIVE : TEN), false, 0, true, false);	//far left side goal to left 10pt
-	}
-	else {	//...far left (or center?)
-		if (SKILLZ_VARIANT) {
-			backUpGoal(true, false);
-
-			turn(-125);
-			//sideGoal(TWENTY, false, 0, true);
-			/*driveAndGoal(20, OUT);
-			quadDrive(30);*/
-			driveAndGoal(50, OUT);
-			driveAndGoal(-50, IN);
-			turn(30);
-			driveStraight(-19);
-			turn(90);
-			scoreGoal(true);
-		}
-		else {
-			middleGoal(false, true/*, !PARK_IN_SKILLS*/);	//temp
-		}
-
-		if (PARK_IN_SKILLS) {
-			turn(-140);
-			driveForDuration(2000);
-		}
-		else {
-			turnDriveTurn(-90, 18, -45);
-
-			sideGoal((SKILLZ_5PT ? FIVE : TEN), false, 0, true, false);	//far left side goal to left 10pt
-
-			turn(160);
-			moveGoalIntake(IN, true);
-			driveForDuration(2000);
-		}
-	}
+	//far right side goal to middle ten
+	turnDriveTurn(90, 23, 45);
+	sideGoal(TEN, true, 0, false, false, false, true)
 
 	autonDebug[0] = time(autonTimer);
 }

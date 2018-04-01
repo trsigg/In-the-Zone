@@ -36,12 +36,12 @@ void logData() {
 
 
 //#region PID testing
-#define NUM_INPUTS 9
+#define NUM_INPUTS 10
 long testingTimer;
-int debugOut;
-int targets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };	/*0-lift, 1-driveStraight, 2-turn, 3-lift PID mode (up=1),
+int debugOut[2];
+int targets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };	/*0-lift, 1-driveStraight, 2-turn, 3-lift PID mode (up=1),
                                                             4-goalIntake maneuver target, 5-stack nth cone, 6-move fb (in=1),
-																														7-gyro scale, 8-drive maxAcc100ms*/
+																														7-gyro scale, 8-gyro bias, 8-drive maxAcc100ms*/
 bool waite = true; //TODO: fix for lift maneuvers
 bool abort = false;
 bool end = false;
@@ -89,6 +89,9 @@ void handlePIDinput(int index) {
 			SensorScale[ hyro[robot] ] = input;
 			break;
 		case 8:
+			SensorBias[ hyro[robot] ] = input;
+			break;
+		case 9:
 			configureRamping(drive, input);
 			break;
 	}
@@ -100,10 +103,11 @@ void handlePIDinput(int index) {
 }
 
 void testPIDs() {
-	int prevTargets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };	//TODO: fill automatically
+	int prevTargets[NUM_INPUTS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };	//TODO: fill automatically
 
 	while (!end) {
-		debugOut = SensorScale[ hyro[robot] ];
+		debugOut[0] = SensorScale[ hyro[robot] ];
+		debugOut[1] = SensorBias[ hyro[robot] ];
 
 		for (int i=0; i<NUM_INPUTS; i++) {
 			if (prevTargets[i] != targets[i]) {

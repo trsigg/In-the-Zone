@@ -28,7 +28,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define CROSS_FIELD_SKLZ false
 #define SKILLZ_5PT       false
 #define TURN_CHEAT       true	//general
-#define ABORT_AFTER_15   false
+#define ABORT_AFTER_15   true
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL true
 #define RETRY_GOAL_FAILS false
@@ -98,7 +98,7 @@ int debugPorts[NUM_DEBUG_PORTS] = { port1, port2, port3, port6, port9 };
 	int fbPos[] = { 700,   2400 };
 
 	enum goalState  { OUT,  MID,  IN };
-	int goalPos[] = { 3200, 2675, 1015 };
+	int goalPos[] = { 3200, 2750, 1050 };
 	//#endsubregion
 
 	//#subregion motors
@@ -173,7 +173,7 @@ bool R_EncReversed[NUM_ROBOTS]    = { true,  false, false };
 	//#endsubregion
 
 	//#subregion ports
-tSensors hyro[NUM_ROBOTS]       = { in1,   in3,   in3 };
+tSensors hyro[NUM_ROBOTS]       = { in1,   in8,   in3 };
 tSensors liftSensor[NUM_ROBOTS] = { in4,   in1,   in1 };
 tSensors goalSensor[NUM_ROBOTS] = { in5,   in6,   in6 };
 tSensors fbSensor[NUM_ROBOTS]   = { -1,    in7,   -1 };
@@ -221,8 +221,8 @@ int rollerStillSpeed[NUM_ROBOTS] = { -1, 20, -1 };
 float liftLen[NUM_ROBOTS]        = { 14.75, 15.5, 15.5 };
 float coneHeight[NUM_ROBOTS]     = { 3.5,   3.25, 3.25 };
 float l_offset[NUM_ROBOTS]       = { 3.5,   2.5,  5 };
-float goalToMidDist[NUM_ROBOTS]  = { 17,    12,   17 };	//distance from field diagonal to mid goal
-float lineToGoalDist[NUM_ROBOTS] = { 26,    22,   22 };	//distance from line to mid goal - TODO: wtf?
+float goalToMidDist[NUM_ROBOTS]  = { 17,    10,   17 };	//distance from field diagonal to mid goal
+float lineToGoalDist[NUM_ROBOTS] = { 26,    10,   22 };	//distance from line to mid goal - TODO: wtf?
 float barToLineDist[NUM_ROBOTS]  = { 9,     9,    9 };
 float interConeDist[NUM_ROBOTS]  = { 9,     9.5,   9 }
 //#endregion
@@ -315,23 +315,23 @@ void initializeStructs() {
 
   //drive
 	int skillzAdjustment = (SKILLZ_MODE ? 1 : 0);
-	initializeDrive(drive, NUM_LEFT_MOTORS-skillzAdjustment, leftMotors, NUM_RIGHT_MOTORS-skillzAdjustment, rightMotors, true, 40);
+	initializeDrive(drive, NUM_LEFT_MOTORS-skillzAdjustment, leftMotors, NUM_RIGHT_MOTORS-skillzAdjustment, rightMotors, true, 30);
 	attachEncoder(drive, leftEnc[robot], LEFT, L_EncReversed[robot]);
 	attachEncoder(drive, rightEnc[robot], RIGHT, R_EncReversed[robot], 4);
 	attachUltrasonic(drive, frontSonar[robot]);
 	attachGyro(drive, hyro[robot]);
-	initializeGyro(drive, 128, 1858);
+	initializeGyro(drive, 139, 1863);
 
 	if (SKILLZ_MODE) {
 		driveDefaults.rampConst1 = 15;
 		driveDefaults.rampConst2 = 0.005;
 		driveDefaults.rampConst3 = 20;
-		driveDefaults.rampConst5 = 300;
+		driveDefaults.rampConst5 = 100;
 
 		turnDefaults.rampConst1 = 6;
 		turnDefaults.rampConst2 = 0.05;
 		turnDefaults.rampConst3 = 22;
-		turnDefaults.rampConst5 = 300;
+		turnDefaults.rampConst5 = 100;
 	}
 
 	//lift

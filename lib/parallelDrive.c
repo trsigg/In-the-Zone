@@ -121,8 +121,9 @@ void attachGyro(parallel_drive *drive, tSensors gyro, bool reversed=true, gyroCo
 
 void initializeGyro(parallel_drive *drive, int scale, int bias) {
 	SensorType[ drive->gyro ] = sensorNone;
-	wait1Msec(2000);
 	SensorType[ drive->gyro ] = sensorGyro;
+
+	wait1Msec(2000);
 
 	SensorScale[ drive->gyro ] = scale;
 	SensorBias[ drive->gyro ] = bias;
