@@ -30,7 +30,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define TURN_CHEAT       true	//general
 #define ABORT_AFTER_15   true
 #define ANTI_MARK        1
-#define ABORT_IF_NO_GOAL true
+#define ABORT_IF_NO_GOAL false
 #define RETRY_GOAL_FAILS false
 #define MAX_GOAL_RETRIES 2
 #define STACK_SIDE_CONES true
@@ -315,7 +315,7 @@ void initializeStructs() {
 
   //drive
 	int skillzAdjustment = (SKILLZ_MODE ? 1 : 0);
-	initializeDrive(drive, NUM_LEFT_MOTORS-skillzAdjustment, leftMotors, NUM_RIGHT_MOTORS-skillzAdjustment, rightMotors, true, 30);
+	initializeDrive(drive, NUM_LEFT_MOTORS-skillzAdjustment, leftMotors, NUM_RIGHT_MOTORS-skillzAdjustment, rightMotors, true, (SKILLZ_MODE ? 30 : 40));
 	attachEncoder(drive, leftEnc[robot], LEFT, L_EncReversed[robot]);
 	attachEncoder(drive, rightEnc[robot], RIGHT, R_EncReversed[robot], 4);
 	attachUltrasonic(drive, frontSonar[robot]);
