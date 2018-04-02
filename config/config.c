@@ -22,7 +22,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define AUTOSTACK_CONFIG false	//using autostacking-focused button config (currently nonfunctional) (TODO: change to shift reverse intake)
 
 	//#subregion auton/skillz options
-#define SKILLZ_MODE      true	//skills
+#define SKILLZ_MODE      false	//skills
 #define SKILLZ_VARIANT   true
 #define PARK_IN_SKILLS   false
 #define CROSS_FIELD_SKLZ false
@@ -39,7 +39,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 
 	//#subregion testing - TODO: change parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
-int debugParameters[] = { -1,      -1,       -1,    -1,     -1,        0,        -1,        -1,      -1,      -1,    -1,      -1,       -1,      -1 };
+int debugParameters[] = { -1,      -1,       -1,    -1,     -1,        -1,       0,         -1,      1,       -1,    -1,      -1,       -1,      -1 };
 //                      { liftPID, liftSens, fbpid, fbSens, driveRamp, turnRamp, coneSonar, goalPot, liftPow, fbPow, leftPow, rightPow, goalPow, customPow }
 
 #define NUM_DEBUG_PORTS 5
@@ -94,8 +94,8 @@ int debugPorts[NUM_DEBUG_PORTS] = { port1, port2, port3, port6, port9 };
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
 	int liftPos[] = { 1300,  1320,    1555,   1320,       2000,   1915,   3010 };
 
-	enum fbState  { FB_UP, FB_DOWN };
-	int fbPos[] = { 700,   2400 };
+	enum fbState  { FB_UP, FB_SAFE, FB_DOWN };
+	int fbPos[] = { 700,   1590,    2400 };
 
 	enum goalState  { OUT,  MID,  IN };
 	int goalPos[] = { 3200, 2750, 1050 };
@@ -198,7 +198,7 @@ int goalLineThresh[NUM_ROBOTS]  = { -1,   2990, 2960 };
 int l_lineThresh[NUM_ROBOTS]    = { 3060, -1,   -1 };
 int r_lineThresh[NUM_ROBOTS]    = { 2960, -1,   -1 };
 int b_lineThresh[NUM_ROBOTS]    = { 2870, -1,   -1 };
-int coneSonarThresh[NUM_ROBOTS] = { 1000, 1500, 2500 };
+int coneSonarThresh[NUM_ROBOTS] = { 1000, 1700, 2500 };
 float liftGearRatio[NUM_ROBOTS] = { 5,    5,    5 };	//gear ratio between lift bar angle and sensors
 
 #define RAD_TO_POT 880.1      //conversion factor between radians and potentiometer values

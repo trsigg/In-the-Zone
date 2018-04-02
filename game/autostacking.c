@@ -20,6 +20,7 @@ void liftDown() {
 
 	#ifdef ROLLER
 		setToStillSpeed(roller);
+		//while (getPosition(fourBar) < fbPos[FB_SAFE]) EndTimeSlice();
 	#endif
 
 	#ifdef PNEUMATIC
@@ -46,12 +47,12 @@ task sonarAutoStacking() {
 
 		//lift down
 		//liftUntilSonar(false);
-		moveForDuration(lift, -60, 150, false);
+		moveForDuration(lift, -127, 150, false);
 
 		//outtake
 		outtake();
 		//moveForDuration(lift, 127, 250, false);
-		liftUntilSonar(true);	//TODO: or above where it dropped cone off (use dangerPos mechanism?)
+		liftUntilSonar(true, 75);	//TODO: or above where it dropped cone off (use dangerPos mechanism?)
 
 		//lift down
 		liftDown();

@@ -54,7 +54,7 @@ void setLiftState(liftState state, bool useManeuver=false) {
 		setLiftTargetAndPID(liftPos[state]);
 }
 
-bool liftUntilSonar(bool up, int timeout=10, int power=127, int lowPower=60, int quitMargin=75) {	//if obstructed is true, will wait until lift is obstructed
+bool liftUntilSonar(bool up, int timeout=30, int power=127, int lowPower=60, int quitMargin=75) {	//if obstructed is true, will wait until lift is obstructed
 	stopAutomovement(lift);
 	power = abs(power) * (up ? 1 : -1);
 	lowPower = abs(lowPower) * (up ? 1 : -1);
