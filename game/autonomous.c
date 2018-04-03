@@ -168,8 +168,12 @@ void quadDrive(int dist, bool runAsTask=false) {
 }
 
 void accuDrive(int dist, bool runAsTask=false) {
-	driveStraight(dist, runAsTask, 10, 0.1, 50);
+	driveStraight(dist, runAsTask, 10, 0.1, 50, 0.07, 150);
 }
+
+/*void accuTurn(int dist, bool runAsTask=false) {
+	turn(dist, runAsTask, driveDefaults.rampConst1, driveDefaults.rampConst2, driveDefaults.rampConst3, 0.05, 500);
+}*/
 
 void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp=false, int intakeDelay=500) {
 	moveLiftToSafePos();
@@ -242,7 +246,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 	moveLiftToSafePos();
 
 	//pick up side goal
-	if (SKILLZ_MODE) {
+	if (SKILLZ_MODE && zone==TWENTY) {
 		driveAndGoal(50, OUT);
 	}
 	else {
@@ -291,7 +295,10 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		//while (stacking) EndTimeSlice();
 	}
 	else {
-		driveAndGoal(-42 + distAdjustment, IN);
+		if (SKILLZ_MODE)
+			driveAndGoal(-43, IN);
+		else
+			driveAndGoal(-42 + distAdjustment, IN);
 
 		maybeAbort();
 	}
@@ -307,23 +314,25 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		if (intakeFully) moveGoalIntake(IN);
 	}
 	else {	//ten or twenty
-		if (TURN_CHEAT) {
+		if (LONG_TURN) {
+			turn(direction * 135);
+
+			accuDrive((middle||zone==TWENTY ? 26 : 5, true);
+		}
+		else {
 			turn(-direction * 45, true, 6.25, 0.2/*, 40, 127, -20, 250, 20, false*/);
 			long timer = resetTimer();
 			while (turnData.isTurning && time(timer) < 1000) EndTimeSlice();
 			turnData.isTurning = false;
-		}
-		else {
-			turn(-direction * 45);	//turnDriveTurn?
+
+			driveStraight(middle||zone==TWENTY ? -22 : -7, true);
 		}
 
-		driveStraight(middle||zone==TWENTY ? -22 : -7, true);
-
-		while (driveData.totalDist < 5) EndTimeSlice();
+		while (!LONG_TURN && driveData.totalDist<5) EndTimeSlice();
 		if (numExtraCones == 0) stackNewCone();
 		while (driveData.isDriving) EndTimeSlice();
 
-		turn(-direction * 90);
+		turn((LONG_TURN ? 1 : -1) * direction * 90);	//accu
 
 		while (stacking) EndTimeSlice();
 		liftToConeSafePos();
@@ -340,7 +349,7 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=fal
 	if (getPosition(goalIntake) < goalPos[OUT]) moveGoalIntake(OUT, true);	//TODO: check if intake is out?
 	driveStraight(barToLineDist[robot] + lineToGoalDist[robot]);
 
-	driveAndGoal(-22, IN, false, true);
+	driveAndGoal(-15, IN, false, true);
 
 	if (twentyPt) {	//preload
 		stackNewCone();
@@ -353,7 +362,7 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=fal
 		turn(-90 * direction);
 	}
 	else {
-		turn(-180);
+		turn(-185);
 		//driveForDuration(1250, 40);	//align to 10pt bar
 	}
 
@@ -372,11 +381,12 @@ void crossFieldGoal(bool twentyPt, bool neer, bool middle=false, bool clearCones
 	int nearOffset = neer ? 50 : 0;	//meant to be near. It doesn't work if you spell it correctly. I'm serious.
 
 	moveGoalIntake(OUT, true);
-	//if (!neer) driveForDuration(1000, -50, 0);	//alignToBar(false, 1500);
-	/*waitForMovementToFinish(goalIntake);
-	wait1Msec(50);*/
+	if (RECKON_IN_SKILLZ) {
+		driveForDuration(1400, -50, 0);	//alignToBar(false, 1500);
+		wait1Msec(250);
+	}
 
-	driveStraight(55 - nearOffset);
+	driveStraight(75 - nearOffset - (RECKON_IN_SKILLZ ? 0 : 20));
 
 	if (twentyPt || middle) {
 		driveAndGoal(40+nearOffset, MID);
@@ -398,14 +408,14 @@ void backUpGoal(bool redSide, bool intakeFully=false, bool reversed=false) {
 	int direction = (reversed ? -1 : 1);
 
 	moveGoalIntake(MID, true);
-	driveStraight(-lineToGoalDist[robot] - (redSide ? 8 : 10));	//accuDrive?
+	driveStraight(-lineToGoalDist[robot] - (redSide ? 11 : 16));	//accuDrive?
 	waitForMovementToFinish(goalIntake);
-	turn(-direction * (redSide ? 92 : 90));
+	turn(-direction * (redSide ? 95 : 95));	//accu
 	moveGoalIntake(OUT);
-	driveStraight(redSide ? 23 : 20);
-	driveAndGoal(redSide ? 5 : 5, IN);
-	turn(direction * (redSide ? 100 : 90));
-	driveStraight(barToLineDist[robot] + lineToGoalDist[robot]);
+	driveStraight(redSide ? 30 : 24);
+	driveAndGoal(redSide ? 11 : 6, IN);
+	turn(direction * (redSide ? 105 : 100));	//accu
+	driveStraight(barToLineDist[robot] + lineToGoalDist[robot] + 8);
 	scoreGoal(false, false, intakeFully);
 }
 //#endregion
@@ -422,26 +432,28 @@ task skillz() {
 	middleGoal(true, false);
 
 	backUpGoal(true); //near right middle goal
+	createManeuver(goalIntake, goalPos[MID]-300, true);
 
-	turn(-175);
+	//moveGoalIntake(OUT, true);
+	turn(-180, false, 6, 0.02, 22, 0.05, 500);
 
-	crossFieldGoal(CROSS_FIELD_SKLZ, false);	//far right middle goal to 10pt
+	crossFieldGoal(false, false);	//far right middle goal to 10pt
 
 	//far left middle goal to far right
 	backUpGoal(false);
 
 	//far left side goal to middle ten
 	turn(-130);
-	driveAndGoal(50, OUT);
+	driveAndGoal(40, OUT);
 	driveAndGoal(-50, IN);
 	turn(30);
-	driveStraight(-19);
+	driveStraight(-12);
 	turn(90);
 	scoreGoal(true, false);
 
 	//far right side goal to middle ten
-	turnDriveTurn(90, 23, 45);
-	sideGoal(TEN, true, 0, false, false, false, true)
+	turnDriveTurn(90, 20, 45);
+	sideGoal(TEN, true, 0, false, false, false, true);
 
 	autonDebug[0] = time(autonTimer);
 }
