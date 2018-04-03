@@ -196,7 +196,7 @@ void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp
 //#endregion
 
 //#region routine portions
-void scoreGoal(bool twentyPt=true, bool align=true, bool intakeFully=true) {	//behind 10pt bar -> aligned with tape (approx)
+void scoreGoal(bool twentyPt, bool align=true, bool intakeFully=true) {	//behind 10pt bar -> aligned with tape (approx)
 	if (twentyPt) {
 		moveGoalIntake(OUT, true);
 		driveForDuration(1000, 90, 20);	//drive over bar
@@ -320,7 +320,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			if (SKILLZ_MODE)
 				accuDrive(26);
 			else
-				driveStraight((middle||zone==TWENTY ? 15 : 5, true);
+				driveStraight((middle||zone==TWENTY ? 15 : 5), true);
 		}
 		else {
 			turn(-direction * 45, true, 6.25, 0.2/*, 40, 127, -20, 250, 20, false*/);
@@ -461,30 +461,31 @@ task skillz() {
 	autonDebug[0] = time(autonTimer);
 }
 
-task antiMark() {
-	if (ANTI_MARK == 1) {
-		wait1Msec(DEFENSIVE_DELAY);
-		driveStraight(13);
-		turn(45);
-		driveStraight(75);
-		driveAndGoal(-40, OUT, false, false, 1250);
-		turn(30);
-		driveStraight(20);
-		moveGoalIntake(IN, false);
-		stackNewCone(false, false);
-	}
-	else {
-		moveFourBar(true);
-		setLiftTargetAndPID(2500);
-		waitForLiftingToFinish();
+void counterDefensive(bool defensive) {
+	if (defensive) wait1Msec(DEFENSIVE_DELAY);
+	driveStraight(13);
+	turn(45);
+	driveStraight(75);
+	driveAndGoal(-40, OUT, false, false, 1250);
+	turn(30);
+	driveStraight(20);
+	driveAndGoal(-28, IN, true);
+	turn(140);
+	driveStraight(40);
+	scoreGoal(false);
+}
 
-		driveStraight(15);
-		stopAutomovement(lift);
-		setPower(lift, -15);
-		wait1Msec(750);
-		driveForDuration(500);
-		setLiftTargetAndPID(2500);
-	}
+void stationaryScore() {
+	moveFourBar(true);
+	setLiftTargetAndPID(2500);
+	waitForLiftingToFinish();
+
+	driveStraight(15);
+	stopAutomovement(lift);
+	setPower(lift, -15);
+	wait1Msec(750);
+	driveForDuration(500);
+	setLiftTargetAndPID(2500);
 }
 //#endregion
 
@@ -493,7 +494,6 @@ task selfDestruct() {
 	//stopAllTasks();
 	stopTask(autonomous);
 	stopTask(skillz);
-	stopTask(antiMark);
 	stopAllMotors();
 }
 
@@ -556,10 +556,9 @@ task autonomous() {
 		//}
 	}
 	else if (modePos < 3820) {	//defensive
-		if (variant)
-			startTask(antiMark);
-		else
-			driveForDuration(2000, 127);
+		counterDefensive(variant);
+	} else if (variant) {
+		driveForDuration(2000, 127);
 	}
 
 	autonDebug[0] = time(autonTimer);

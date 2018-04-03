@@ -40,7 +40,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 
 	//#subregion testing - TODO: change parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
-int debugParameters[] = { -1,      -1,       -1,    -1,     -1,        0,       -1,        -1,      -1       -1,    -1,      -1,       -1,      -1 };
+int debugParameters[] = { -1,      -1,       -1,    -1,     -1,        0,       -1,        -1,      -1,       -1,    -1,      -1,       -1,      -1 };
 //                      { liftPID, liftSens, fbpid, fbSens, driveRamp, turnRamp, coneSonar, goalPot, liftPow, fbPow, leftPow, rightPow, goalPow, customPow }
 
 #define NUM_DEBUG_PORTS 5
@@ -225,7 +225,7 @@ float l_offset[NUM_ROBOTS]       = { 3.5,   2.5,  5 };
 float goalToMidDist[NUM_ROBOTS]  = { 17,    12.5, 17 };	//distance from field diagonal to mid goal
 float lineToGoalDist[NUM_ROBOTS] = { 26,    10,   22 };	//distance from line to mid goal - TODO: wtf?
 float barToLineDist[NUM_ROBOTS]  = { 9,     9,    9 };
-float interConeDist[NUM_ROBOTS]  = { 9,     9.5,   9 }
+float interConeDist[NUM_ROBOTS]  = { 9,     9.5,  9 };
 //#endregion
 
 //#region cone counts
@@ -327,13 +327,13 @@ void initializeStructs() {
 		driveDefaults.rampConst1 = 15;
 		driveDefaults.rampConst2 = 0.005;
 		driveDefaults.rampConst3 = 20;
-		driveDefaults.rampConst4 = 0.07
+		driveDefaults.rampConst4 = 0.07;
 		driveDefaults.rampConst5 = 150;
 
 		turnDefaults.rampConst1 = 6;
 		turnDefaults.rampConst2 = 0.02;
 		turnDefaults.rampConst3 = 20;
-		turnDefaults.rampConst4 = 0.05
+		turnDefaults.rampConst4 = 0.05;
 		turnDefaults.rampConst5 = 150;
 	}
 
