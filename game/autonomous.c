@@ -317,7 +317,10 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		if (LONG_TURN) {
 			turn(direction * 135);
 
-			accuDrive((middle||zone==TWENTY ? 26 : 5, true);
+			if (SKILLZ_MODE)
+				accuDrive(26);
+			else
+				driveStraight((middle||zone==TWENTY ? 15 : 5, true);
 		}
 		else {
 			turn(-direction * 45, true, 6.25, 0.2/*, 40, 127, -20, 250, 20, false*/);

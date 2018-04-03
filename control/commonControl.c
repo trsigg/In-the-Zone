@@ -17,14 +17,27 @@ bool movingToMax = false;
 
 
 void handleGoalIntakeInput() {
-	int goalPower = takeInput(goalIntake, false);
-
-	if (abs(goalPower)<=goalStillSpeed[robot] || getPosition(lift)>=liftPos[L_SAFE] || !LIMIT_GOAL_MVMNT) {
-		setPower(goalIntake, goalPower);
-		updateMotorConfig(goalPower);
+	if (SKILLZ_MODE) {
+		takeInput(goalIntake);
 	}
 	else {
-		moveLiftToSafePos(false, false);
+		int goalPower = takeInput(goalIntake, false);
+
+		if (abs(goalPower)<=goalIntake.stillSpeed || getPosition(lift)>=liftPos[L_SAFE] || !LIMIT_GOAL_MVMNT) {
+			updateMotorConfig(goalPower);
+
+			if (goalPower != 0) {
+				setPower(goalIntake, goalPower);
+				lift.stillSpeed = 0;
+			}
+			else {
+				lift.stillSpeed = l_StillSpeed[robot];
+			}
+		}
+		else {
+			moveLiftToSafePos(false, false);
+			lift.stillSpeed = l_StillSpeed[robot];
+		}
 	}
 }
 

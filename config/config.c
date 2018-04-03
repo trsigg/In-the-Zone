@@ -22,7 +22,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define AUTOSTACK_CONFIG false	//using autostacking-focused button config (currently nonfunctional) (TODO: change to shift reverse intake)
 
 	//#subregion auton/skillz options
-#define SKILLZ_MODE      true	//skills
+#define SKILLZ_MODE      false	//skills
 #define SKILLZ_VARIANT   true
 #define PARK_IN_SKILLS   false
 #define CROSS_FIELD_SKLZ false
@@ -99,7 +99,7 @@ int debugPorts[NUM_DEBUG_PORTS] = { port1, port2, port3, port6, port9 };
 	int fbPos[] = { 700,   1590,    2400 };
 
 	enum goalState  { OUT,  MID,  IN };
-	int goalPos[] = { 3200, 2750, 1050 };
+	int goalPos[] = { 3300, 2850, 1150 };
 	//#endsubregion
 
 	//#subregion motors
