@@ -15,21 +15,22 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 //#define HAS_SPEAKER
 #define MULTIPLE_PIDs    false //if lift uses different PID consts for movement in different locations or directions
 #define HOLD_LAST_CONE   true	//if lift stays up after stacking last cone
-#define USE_ENC_CORR     true
 #define DOUBLE_DRIVER    false
 #define SONAR_STACKING   true
 #define LIMIT_GOAL_MVMNT true //if goal won't move unless lifted up
 #define AUTOSTACK_CONFIG false	//using autostacking-focused button config (currently nonfunctional) (TODO: change to shift reverse intake)
+#define SONAR_IN_SKILLZ  true
 
 	//#subregion auton/skillz options
-#define SKILLZ_MODE      false	//skills
+#define SKILLZ_MODE      true	//skills
 #define SKILLZ_VARIANT   true
 #define PARK_IN_SKILLS   false
 #define CROSS_FIELD_SKLZ false
 #define SKILLZ_5PT       false
 #define RECKON_IN_SKILLZ false
-#define LONG_TURN        true	//general
-#define ABORT_AFTER_15   true
+#define ABORT_AFTER_15   true	//general
+#define USE_ENC_CORR     true
+#define DRIVE_FOR_10     false
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL false
 #define RETRY_GOAL_FAILS false
@@ -96,7 +97,7 @@ int debugPorts[NUM_DEBUG_PORTS] = { port1, port2, port3, port6, port9 };
 	int liftPos[] = { 1300,  1320,    1555,   1320,       2000,   1915,   3010 };
 
 	enum fbState  { FB_UP, FB_SAFE, FB_DOWN };
-	int fbPos[] = { 700,   1590,    2400 };
+	int fbPos[] = { 600,   1812,    2250 };
 
 	enum goalState  { OUT,  MID,  IN };
 	int goalPos[] = { 3300, 2850, 1150 };
@@ -170,7 +171,7 @@ bool liftSensReversed[NUM_ROBOTS] = { false, false, false };
 bool fbSensReversed[NUM_ROBOTS]   = { false, false, false };
 bool goalSensReversed[NUM_ROBOTS] = { false, true,  false };
 bool L_EncReversed[NUM_ROBOTS]    = { false, false, true };
-bool R_EncReversed[NUM_ROBOTS]    = { true,  false, false };
+bool R_EncReversed[NUM_ROBOTS]    = { true,  true, false };
 	//#endsubregion
 
 	//#subregion ports
@@ -244,29 +245,30 @@ int goalinDuration[NUM_ROBOTS]  = { 1250, 1250, 1250 };
 //#region buttons
 	//#subregion variable buttons
 //c is for comp mode, s for skills
-TVexJoysticks c_fbInBtn[NUM_ROBOTS]     = { Btn6U, Btn8D, -1 };
-TVexJoysticks c_fbOutBtn[NUM_ROBOTS]    = { Btn6D, Btn8U, -1 };
-TVexJoysticks s_fbInBtn[NUM_ROBOTS]     = { Btn7D, Btn8D, -1 };
-TVexJoysticks s_fbOutBtn[NUM_ROBOTS]    = { Btn7U, Btn8U, -1 };
-TVexJoysticks stackBtn[NUM_ROBOTS]      = { Btn8U, Btn8R, Btn8D };
-TVexJoysticks safePosBtn[NUM_ROBOTS]    = { Btn8D, -1,    -1 };
-TVexJoysticks maxPosBtn[NUM_ROBOTS]     = { Btn8L, -1,    -1 };
-TVexJoysticks c_intakeBtn[NUM_ROBOTS]   = { -1,    Btn6U, Btn8R };
-TVexJoysticks c_outtakeBtn[NUM_ROBOTS]  = { -1,    Btn6D, -1 };
-TVexJoysticks s_intakeBtn[NUM_ROBOTS]   = { -1,    Btn7U, -1 };
-TVexJoysticks s_outtakeBtn[NUM_ROBOTS]  = { -1,    Btn7D, -1 };
-TVexJoysticks toggleFbBtn[NUM_ROBOTS]   = { -1,    Btn8L, Btn8L };
-TVexJoysticks brakeBtn[NUM_ROBOTS]      = { -1,    -1,    Btn8U };
-TVexJoysticks toggleModeBtn[NUM_ROBOTS] = { Btn7D, Btn7D, Btn7D };
-TVexJoysticks c_cycleInBtn[NUM_ROBOTS]  = { -1,    -1,    Btn6U };
-TVexJoysticks c_cycleOutBtn[NUM_ROBOTS] = { -1,    -1,    Btn6D };
-TVexJoysticks s_cycleInBtn[NUM_ROBOTS]  = { -1,    -1,    Btn7U };
-TVexJoysticks s_cycleOutBtn[NUM_ROBOTS] = { -1,    -1,    Btn7D };
+TVexJoysticks c_fbInBtn[NUM_ROBOTS]      = { Btn6U, Btn8D, -1 };
+TVexJoysticks c_fbOutBtn[NUM_ROBOTS]     = { Btn6D, Btn8U, -1 };
+TVexJoysticks s_fbInBtn[NUM_ROBOTS]      = { Btn7D, Btn8D, -1 };
+TVexJoysticks s_fbOutBtn[NUM_ROBOTS]     = { Btn7U, Btn8U, -1 };
+TVexJoysticks stackBtn[NUM_ROBOTS]       = { Btn8U, Btn8R, Btn8D };
+TVexJoysticks safePosBtn[NUM_ROBOTS]     = { Btn8D, -1,    -1 };
+TVexJoysticks maxPosBtn[NUM_ROBOTS]      = { Btn8L, -1,    -1 };
+TVexJoysticks c_intakeBtn[NUM_ROBOTS]    = { -1,    Btn6U, Btn8R };
+TVexJoysticks c_outtakeBtn[NUM_ROBOTS]   = { -1,    Btn6D, -1 };
+TVexJoysticks s_intakeBtn[NUM_ROBOTS]    = { -1,    Btn7U, -1 };
+TVexJoysticks s_outtakeBtn[NUM_ROBOTS]   = { -1,    Btn7D, -1 };
+TVexJoysticks toggleFbBtn[NUM_ROBOTS]    = { -1,    Btn8L, Btn8L };
+TVexJoysticks brakeBtn[NUM_ROBOTS]       = { -1,    -1,    Btn8U };
+TVexJoysticks toggleFieldBtn[NUM_ROBOTS] = { Btn7D, Btn7D, Btn7D };
+TVexJoysticks toggleCtrlBtn[NUM_ROBOTS]  = { -1,    Btn7R, -1 };
+TVexJoysticks c_cycleInBtn[NUM_ROBOTS]   = { -1,    -1,    Btn6U };
+TVexJoysticks c_cycleOutBtn[NUM_ROBOTS]  = { -1,    -1,    Btn6D };
+TVexJoysticks s_cycleInBtn[NUM_ROBOTS]   = { -1,    -1,    Btn7U };
+TVexJoysticks s_cycleOutBtn[NUM_ROBOTS]  = { -1,    -1,    Btn7D };
+TVexJoysticks shiftBtn[NUM_ROBOTS]       = { Btn7R, -1,    Btn7R };
 	//#endsubregion
 
 	//#subregion common buttons
 #define abortManeuversBtn Btn7L
-#define shiftBtn          Btn7R
 #define sayConeNumberBtn  Btn8L	//with shift
 
 		//#subsubregion goal intake
@@ -311,6 +313,26 @@ float generalDebug[] = { 0, 0 };
 
 //motorGroup groupWaitList[DEF_WAIT_LIST_LEN] = { lift, fourBar, goalIntake };
 
+bool inSkillzControl;
+
+void setControlMode(bool skillz) {
+	if (skillz) {
+		configureButtonInput(fourBar, s_fbOutBtn[robot], s_fbInBtn[robot]);
+		configureButtonInput(goalIntake, s_goalOuttakeBtn, s_goalIntakeBtn);
+		configureButtonInput(roller, s_intakeBtn[robot], s_outtakeBtn[robot], rollerStillSpeed[robot]);	//be careful, usercontrol()'s behavior depends on the order of these buttons
+	}
+	else {
+		configureButtonInput(fourBar, c_fbOutBtn[robot], c_fbInBtn[robot]);
+		configureButtonInput(goalIntake, c_goalOuttakeBtn, c_goalIntakeBtn);
+		configureButtonInput(roller, c_intakeBtn[robot], c_outtakeBtn[robot], rollerStillSpeed[robot]);
+	}
+
+	configureBtnDependentStillSpeed(fourBar, fbStillSpeed[robot]);
+	configureBtnDependentStillSpeed(goalIntake, (SKILLZ_MODE ? goalStillSpeed[robot] : 0));
+
+	inSkillzControl = skillz;
+}
+
 void initializeStructs() {
 	//arrayCopy(groupWaitList, defGroupWaitList, DEF_WAIT_LIST_LEN);
 
@@ -346,12 +368,7 @@ void initializeStructs() {
 	if (liftSensor[robot]>=dgtl1) configureEncoderCorrection(lift, liftPos[L_MAX]);
 
 	//mobile goal intake
-	initializeGroup(goalIntake, NUM_GOAL_MOTORS, goalMotors);
-	if (SKILLZ_MODE)
-		configureButtonInput(goalIntake, s_goalOuttakeBtn, s_goalIntakeBtn);
-	else
-		configureButtonInput(goalIntake, c_goalOuttakeBtn, c_goalIntakeBtn);
-	configureBtnDependentStillSpeed(goalIntake, (SKILLZ_MODE ? goalStillSpeed[robot] : 0));
+	initializeGroup(goalIntake, NUM_GOAL_MOTORS, goalMotors);	//input setup handled in setControlMode()
 	addSensor(goalIntake, goalSensor[robot], goalSensReversed[robot]);
 
 	//top four bar
@@ -367,13 +384,6 @@ void initializeStructs() {
 	#else
 		initializeGroup(fourBar, NUM_FB_MOTORS, fourBarMotors);
 
-		if (SKILLZ_MODE)
-			configureButtonInput(fourBar, s_fbOutBtn[robot], s_fbInBtn[robot]);
-		else
-			configureButtonInput(fourBar, c_fbOutBtn[robot], c_fbInBtn[robot]);
-
-		configureBtnDependentStillSpeed(fourBar, fbStillSpeed[robot]);
-
 		if (fbSensor[robot] >= 0) {
 			//initializeTargetingPID(fourBar, 0.46*FB_CORR_FCTR, 0.0001*FB_CORR_FCTR, 13*FB_CORR_FCTR, 100/FB_CORR_FCTR);
 			addSensor(fourBar, fbSensor[robot], fbSensReversed[robot]);
@@ -384,9 +394,8 @@ void initializeStructs() {
 	//roller intake
 	#ifdef ROLLER
 		initializeGroup(roller, NUM_ROLLER_MOTORS, rollerMotors);
-		if (SKILLZ_MODE)	//be careful, usercontrol()'s behavior depends on the order of these buttons
-			configureButtonInput(roller, s_intakeBtn[robot], s_outtakeBtn[robot], rollerStillSpeed[robot]);
-		else
-			configureButtonInput(roller, c_intakeBtn[robot], c_outtakeBtn[robot], rollerStillSpeed[robot]);
+		configureButtonInput(goalIntake, s_goalOuttakeBtn, s_goalIntakeBtn);
 	#endif
+
+	setControlMode(SKILLZ_MODE);
 }

@@ -4,14 +4,15 @@
 
 bool stacking = false;	//whether the robot is currently in the process of stacking
 bool goToSafe = false;	//whether lift & fb should go to safe pos (as opposed to def pos) after stacking
+void startAutoStacking(bool sonar = (coneSonar[robot]>=dgtl1 && SONAR_STACKING && !(bIfiAutonomousMode || SKILLZ_MODE)));
 
-void outtake() {
+void setIntakeState(bool intakeCone) {
 	#ifdef ROLLER
-		setPower(roller, -127);
+		setPower(roller, (intakeCone ? 1 : -1)*127);
 	#endif
 
 	#ifdef PNEUMATIC
-		setState(intake, false);
+		setState(intake, intakeCone);
 	#endif
 }
 
@@ -40,6 +41,19 @@ task sonarAutoStacking() {
 	while (true) {
 		while (!stacking) EndTimeSlice();
 
+		if (SKILLZ_MODE) {
+			setIntakeState(true);
+			moveFourBar(false, false);
+			while (getPosition(fourBar) < fbPos[FB_SAFE]) EndTimeSlice();
+			setLiftState(L_DEF, true);
+			waitForMovementToFinish(lift);
+			//wait1Msec(intakeDuration[robot]);
+
+			#ifdef ROLLER
+				setToStillSpeed(roller);
+			#endif
+		}
+
 		//lift above stack
 		liftUntilSonar(true);
 
@@ -50,7 +64,7 @@ task sonarAutoStacking() {
 		moveForDuration(lift, -127, 150, false);
 
 		//outtake
-		outtake();
+		setIntakeState(false);
 		//moveForDuration(lift, 127, 250, false);
 		liftUntilSonar(true, 75);	//TODO: or above where it dropped cone off (use dangerPos mechanism?)
 
@@ -104,7 +118,7 @@ task kinematicAutoStacking() {
 				setLiftTargetAndPID(liftRelease);
 				waitForMovementToFinish(lift);
 
-				outtake();
+				setIntakeState(false);
 				setLiftTargetAndPID(liftTarget);
 				waitForMovementToFinish(lift, outtakeDuration[robot]);
 			#endif
@@ -116,21 +130,23 @@ task kinematicAutoStacking() {
 		numCones++;
 		speakNum(numCones);
 
-		//moveFourBar(true);
+		if (SKILLZ_MODE && SONAR_IN_SKILLZ) break;
 	}
+
+	startAutoStacking(true);
 }
 //#endregion
 
-void startAutoStacking() {
+void startAutoStacking(bool sonar) {	//prototype with default above
 	stacking = false;
 
-	if (coneSonar[robot]>=dgtl1 && SONAR_STACKING && !bIfiAutonomousMode)
+	if (sonar)
 		startTask(sonarAutoStacking);
 	else
 		startTask(kinematicAutoStacking);
 }
 
-void stackNewCone(bool waite=false, bool safeAtEnd=bIfiAutonomousMode) {	//TODO: liftTarget and liftRelease
+void stackNewCone(bool waite=false, bool safeAtEnd=bIfiAutonomousMode||SKILLZ_MODE) {	//TODO: liftTarget and liftRelease
 	if (!(SONAR_STACKING && coneSonar[robot]>=dgtl1) || bIfiAutonomousMode) {
 		float stackHeight = coneHeight[robot] * adjustedNumCones();
 

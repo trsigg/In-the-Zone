@@ -17,27 +17,24 @@ bool movingToMax = false;
 
 
 void handleGoalIntakeInput() {
-	if (SKILLZ_MODE) {
-		takeInput(goalIntake);
-	}
-	else {
-		int goalPower = takeInput(goalIntake, false);
+	int goalPower = takeInput(goalIntake, false);
 
-		if (abs(goalPower)<=goalIntake.stillSpeed || getPosition(lift)>=liftPos[L_SAFE] || !LIMIT_GOAL_MVMNT) {
-			updateMotorConfig(goalPower);
+	if (abs(goalPower)<=goalIntake.stillSpeed || getPosition(lift)>=liftPos[L_SAFE] || !LIMIT_GOAL_MVMNT) {
+		updateMotorConfig(goalPower);
 
-			if (goalPower != 0) {
-				setPower(goalIntake, goalPower);
-				lift.stillSpeed = 0;
-			}
-			else {
-				lift.stillSpeed = l_StillSpeed[robot];
-			}
+		if (goalPower != 0) {
+			setPower(goalIntake, goalPower);
+			lift.stillSpeed = 0;
+
+			if (goalPower > goalIntake.stillSpeed) numCones = 0;
 		}
 		else {
-			moveLiftToSafePos(false, false);
 			lift.stillSpeed = l_StillSpeed[robot];
 		}
+	}
+	else {
+		moveLiftToSafePos(false, false);
+		lift.stillSpeed = l_StillSpeed[robot];
 	}
 }
 
@@ -55,7 +52,7 @@ void handleConeCountInput() {	//change cone count based on user input
 }
 
 void handleModeInput(bool shift) {
-	if (shift && newlyPressed(toggleModeBtn[robot])) {
+	if (shift && newlyPressed(toggleFieldBtn[robot])) {
 		fielding = !fielding;
 
 		if (fielding)
@@ -63,6 +60,9 @@ void handleModeInput(bool shift) {
 		else
 			playSound(soundUpwardTones);
 	}
+
+	if (newlyPressed(toggleCtrlBtn[robot]))
+		setControlMode(!inSkillzControl);
 }
 
 void handleAbortInput() {
@@ -126,11 +126,13 @@ task usercontrol() {
 
 	#ifdef PNEUMATIC
 		setState(intake, true);
+	#else
+		fourBar.stillSpeedReversed = fbUp = getPosition(fourBar) < fbPos[FB_SAFE];
 	#endif
 
 	while (true) {
 		logData();
-		shift = vexRT[shiftBtn]==1;
+		shift = vexRT[ shiftBtn[robot] ]==1;
 
 		if (shift) handleConeCountInput();
 
