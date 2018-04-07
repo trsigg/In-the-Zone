@@ -323,9 +323,9 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			turn(direction * 135);
 
 			if (SKILLZ_MODE)
-				accuDrive(zone==TWENTY ? 24 : 12);
+				accuDrive(zone==TWENTY ? 25 : 12);
 			else
-				driveStraight(DRIVE_FOR_10 ? 3 : 20);
+				driveStraight(zone==TEN ? 3 : 16);
 
 			turn(direction * 90);	//accu
 		}
@@ -361,7 +361,7 @@ void middleGoal(bool left, bool twentyPt=true, bool middle=false, bool align=fal
 		turn(-90 * direction);
 	}
 	else {
-		turn(-185);
+		turn(-180);
 		//driveForDuration(1250, 40);	//align to 10pt bar
 	}
 
@@ -409,10 +409,10 @@ void backUpGoal(bool redSide, bool intakeFully=false, bool reversed=false) {
 	moveGoalIntake(MID, true);
 	driveStraight(-lineToGoalDist[robot] - (redSide ? 11 : 15.5));	//accuDrive?
 	waitForMovementToFinish(goalIntake);
-	turn(-direction * (redSide ? 95 : 95));	//accu
+	turn(-direction * (redSide ? 90 : 90));	//accu
 	moveGoalIntake(OUT);
-	driveStraight(redSide ? 23 : 22);
-	driveAndGoal(redSide ? 5 : 4, IN);
+	driveStraight(redSide ? 24 : 22);
+	driveAndGoal(redSide ? 7 : 4, IN);
 	turn(direction * (redSide ? 100 : 95));	//accu
 	driveStraight(barToLineDist[robot] + lineToGoalDist[robot] + 8);
 	scoreGoal(false, false, intakeFully);
@@ -435,7 +435,7 @@ task skillz() {
 
 	//moveGoalIntake(OUT, true);
 	//turn(-180, false, 6, 0.02, 22, 0.05, 500);
-	turnToAbsAngle(-87, false, 6, 0.02, 22, 0.05, 500);
+	turnToAbsAngle(-85, false, 6, 0.02, 22, 0.05, 500);
 
 	crossFieldGoal(false, false);	//far right middle goal to 10pt
 
@@ -445,7 +445,7 @@ task skillz() {
 	//far left side goal to middle ten
 	turn(-120);
 	driveAndGoal(45, OUT);
-	driveAndGoal(-60, IN);
+	driveAndGoal(-65, IN);
 	turn(120);
 	//driveStraight(-12);
 	//turn(90);
@@ -453,7 +453,8 @@ task skillz() {
 
 	//far right side goal to middle ten
 	turnDriveTurn(90, 20, 45);
-	sideGoal(TEN, true, 0, false, false, false, true);
+	driveStraight(60);
+	//sideGoal(TEN, true, 0, false, false, false, true);
 
 	autonDebug[0] = time(autonTimer);
 }

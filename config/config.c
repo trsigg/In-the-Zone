@@ -22,7 +22,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define SONAR_IN_SKILLZ  true
 
 	//#subregion auton/skillz options
-#define SKILLZ_MODE      true	//skills
+#define SKILLZ_MODE      false	//skills
 #define SKILLZ_VARIANT   true
 #define PARK_IN_SKILLS   false
 #define CROSS_FIELD_SKLZ false
@@ -36,7 +36,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define RETRY_GOAL_FAILS false
 #define MAX_GOAL_RETRIES 2
 #define STACK_SIDE_CONES true
-#define DEFENSIVE_DELAY  2000
+#define DEFENSIVE_DELAY  1000
 	//#endsubregion
 
 	//#subregion testing - TODO: change parameter scheme
