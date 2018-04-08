@@ -207,7 +207,8 @@ void scoreGoal(bool twentyPt, bool align=true, bool intakeFully=true) {	//behind
 		driveForDuration(1000, 90, 20);	//drive over bar
 		waitForMovementToFinish(goalIntake);
 		//driveForDuration(250);	//push goal to back of zone
-		driveForDuration(375, -127);
+		driveForDuration(375, -127);	//TODO: remove?
+		driveStraight(align ? -11 : -9);	//back out
 	}
 	else {
 		moveGoalIntake(OUT, true);
@@ -218,14 +219,6 @@ void scoreGoal(bool twentyPt, bool align=true, bool intakeFully=true) {	//behind
 
 	moveGoalIntake(intakeFully ? IN : MID);
 	//wait1Msec(200);	//while (getPosition(goalIntake) < goalPos[MID]) EndTimeSlice();
-
-	if (twentyPt) {
-		driveStraight(align ? -11 : -9);	//back out
-		/*if (align)
-			driveStraight(-15);
-		else
-			driveForDuration(75, -127)*/
-	}
 
 	if (align) {
 		alignToBar(true, (twentyPt ? 700 : 600));
@@ -325,7 +318,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			if (SKILLZ_MODE)
 				accuDrive(zone==TWENTY ? 25 : 12);
 			else
-				driveStraight(zone==TEN ? 3 : 16);
+				driveStraight(zone==TEN ? 3 : 17);
 
 			turn(direction * 90);	//accu
 		}
@@ -462,9 +455,9 @@ task skillz() {
 void counterDefensive(bool defensive) {
 	if (defensive) wait1Msec(DEFENSIVE_DELAY);
 	driveStraight(10);
-	turn(45);
+	turn(47);
 	driveStraight(75);
-	driveAndGoal(-40, OUT, false, false, 1250);
+	driveAndGoal(-40, OUT, false, false, 2000);
 	turn(30);
 	driveStraight(20);
 	driveAndGoal(-30, IN, true);
