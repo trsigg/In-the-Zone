@@ -14,7 +14,7 @@ typedef struct {
 	int prevPower;
 	controlType controlType;
 	bool controlActive;
-	TVexJoysticks posInput, negInput; //inputs. NegInput only assigned if using button control
+	TVexJoysticks posInput, negInput; //inputs. NegInput used for 2nd input in dual driver
 	//button control
 	int upPower, downPower, stillSpeed;
 		//complex still speeds
@@ -27,6 +27,9 @@ typedef struct {
 	float powMap; //degree of polynomial to which inputs are mapped (1 for linear)
 	float coeff; //factor by which motor powers are multiplied
 	long lastUpdated; //ramping
+		//dual driver
+	bool usingDualJoystick;
+	int dualPowerCutoff;
 	//power limits
 	int minPow, maxPow;
 	bool hasMinPow, hasMaxPow;
@@ -86,6 +89,12 @@ void configureJoystickInput(motorGroup *group, TVexJoysticks joystick, int deadb
 	group->powMap = powMap;
 	group->coeff = maxPow /  127.0;
 	group->lastUpdated = nPgmTime;
+}
+
+void configureDualJoystick(motorGroup *group, TVexJoysticks joystick, int powerCutoff=20) {
+	group->negInput = joystick;
+	group->dualPowerCutoff = powerCutoff;
+	group->usingDualJoystick = true;
 }
 
 void configureRamping(motorGroup *group, int maxAcc100ms) {
@@ -511,6 +520,10 @@ int handleButtonInput(motorGroup *group) {
 
 int handleJoystickInput(motorGroup *group) {
 	int input = vexRT[group->posInput];
+
+	if (group->usingDualJoystick && abs(input) < group->dualPowerCutoff)
+		input = vexRT[group->negInput];
+
 	int power = sgn(input) * group->coeff * fabs(pow(input / 127.0, group->powMap)) * 127;
 
 	if (abs(power) < group->deadband) power = 0;

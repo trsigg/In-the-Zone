@@ -49,6 +49,11 @@ void initializeDrive(parallel_drive *drive, int numLeftMotors, tMotor *leftMotor
 	drive->posLastUpdated = resetTimer();
 }
 
+void configureDualDriver(parallel_drive *drive, int dualPowerCutoff=20) {
+	configureDualJoystick(drive->leftDrive, Ch3Xmtr2, dualPowerCutoff);
+	configureDualJoystick(drive->rightDrive, Ch2Xmtr2, dualPowerCutoff);
+}
+
 void configureRamping(parallel_drive *drive, int maxAcc100ms) {
 	configureRamping(drive->leftDrive, maxAcc100ms);
 	configureRamping(drive->rightDrive, maxAcc100ms);

@@ -19,6 +19,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define SONAR_STACKING   true
 #define LIMIT_GOAL_MVMNT true //if goal won't move unless lifted up
 #define AUTOSTACK_CONFIG false	//using autostacking-focused button config (currently nonfunctional) (TODO: change to shift reverse intake)
+#define DUAL_DRIVER      true
 #define SONAR_IN_SKILLZ  true
 
 	//#subregion auton/skillz options
@@ -339,6 +340,7 @@ void initializeStructs() {
   //drive
 	int skillzAdjustment = (SKILLZ_MODE ? 1 : 0);
 	initializeDrive(drive, NUM_LEFT_MOTORS-skillzAdjustment, leftMotors, NUM_RIGHT_MOTORS-skillzAdjustment, rightMotors, true, (SKILLZ_MODE ? 30 : 40));
+	if (DUAL_DRIVER) configureDualDriver(drive);
 	attachEncoder(drive, leftEnc[robot], LEFT, L_EncReversed[robot]);
 	attachEncoder(drive, rightEnc[robot], RIGHT, R_EncReversed[robot], 4);
 	attachUltrasonic(drive, frontSonar[robot]);
