@@ -95,7 +95,7 @@ int debugPorts[NUM_DEBUG_PORTS] = { port1, port2, port3, port6, port9 };
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1300,  1320,    1555,   1320,       2000,   1915,   3010 };
+	int liftPos[] = { 3340,  3340,    3380,   3340,       3465,   3490,   3790 };
 
 	enum fbState  { FB_UP, FB_SAFE, FB_DOWN };
 	int fbPos[] = { 600,   1812,    2250 };
