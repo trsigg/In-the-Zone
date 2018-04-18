@@ -23,7 +23,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define SONAR_IN_SKILLZ  true
 
 	//#subregion auton/skillz options
-#define SKILLZ_MODE      false	//skills
+#define SKILLZ_MODE      true	//skills
 #define SKILLZ_VARIANT   true
 #define PARK_IN_SKILLS   false
 #define CROSS_FIELD_SKLZ false
@@ -101,7 +101,7 @@ int debugPorts[NUM_DEBUG_PORTS] = { port1, port2, port3, port6, port9 };
 	int fbPos[] = { 600,   1812,    2250 };
 
 	enum goalState  { OUT,  MID,  IN };
-	int goalPos[] = { 3300, 2850, 1150 };
+	int goalPos[] = { 3300, 2850, 1160 };
 	//#endsubregion
 
 	//#subregion motors
@@ -224,7 +224,7 @@ int rollerStillSpeed[NUM_ROBOTS] = { -1, 20, -1 };
 float liftLen[NUM_ROBOTS]        = { 14.75, 15.5, 15.5 };
 float coneHeight[NUM_ROBOTS]     = { 3.5,   3.25, 3.25 };
 float l_offset[NUM_ROBOTS]       = { 3.5,   2.5,  5 };
-float goalToMidDist[NUM_ROBOTS]  = { 17,    14,   17 };	//distance from field diagonal to mid goal
+float goalToMidDist[NUM_ROBOTS]  = { 17,    15,   17 };	//distance from field diagonal to mid goal
 float lineToGoalDist[NUM_ROBOTS] = { 26,    10,   22 };	//distance from line to mid goal - TODO: wtf?
 float barToLineDist[NUM_ROBOTS]  = { 9,     9,    9 };
 float interConeDist[NUM_ROBOTS]  = { 9,     9.5,  9 };
@@ -345,7 +345,7 @@ void initializeStructs() {
 	attachEncoder(drive, rightEnc[robot], RIGHT, R_EncReversed[robot], 4);
 	attachUltrasonic(drive, frontSonar[robot]);
 	attachGyro(drive, hyro[robot]);
-	initializeGyro(drive, 139, 1863);
+	initializeGyro(drive, 139, 1865);
 
 	if (SKILLZ_MODE) {
 		driveDefaults.rampConst1 = 15;
