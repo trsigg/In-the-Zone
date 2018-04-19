@@ -168,5 +168,5 @@ void moveLiftToSafePos(bool waite=true, bool moveFb=true) {
 }
 
 void liftToConeSafePos() {
-	setLiftTargetAndPID(max(calcLiftTargetForHeight(coneHeight[robot] * numCones + 6), liftPos[L_SAFE]+50));
+	setLiftTargetAndPID(max(calcLiftTargetForHeight(coneHeight[robot] * numCones + 4), liftPos[L_SAFE]+50));
 }

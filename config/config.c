@@ -42,7 +42,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 
 	//#subregion testing - TODO: change parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
-int debugParameters[] = { -1,      -1,       -1,    -1,     0,         -1,       -1,        -1,      -1,       -1,    -1,      -1,       -1,      -1 };
+int debugParameters[] = { 0,       7,        -1,    -1,     -1,        -1,       -1,        -1,      -1,       -1,    -1,      -1,       -1,      -1 };
 //                      { liftPID, liftSens, fbpid, fbSens, driveRamp, turnRamp, coneSonar, goalPot, liftPow, fbPow, leftPow, rightPow, goalPow, customPow }
 
 #define NUM_DEBUG_PORTS 5
@@ -94,8 +94,8 @@ int debugPorts[NUM_DEBUG_PORTS] = { port1, port2, port3, port6, port9 };
 	robotId robot = E_ROLLER;
 
 	//#subregion positions
-	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1230,  1250,    1485,   1250,       1930,   1845,   2940 };
+	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, S_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
+	int liftPos[] = { 1150,  1160,    1450,   1150,       1850,       1930,   1810,   2900 };
 
 	enum fbState  { FB_UP, FB_SAFE, FB_DOWN };
 	int fbPos[] = { 600,   1812,    2250 };
@@ -182,6 +182,7 @@ tSensors goalSensor[NUM_ROBOTS] = { in5,   in6,   in6 };
 tSensors fbSensor[NUM_ROBOTS]   = { -1,    in7,   -1 };
 tSensors sidePot[NUM_ROBOTS]    = { in2,   in5,   in5 };
 tSensors modePot[NUM_ROBOTS]    = { in3,   in4,   in4 };
+tSensors configPot[NUM_ROBOTS]  = { -1,    in3,   -1 }
 tSensors leftEnc[NUM_ROBOTS]    = { dgtl1, dgtl3, dgtl3 };
 tSensors rightEnc[NUM_ROBOTS]   = { dgtl3, dgtl1, dgtl1 };
 tSensors coneSonar[NUM_ROBOTS]  = { -1,    dgtl5, -1 };
@@ -227,7 +228,7 @@ float l_offset[NUM_ROBOTS]       = { 3.5,   2.5,  5 };
 float goalToMidDist[NUM_ROBOTS]  = { 17,    12,   17 };	//distance from field diagonal to mid goal
 float lineToGoalDist[NUM_ROBOTS] = { 26,    10,   22 };	//distance from line to mid goal - TODO: wtf?
 float barToLineDist[NUM_ROBOTS]  = { 9,     9,    9 };
-float interConeDist[NUM_ROBOTS]  = { 9,     9.5,  9 };
+float interConeDist[NUM_ROBOTS]  = { 9,     10,   9 };
 //#endregion
 
 //#region cone counts
@@ -238,7 +239,7 @@ int maxNumCones[NUM_ROBOTS] = { 16, 16, 16 };
 //#region timing
 int fbMoveDuration[NUM_ROBOTS]  = { 700,  600,  200 };
 int outtakeDuration[NUM_ROBOTS] = { 250,  100,  300 };
-int intakeDuration[NUM_ROBOTS]  = { -1,   100,  300 };
+int intakeDuration[NUM_ROBOTS]  = { -1,   300,  300 };
 int goalOutDuration[NUM_ROBOTS] = { 1500, 1500, 1500 };
 int goalinDuration[NUM_ROBOTS]  = { 1250, 1250, 1250 };
 //#endregion

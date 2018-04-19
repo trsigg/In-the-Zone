@@ -209,7 +209,7 @@ void aboutFace(float angle=0) {
 void scoreGoal(bool twentyPt, bool align=true, bool intakeFully=true) {	//behind 10pt bar -> aligned with tape (approx)
 	if (twentyPt) {
 		moveGoalIntake(OUT, true);
-		driveForDuration(1000, 90, 20);	//drive over bar
+		driveForDuration(1000, 80, 20);	//drive over bar
 		waitForMovementToFinish(goalIntake);
 		//driveForDuration(250);	//push goal to back of zone
 		driveForDuration(375, -127);	//TODO: remove?
@@ -243,7 +243,7 @@ void scoreGoal(bool twentyPt, bool align=true, bool intakeFully=true) {	//behind
 	}
 }
 
-void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool reversed=false, bool startingFromBar=true, bool align=false, bool intakeFully=true) {	//touching bar, aligned with goal -> aligned with tape (approx)
+void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool reversed=false, bool startingFromBar=true, bool align=false, bool intakeFully=true, bool hasFirstCone=true) {	//touching bar, aligned with goal -> aligned with tape (approx)
 	int direction = (reversed ? -1 : 1);
 	int distAdjustment = (zone==FIVE ? 14 : 0) - interConeDist[robot] * numExtraCones;
 	moveLiftToSafePos();
@@ -251,6 +251,9 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 	//pick up side goal
 	if (SKILLZ_MODE && zone==TWENTY && startingFromBar) {
 		driveAndGoal(45, OUT, false, true);
+	}
+	else if (!(startingFromBar || SKILLZ_MODE)) {
+		driveStraight(40);
 	}
 	else {
 		driveAndGoal((startingFromBar ? 23 : 10), OUT, false, true);
@@ -261,14 +264,18 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 	//position robot facing middle of 10pt bar
 	if (numExtraCones > 0) {
 		for (int i=0; i<numExtraCones; i++) {
-			driveStraight(interConeDist[robot], true);
-
 			if (i == 0) {
+				driveStraight(interConeDist[robot], true);
+
 				moveGoalIntake(IN);
 				maybeAbort();
-			}
 
-			stackNewCone();
+				if (hasFirstCone) stackNewCone();
+			}
+			else {
+				driveStraight(interConeDist[robot], true);
+				stackNewCone();
+			}
 
 			while (driveData.isDriving) EndTimeSlice();
 
@@ -287,8 +294,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 				setLiftState(L_FIELD, true);
 			}
 
-			waitForMovementToFinish(lift);
-			wait1Msec(intakeDuration[robot]);
+			waitForMovementToFinish(lift, intakeDuration[robot]);
 		}
 
 		stackNewCone();
@@ -323,7 +329,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			if (SKILLZ_MODE)
 				accuDrive(zone==TEN ? 12 : 26);
 			else
-				driveStraight(zone==TEN ? 3 : 17);
+				driveStraight(zone==TEN ? 3 : 19);
 
 			turn(direction * 90);	//accu
 		}
@@ -480,8 +486,8 @@ void altSkillz() {
 	driveForDuration(1500, -127, 0); //driveStraight(-60);
 }
 
-void counterDefensive(bool defensive) {
-	if (defensive) wait1Msec(DEFENSIVE_DELAY);
+void counterDefensive(int defensiveDelay) {
+	wait1Msec(defensiveDelay);
 	driveStraight(10);
 	turn(47);
 	driveStraight(75);
@@ -495,16 +501,26 @@ void counterDefensive(bool defensive) {
 }
 
 void stationaryScore() {
-	moveFourBar(true);
-	setLiftTargetAndPID(2500);
-	waitForLiftingToFinish();
+	//moveFourBar(true);
+	setLiftState(S_BASE_POS);
 
-	driveStraight(15);
-	stopAutomovement(lift);
-	setPower(lift, -15);
-	wait1Msec(750);
-	driveForDuration(500);
-	setLiftTargetAndPID(2500);
+	driveStraight(20);
+
+	waitForLiftingToFinish();
+	moveFourBar(false, false);
+	setIntakeState(false);
+
+	moveFourBar(true, false);
+
+	/*setLiftTargetAndPID(liftPos[S_BASE_POS] + 200);
+	waitForLiftingToFinish(outtakeDuration[robot]);*/
+
+	setToStillSpeed(roller);
+	//moveFourBar(true, true);
+	createManeuver(goalIntake, goalPos[MID]-100)
+	setLiftTargetAndPID(liftPos[L_SAFE] + 50)
+	driveStraight(-18);
+	waitForLiftingToFinish();
 }
 //#endregion
 
@@ -526,8 +542,9 @@ task autonomous() {
 
 	if (ABORT_AFTER_15) startTask(selfDestruct);
 
-	int sidePos = SensorValue[ sidePot[robot] ];
-	int modePos = SensorValue[ modePot[robot] ];
+	int sidePos   = SensorValue[ sidePot[robot] ];
+	int modePos   = SensorValue[ modePot[robot] ];
+	int configPos = SensorValue[ configPot[robot] ];
 	autonTimer = resetTimer();
 
 	turnDefaults.reversed = sidePos > sideSwitchPos[robot];	//TODO: put this val in config
@@ -545,18 +562,21 @@ task autonomous() {
 		zoneType zone;
 		int extraCones;
 
-		if (modePos < 530) {
+		if (modePos < 530)
 			zone = TWENTY;
-			extraCones = 2;
-		}
-		else if (modePos < 1620) {
+		else if (modePos < 1620)
 			zone = TEN;
-			extraCones = 2;
-		}
-		else {
+		else
 			zone = FIVE;
+
+		if (configPos < 370)
+			extraCones = 0;
+		else if (configPos < 1915)
+			extraCones = 1;
+		else if (configPos < 3760)
 			extraCones = 2;
-		}
+		else
+			extraCones = 3;
 
 		if (!(STACK_SIDE_CONES && variant)) extraCones = 0;
 
@@ -579,9 +599,25 @@ task autonomous() {
 		//}
 	}
 	else if (modePos < 3820) {	//defensive
-		counterDefensive(variant);
+		int defensiveDelay;
+
+		if (configPos < 370)
+			defensiveDelay = 0;
+		else if (configPos < 1915)
+			defensiveDelay = 500;
+		else if (configPos < 3760)
+			defensiveDelay = 1000;
+		else
+			defensiveDelay = 2000;
+
+		counterDefensive(defensiveDelay);
 	} else if (variant) {
-		driveForDuration(2000, 127);
+		//driveForDuration(2000, 127);
+		stationaryScore();
+
+		turn(-90);
+
+		sideGoal(TEN, false, 2, false, false, false, true, false);
 	}
 
 	autonDebug[0] = time(autonTimer);
