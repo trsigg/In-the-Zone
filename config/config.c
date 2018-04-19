@@ -23,8 +23,8 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define SONAR_IN_SKILLZ  true
 
 	//#subregion auton/skillz options
-#define SKILLZ_MODE      true	//skills
-#define SKILLZ_VARIANT   true
+#define SKILLZ_MODE      false	//skills
+#define SKILLZ_VARIANT   false
 #define PARK_IN_SKILLS   false
 #define CROSS_FIELD_SKLZ false
 #define SKILLZ_5PT       false
@@ -42,7 +42,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 
 	//#subregion testing - TODO: change parameter scheme
 #define TESTING 0	//0 for normal behavior, 1 & 2 for PID testing (1 uses automatic still speeding, 2 uses only PID), 3 for misc testing
-int debugParameters[] = { -1,      -1,       -1,    -1,     -1,        0,       -1,        -1,      -1,       -1,    -1,      -1,       -1,      -1 };
+int debugParameters[] = { -1,      -1,       -1,    -1,     0,         -1,       -1,        -1,      -1,       -1,    -1,      -1,       -1,      -1 };
 //                      { liftPID, liftSens, fbpid, fbSens, driveRamp, turnRamp, coneSonar, goalPot, liftPow, fbPow, leftPow, rightPow, goalPow, customPow }
 
 #define NUM_DEBUG_PORTS 5
@@ -95,7 +95,7 @@ int debugPorts[NUM_DEBUG_PORTS] = { port1, port2, port3, port6, port9 };
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1300,  1320,    1555,   1320,       2000,   1915,   3010 };
+	int liftPos[] = { 1230,  1250,    1485,   1250,       1930,   1845,   2940 };
 
 	enum fbState  { FB_UP, FB_SAFE, FB_DOWN };
 	int fbPos[] = { 600,   1812,    2250 };
@@ -224,7 +224,7 @@ int rollerStillSpeed[NUM_ROBOTS] = { -1, 20, -1 };
 float liftLen[NUM_ROBOTS]        = { 14.75, 15.5, 15.5 };
 float coneHeight[NUM_ROBOTS]     = { 3.5,   3.25, 3.25 };
 float l_offset[NUM_ROBOTS]       = { 3.5,   2.5,  5 };
-float goalToMidDist[NUM_ROBOTS]  = { 17,    15,   17 };	//distance from field diagonal to mid goal
+float goalToMidDist[NUM_ROBOTS]  = { 17,    12,   17 };	//distance from field diagonal to mid goal
 float lineToGoalDist[NUM_ROBOTS] = { 26,    10,   22 };	//distance from line to mid goal - TODO: wtf?
 float barToLineDist[NUM_ROBOTS]  = { 9,     9,    9 };
 float interConeDist[NUM_ROBOTS]  = { 9,     9.5,  9 };
@@ -396,7 +396,6 @@ void initializeStructs() {
 	//roller intake
 	#ifdef ROLLER
 		initializeGroup(roller, NUM_ROLLER_MOTORS, rollerMotors);
-		configureButtonInput(goalIntake, s_goalOuttakeBtn, s_goalIntakeBtn);
 	#endif
 
 	setControlMode(SKILLZ_MODE);

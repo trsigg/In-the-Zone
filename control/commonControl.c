@@ -115,6 +115,8 @@ void handleLiftInput(bool shift) {
 task usercontrol() {
 	bool shift;
 
+	setControlMode(SKILLZ_MODE);
+
 	stopLiftTargeting();
 	startAutoStacking();
 
