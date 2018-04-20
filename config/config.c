@@ -98,7 +98,7 @@ int debugPorts[NUM_DEBUG_PORTS] = { port1, port2, port3, port6, port9 };
 	int liftPos[] = { 1150,  1160,    1450,   1150,       1850,       1930,   1810,   2900 };
 
 	enum fbState  { FB_UP, FB_SAFE, FB_DOWN };
-	int fbPos[] = { 600,   1812,    2250 };
+	int fbPos[] = { 600,   1812,    2150 };
 
 	enum goalState  { OUT,  MID,  IN };
 	int goalPos[] = { 3300, 2850, 1160 };

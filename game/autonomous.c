@@ -264,16 +264,15 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 	//position robot facing middle of 10pt bar
 	if (numExtraCones > 0) {
 		for (int i=0; i<numExtraCones; i++) {
-			if (i == 0) {
-				driveStraight(interConeDist[robot], true);
+			driveStraight(interConeDist[robot], true);
 
+			if (i == 0) {
 				moveGoalIntake(IN);
 				maybeAbort();
 
 				if (hasFirstCone) stackNewCone();
 			}
 			else {
-				driveStraight(interConeDist[robot], true);
 				stackNewCone();
 			}
 
