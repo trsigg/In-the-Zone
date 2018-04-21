@@ -17,6 +17,8 @@ typedef struct {
 	bool useGyro;
 	bool reversed;	//reverses all turns (for mirroring auton routines)
 	bool usePID;	//true for PID ramping, false for quad ramping
+	bool resetGyroToTurn;
+	bool turnToAbs;
 	int debugStartCol;
 	int sampleTime;
 	int waitAtEnd;
@@ -50,6 +52,8 @@ void initializeAutoMovement() {
 	turnDefaults.useGyro = true;
 	turnDefaults.reversed = false;
 	turnDefaults.usePID = true;
+	turnDefaults.resetGyroToTurn = true;
+	turnDefaults.turnToAbs = false;
 	turnDefaults.debugStartCol = -1;
 	turnDefaults.sampleTime = 30;
 	turnDefaults.waitAtEnd = 100;
@@ -145,10 +149,12 @@ task turnTask() {
 	turnEnd();
 }
 
-void turn(float angle, bool runAsTask=turnDefaults.runAsTask, float in1=turnDefaults.rampConst1, float in2=turnDefaults.rampConst2, float in3=turnDefaults.rampConst3, float in4=turnDefaults.rampConst4, float in5=turnDefaults.rampConst5, bool usePID=turnDefaults.usePID, int sampleTime=turnDefaults.sampleTime, angleType angleType=turnDefaults.defAngleType, bool useGyro=turnDefaults.useGyro, int waitAtEnd=turnDefaults.waitAtEnd) { //for PD, in1=kP, in2=kI, in3=kD, in4=error, in5=pd timeout; for quad ramping, in1=initial, in2=maximum, in3=final, in4=brakePower, and in5=brakeDuration
+void turn(float angle, bool runAsTask=turnDefaults.runAsTask, float in1=turnDefaults.rampConst1, float in2=turnDefaults.rampConst2, float in3=turnDefaults.rampConst3, float in4=turnDefaults.rampConst4, float in5=turnDefaults.rampConst5, bool usePID=turnDefaults.usePID, bool turnToAbs=turnDefaults.turnToAbs, bool resetGyro=turnDefaults.resetGyro, int sampleTime=turnDefaults.sampleTime, angleType angleType=turnDefaults.defAngleType, bool useGyro=turnDefaults.useGyro, int waitAtEnd=turnDefaults.waitAtEnd) { //for PD, in1=kP, in2=kI, in3=kD, in4=error, in5=pd timeout; for quad ramping, in1=initial, in2=maximum, in3=final, in4=brakePower, and in5=brakeDuration
 	//initialize variables
 	if (turnDefaults.reversed) angle *= -1;
-	float formattedAngle = convertAngle(fabs(angle), DEGREES, angleType);
+	float formattedAngle = convertAngle(fabs(angle), DEGREES, angleType) + (!(resetGyro || turnToAbs) ? );
+	if (!resetGyro)
+		formattedAngle +=  copysign(gyroVal(autoDrive), angle);
 	turnData.angle = (useGyro ? formattedAngle : PI*autoDrive.width*formattedAngle/360.);
 	turnData.direction = sgn(angle);
 	turnData.sampleTime = sampleTime;
