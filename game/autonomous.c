@@ -263,7 +263,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			break;
 	}
 
-	resetGyro();
+	resetGyro(drive);
 	moveLiftToSafePos();
 
 	//pick up side goal
@@ -324,14 +324,9 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		//while (stacking) EndTimeSlice();
 	}
 	else {
-<<<<<<< HEAD
 		turnToRealign();
-
-		if (SKILLZ_MODE)
-=======
 		driveStraight(-36 + distAdjustment);
 		/*if (SKILLZ_MODE)
->>>>>>> origin/master
 			driveAndGoal(-36, IN);
 		else
 			driveAndGoal(-36 + distAdjustment, IN, true);*/
