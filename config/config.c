@@ -30,7 +30,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define SKILLZ_5PT       false
 #define RECKON_IN_SKILLZ false
 #define ABORT_AFTER_15   true	//general
-#define USE_ENC_CORR     true
+#define USE_ENC_CORR     false
 #define DRIVE_FOR_10     false
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL false
@@ -95,10 +95,10 @@ int debugPorts[NUM_DEBUG_PORTS] = { port1, port2, port3, port6, port9 };
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, S_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1150,  1160,    1450,   1150,       1850,       1930,   1810,   2900 };
+	int liftPos[] = { 1365,  1375,    1630,   1360,       1950,       2000,   1940,   3055 };
 
 	enum fbState  { FB_UP, FB_SAFE, FB_DOWN };
-	int fbPos[] = { 600,   1812,    2150 };
+	int fbPos[] = { 1500,  3000,    3550 };
 
 	enum goalState  { OUT,  MID,  IN };
 	int goalPos[] = { 3300, 2850, 1160 };
@@ -228,7 +228,7 @@ float l_offset[NUM_ROBOTS]       = { 3.5,   2.5,  5 };
 float goalToMidDist[NUM_ROBOTS]  = { 17,    12,   17 };	//distance from field diagonal to mid goal
 float lineToGoalDist[NUM_ROBOTS] = { 26,    10,   22 };	//distance from line to mid goal - TODO: wtf?
 float barToLineDist[NUM_ROBOTS]  = { 9,     9,    9 };
-float interConeDist[NUM_ROBOTS]  = { 9,     10,   9 };
+float interConeDist[NUM_ROBOTS]  = { 9,     8,    9 };
 //#endregion
 
 //#region cone counts
