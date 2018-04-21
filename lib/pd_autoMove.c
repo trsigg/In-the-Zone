@@ -58,7 +58,7 @@ void initializeAutoMovement() {
 	turnDefaults.rampConst2 = 0.02; // maxPower      / kI
 	turnDefaults.rampConst3 = 20;	  // finalPower    / kD
 	turnDefaults.rampConst4 = 0.08; // brakeDuration / pd acceptable error (proportion of target)
-	turnDefaults.rampConst5 = 100;	// brakePower    / pd timeout
+	turnDefaults.rampConst5 = 250;	// brakePower    / pd timeout
 
 	//driving
 	driveDefaults.defCorrectionType = AUTO;

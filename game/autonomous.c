@@ -28,6 +28,8 @@ void prepareForAuton() {
 	resetLiftEncoders();
 	stopLiftTargeting();
 	startAutoStacking();
+
+	goalIntake.moving == NO;
 	numCones = 0;
 
 	if (!USE_ENC_CORR) {
@@ -250,35 +252,47 @@ void scoreGoal(bool twentyPt, bool align=true, bool intakeFully=true) {	//behind
 
 void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool reversed=false, bool startingFromBar=true, bool align=false, bool intakeFully=true, bool hasFirstCone=true) {	//touching bar, aligned with goal -> aligned with tape (approx)
 	int direction = (reversed ? -1 : 1);
-	int distAdjustment = (zone==FIVE ? 14 : 0) - interConeDist[robot] * numExtraCones;
+	int distAdjustment = -interConeDist[robot] * numExtraCones;
+
+	switch (zone) {
+		case FIVE:
+			distAdjustment += 14;
+			break;
+		case TEN:
+			distAdjustment -= 5;
+			break;
+	}
+
 	resetGyro();
 	moveLiftToSafePos();
 
 	//pick up side goal
-	if (SKILLZ_MODE && zone==TWENTY && startingFromBar) {
-		driveAndGoal(45, OUT, false, true);
+	if (SKILLZ_MODE) {
+		if (startingFromBar) {
+			driveAndGoal(45, OUT, false, true);
+		}
+		else {
+			driveAndGoal(10, OUT, false, true);
+			quadDrive(19);
+		}
+	} else {
+		if (startingFromBar) moveGoalIntake(OUT, false);
+		driveStraight(startingFromBar ? 53 : 45, true);
+		while ((driveData.distance - driveData.totalDist) > 12) EndTimeSlice();
 	}
-	else if (!(startingFromBar || SKILLZ_MODE)) {
-		driveStraight(40);
-	}
-	else {
-		driveAndGoal((startingFromBar ? 23 : 10), OUT, false, true);
 
-		quadDrive(startingFromBar ? 19 : 19);
-	}
+	moveGoalIntake(IN, false);//while (true);
 
 	//position robot facing middle of 10pt bar
 	if (numExtraCones > 0) {
 		for (int i=0; i<numExtraCones; i++) {
-			driveStraight(interConeDist[robot], true);
-
 			if (i == 0) {
-				moveGoalIntake(IN);
 				maybeAbort();
 
 				if (hasFirstCone) stackNewCone();
 			}
 			else {
+				driveStraight(interConeDist[robot], true);
 				stackNewCone();
 			}
 
@@ -294,7 +308,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 				setPower(roller, 127);
 			#endif
 
-			if (goToSafe) {
+			if (goToSafe || !hasFirstCone && i==0) {
 				moveFourBar(false, false);
 				setLiftState(L_FIELD, true);
 			}
@@ -310,12 +324,17 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		//while (stacking) EndTimeSlice();
 	}
 	else {
+<<<<<<< HEAD
 		turnToRealign();
 
 		if (SKILLZ_MODE)
+=======
+		driveStraight(-36 + distAdjustment);
+		/*if (SKILLZ_MODE)
+>>>>>>> origin/master
 			driveAndGoal(-36, IN);
 		else
-			driveAndGoal(-36 + distAdjustment, IN, true);
+			driveAndGoal(-36 + distAdjustment, IN, true);*/
 
 		maybeAbort();
 	}
@@ -337,12 +356,12 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			if (SKILLZ_MODE)
 				accuDrive(zone==TEN ? 12 : 26);
 			else
-				driveStraight(zone==TEN ? 3 : 19);
+				driveStraight(zone==TEN ? 3 : 21);
 
 			turn(direction * 90);	//accu
 		}
 		else {	//near ten
-			turn(direction * 225);
+			turn(direction * 205);	//225
 		}
 
 		while (stacking) EndTimeSlice();
@@ -525,9 +544,9 @@ void stationaryScore() {
 
 	setToStillSpeed(roller);
 	//moveFourBar(true, true);
-	createManeuver(goalIntake, goalPos[MID]-100)
-	setLiftTargetAndPID(liftPos[L_SAFE] + 50)
-	driveStraight(-18);
+	createManeuver(goalIntake, goalPos[MID]-100);
+	setLiftTargetAndPID(liftPos[L_SAFE] + 50);
+	driveStraight(-16);
 	waitForLiftingToFinish();
 }
 //#endregion
@@ -553,10 +572,20 @@ task autonomous() {
 	int sidePos   = SensorValue[ sidePot[robot] ];
 	int modePos   = SensorValue[ modePot[robot] ];
 	int configPos = SensorValue[ configPot[robot] ];
+	int extraCones;
 	autonTimer = resetTimer();
 
 	turnDefaults.reversed = sidePos > sideSwitchPos[robot];	//TODO: put this val in config
 	variant = abs(sidePos - sideSwitchPos[robot]) < 1600;
+
+	if (configPos < 370)
+		extraCones = 0;
+	else if (configPos < 1915)
+		extraCones = 1;
+	else if (configPos < 3760)
+		extraCones = 2;
+	else
+		extraCones = 3;
 
 	if (SKILLZ_MODE) {
 		turnDefaults.reversed = false;
@@ -568,7 +597,6 @@ task autonomous() {
 	}
 	else if (modePos < 2520) {	//side goal
 		zoneType zone;
-		int extraCones;
 
 		if (modePos < 530)
 			zone = TWENTY;
@@ -576,15 +604,6 @@ task autonomous() {
 			zone = TEN;
 		else
 			zone = FIVE;
-
-		if (configPos < 370)
-			extraCones = 0;
-		else if (configPos < 1915)
-			extraCones = 1;
-		else if (configPos < 3760)
-			extraCones = 2;
-		else
-			extraCones = 3;
 
 		if (!(STACK_SIDE_CONES && variant)) extraCones = 0;
 
@@ -596,7 +615,8 @@ task autonomous() {
 					turn(45);
 					break;
 				case TEN:
-					turnDriveTurn(90, 7);
+					//turnDriveTurn(90, 3);
+					turn(-10);
 					break;
 				case TWENTY:
 					turnDriveTurn(90, 21);
@@ -623,9 +643,10 @@ task autonomous() {
 		//driveForDuration(2000, 127);
 		stationaryScore();
 
-		turn(-90);
+		turn(-86);
 
-		sideGoal(TEN, false, 2, false, false, false, true, false);
+		sideGoal(TEN, false, extraCones, false, false, false, true, false);
+		//sideGoal(NTY, middl, extraCones, rever, omBar, align, inta, hasFi);
 	}
 
 	autonDebug[0] = time(autonTimer);

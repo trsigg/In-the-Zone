@@ -1,4 +1,5 @@
 #include "lift.c"
+#include "autonomous.c"
 
 
 void logData() {
@@ -61,6 +62,7 @@ void handlePIDinput(int index) {
 		case 1:
 			timedManeuver = true;
 			driveStraight(input, !waite);
+			//driveStraight(input, false, 30, 120, -20, 250, 20, false);	//quadDrive(input);
 			break;
 		case 2:
 			timedManeuver = true;
