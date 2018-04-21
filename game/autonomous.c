@@ -29,7 +29,8 @@ void prepareForAuton() {
 	stopLiftTargeting();
 	startAutoStacking();
 
-	goalIntake.moving == NO;
+	goalIntake.moving = NO;
+	currGoalState = IN;
 	numCones = 0;
 
 	if (!USE_ENC_CORR) {
@@ -183,14 +184,11 @@ void accuDrive(int dist, bool runAsTask=false) {
 }*/
 
 void turnToRealign() {
-	if (gyroVal(drive) > 10)
+	if (fabs(gyroVal(drive)) > 10) {
 		turnToAbsAngle(0);
-	/*int offset = gyroVal(drive);
 
-	if (fabs(offset) > 10) {
-
-		turn(offset);
-	}*/
+		resetGyro(drive);
+	} else generalDebug[1] = gyroVal(drive);
 }
 
 void aboutFace(float angle=0) {
@@ -262,7 +260,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 
 	switch (zone) {
 		case FIVE:
-			distAdjustment += 14;
+			distAdjustment += 11;
 			break;
 		case TEN:
 			distAdjustment -= 5;
@@ -293,10 +291,9 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 	if (numExtraCones > 0) {
 		maybeAbort();
 		if (hasFirstCone) stackNewCone();
+		turnToRealign();
 
 		for (int i=0; i<numExtraCones; i++) {
-			//turnToRealign();
-
 			if (i != 0) {
 				driveStraight(interConeDist[robot], true);
 				stackNewCone();
@@ -304,10 +301,11 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 
 			while (driveData.isDriving) EndTimeSlice();
 
-			while (stacking) {
-				goToSafe = false;
-				EndTimeSlice();
-			}
+			if (stacking) goToSafe = false;
+
+			turnToRealign();
+
+			while (stacking) EndTimeSlice();
 
 			//intake
 			#ifdef ROLLER
@@ -326,8 +324,6 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 
 		turnToRealign();
 		driveStraight(-36 + distAdjustment);
-
-		//while (stacking) EndTimeSlice();
 	}
 	else {
 		turnToRealign();
@@ -347,7 +343,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		liftToConeSafePos();
 		while (turnData.isTurning) EndTimeSlice();
 		moveGoalIntake(OUT);
-		driveStraight(-10);
+		quadDrive(-13);
 		if (intakeFully) moveGoalIntake(IN);
 	}
 	else {	//ten or twenty

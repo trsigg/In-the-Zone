@@ -30,7 +30,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define SKILLZ_5PT       false
 #define RECKON_IN_SKILLZ false
 #define ABORT_AFTER_15   true	//general
-#define USE_ENC_CORR     false
+#define USE_ENC_CORR     true
 #define DRIVE_FOR_10     false
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL false
@@ -95,7 +95,7 @@ int debugPorts[NUM_DEBUG_PORTS] = { port1, port2, port3, port6, port9 };
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, S_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1365,  1375,    1630,   1360,       1950,       2000,   1940,   3055 };
+	int liftPos[] = { 1400,  1415,    1650,   1410,       1965,       2250,   1990,   3045 };
 
 	enum fbState  { FB_UP, FB_SAFE, FB_DOWN };
 	int fbPos[] = { 1500,  3000,    3550 };
