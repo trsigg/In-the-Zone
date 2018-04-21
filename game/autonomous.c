@@ -180,6 +180,16 @@ void accuDrive(int dist, bool runAsTask=false) {
 	turn(dist, runAsTask, driveDefaults.rampConst1, driveDefaults.rampConst2, driveDefaults.rampConst3, 0.05, 500);
 }*/
 
+void turnToRealign() {
+	if (gyroVal(drive) > 10)
+		turnToAbsAngle(0);
+}
+
+void aboutFace(float angle=0) {
+	createManeuver(goalIntake, goalPos[MID]-250, false);
+	turnToAbsAngle(angle, false, 6, 0.02, 22, 0.05, 500);
+}
+
 void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp=false, int intakeDelay=500) {
 	moveLiftToSafePos();
 	moveGoalIntake(state, true);
@@ -197,11 +207,6 @@ void driveAndGoal(int dist, goalState state, bool stackCone=false, bool quadRamp
 	if (stackCone) stackNewCone();
 
 	while (driveData.isDriving /*|| (stacking && stackCone)*/) EndTimeSlice();
-}
-
-void aboutFace(float angle=0) {
-	createManeuver(goalIntake, goalPos[MID]-250, false);
-	turnToAbsAngle(angle, false, 6, 0.02, 22, 0.05, 500);
 }
 //#endregion
 
@@ -246,6 +251,7 @@ void scoreGoal(bool twentyPt, bool align=true, bool intakeFully=true) {	//behind
 void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool reversed=false, bool startingFromBar=true, bool align=false, bool intakeFully=true, bool hasFirstCone=true) {	//touching bar, aligned with goal -> aligned with tape (approx)
 	int direction = (reversed ? -1 : 1);
 	int distAdjustment = (zone==FIVE ? 14 : 0) - interConeDist[robot] * numExtraCones;
+	resetGyro();
 	moveLiftToSafePos();
 
 	//pick up side goal
@@ -298,11 +304,14 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 
 		stackNewCone();
 
+		turnToRealign();
 		driveStraight(-36 + distAdjustment);
 
 		//while (stacking) EndTimeSlice();
 	}
 	else {
+		turnToRealign();
+
 		if (SKILLZ_MODE)
 			driveAndGoal(-36, IN);
 		else
