@@ -185,6 +185,12 @@ void accuDrive(int dist, bool runAsTask=false) {
 void turnToRealign() {
 	if (gyroVal(drive) > 10)
 		turnToAbsAngle(0);
+	/*int offset = gyroVal(drive);
+
+	if (fabs(offset) > 10) {
+
+		turn(offset);
+	}*/
 }
 
 void aboutFace(float angle=0) {
@@ -285,13 +291,13 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 
 	//position robot facing middle of 10pt bar
 	if (numExtraCones > 0) {
-		for (int i=0; i<numExtraCones; i++) {
-			if (i == 0) {
-				maybeAbort();
+		maybeAbort();
+		if (hasFirstCone) stackNewCone();
 
-				if (hasFirstCone) stackNewCone();
-			}
-			else {
+		for (int i=0; i<numExtraCones; i++) {
+			//turnToRealign();
+
+			if (i != 0) {
 				driveStraight(interConeDist[robot], true);
 				stackNewCone();
 			}

@@ -182,7 +182,7 @@ tSensors goalSensor[NUM_ROBOTS] = { in5,   in6,   in6 };
 tSensors fbSensor[NUM_ROBOTS]   = { -1,    in7,   -1 };
 tSensors sidePot[NUM_ROBOTS]    = { in2,   in5,   in5 };
 tSensors modePot[NUM_ROBOTS]    = { in3,   in4,   in4 };
-tSensors configPot[NUM_ROBOTS]  = { -1,    in3,   -1 }
+tSensors configPot[NUM_ROBOTS]  = { -1,    in3,   -1 };
 tSensors leftEnc[NUM_ROBOTS]    = { dgtl1, dgtl3, dgtl3 };
 tSensors rightEnc[NUM_ROBOTS]   = { dgtl3, dgtl1, dgtl1 };
 tSensors coneSonar[NUM_ROBOTS]  = { -1,    dgtl5, -1 };
@@ -228,7 +228,7 @@ float l_offset[NUM_ROBOTS]       = { 3.5,   2.5,  5 };
 float goalToMidDist[NUM_ROBOTS]  = { 17,    12,   17 };	//distance from field diagonal to mid goal
 float lineToGoalDist[NUM_ROBOTS] = { 26,    10,   22 };	//distance from line to mid goal - TODO: wtf?
 float barToLineDist[NUM_ROBOTS]  = { 9,     9,    9 };
-float interConeDist[NUM_ROBOTS]  = { 9,     8,    9 };
+float interConeDist[NUM_ROBOTS]  = { 9,     7.5,  9 };
 //#endregion
 
 //#region cone counts
