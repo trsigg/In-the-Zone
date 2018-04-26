@@ -61,7 +61,7 @@ task sonarAutoStacking() {
 
 		//lift down
 		//liftUntilSonar(false);
-		moveForDuration(lift, -127, 150, false);
+		moveForDuration(lift, -127, 250, false);
 
 		//outtake
 		setIntakeState(false);
