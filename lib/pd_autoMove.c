@@ -74,7 +74,7 @@ void initializeAutoMovement() {
 	driveDefaults.rampConst2 = 0.5;
 	driveDefaults.rampConst3 = 70;
 	driveDefaults.rampConst4 = 0.1;
-	driveDefaults.rampConst5 = 100;
+	driveDefaults.rampConst5 = 150;
 	driveDefaults.kP_c = 0.7;
 	driveDefaults.kI_c = 0.007;
 	driveDefaults.kD_c = 0.15;

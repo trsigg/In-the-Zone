@@ -23,12 +23,13 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define SONAR_IN_SKILLZ  true
 
 	//#subregion auton/skillz options
-#define SKILLZ_MODE      true	//skills
+#define SKILLZ_MODE      false	//skills
 #define SKILLZ_VARIANT   false
 #define PARK_IN_SKILLS   false
 #define CROSS_FIELD_SKLZ false
 #define SKILLZ_5PT       false
 #define RECKON_IN_SKILLZ false
+#define PULSE_ROLLERS    true
 #define ABORT_AFTER_15   true	//general
 #define USE_ENC_CORR     true
 #define DRIVE_FOR_10     false
@@ -36,7 +37,6 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define ABORT_IF_NO_GOAL false
 #define RETRY_GOAL_FAILS false
 #define MAX_GOAL_RETRIES 2
-#define STACK_SIDE_CONES true
 #define DEFENSIVE_DELAY  1000
 	//#endsubregion
 
@@ -95,13 +95,13 @@ int debugPorts[NUM_DEBUG_PORTS] = { port1, port2, port3, port6, port9 };
 
 	//#subregion positions
 	enum liftState  { L_MIN, L_FIELD, L_SAFE, M_BASE_POS, S_BASE_POS, D_LOAD, L_ZERO, L_MAX, L_DEF };	//when lift is at L_SAFE, goal intake can be moved without collision
-	int liftPos[] = { 1400,  1415,    1650,   1410,       1965,       2250,   1990,   3045 };
+	int liftPos[] = { 1400,  1415,    1650,   1410,       2050,       2250,   1990,   3045 };
 
 	enum fbState  { FB_UP, FB_SAFE, FB_DOWN };
 	int fbPos[] = { 1500,  3000,    3550 };
 
 	enum goalState  { OUT,  MID,  IN };
-	int goalPos[] = { 3300, 2850, 1160 };
+	int goalPos[] = { 3375, 2850, 1160 };
 	//#endsubregion
 
 	//#subregion motors
@@ -111,11 +111,11 @@ int debugPorts[NUM_DEBUG_PORTS] = { port1, port2, port3, port6, port9 };
 	#define NUM_FB_MOTORS 1
 	tMotor fourBarMotors[NUM_FB_MOTORS] = { port10 };
 
-	#define NUM_LEFT_MOTORS 3
-	tMotor leftMotors[NUM_LEFT_MOTORS] = { port3, port8, port2 };
+	#define NUM_LEFT_MOTORS 2
+	tMotor leftMotors[NUM_LEFT_MOTORS] = { port6, port2 };
 
 	#define NUM_RIGHT_MOTORS 2
-	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port6, port9 };
+	tMotor rightMotors[NUM_RIGHT_MOTORS] = { port3, port9 };
 
 	#define NUM_GOAL_MOTORS 2
 	tMotor goalMotors[NUM_GOAL_MOTORS] = { port2, port9 };

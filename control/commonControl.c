@@ -19,22 +19,22 @@ bool movingToMax = false;
 void handleGoalIntakeInput() {
 	int goalPower = takeInput(goalIntake, false);
 
-	if (abs(goalPower)<=goalIntake.stillSpeed || getPosition(lift)>=liftPos[L_SAFE] || !LIMIT_GOAL_MVMNT) {
+	if (fabs(goalPower)<=goalIntake.stillSpeed || getPosition(lift)>=liftPos[L_SAFE] || !LIMIT_GOAL_MVMNT) {
 		updateMotorConfig(goalPower);
 
 		if (goalPower != 0) {
 			setPower(goalIntake, goalPower);
-			lift.stillSpeed = 0;
+			//lift.stillSpeed = 0;
 
 			if (goalPower > goalIntake.stillSpeed) numCones = 0;
 		}
-		else {
+		/*else {
 			lift.stillSpeed = l_StillSpeed[robot];
-		}
+		}*/
 	}
 	else {
 		moveLiftToSafePos(false, false);
-		lift.stillSpeed = l_StillSpeed[robot];
+		//lift.stillSpeed = l_StillSpeed[robot];
 	}
 }
 

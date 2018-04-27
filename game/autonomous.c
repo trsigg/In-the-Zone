@@ -1,5 +1,6 @@
 #include "autostacking.c"
 #include "mobileGoal.c"
+#include "rollers.c"
 #include "testing.c"
 
 #ifdef ROLLER
@@ -47,6 +48,7 @@ void prepareForAuton() {
 	#endif
 
 	#ifdef ROLLER
+		if (PULSE_ROLLERS) pulseRollers(true);
 		setToStillSpeed(roller);
 	#endif
 }
@@ -176,7 +178,7 @@ void quadDrive(int dist, bool runAsTask=false) {
 }
 
 void accuDrive(int dist, bool runAsTask=false) {
-	driveStraight(dist, runAsTask, 10, 0.1, 50, 0.05, 250);
+	driveStraight(dist, runAsTask, 12, 0.1, 50, 0.05, 250);
 }
 
 /*void accuTurn(int dist, bool runAsTask=false) {
@@ -280,7 +282,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			quadDrive(19);
 		}
 	} else {
-		if (startingFromBar) moveGoalIntake(OUT, false);
+		moveGoalIntake(OUT, false);
 		driveStraight(startingFromBar ? 53 : 45, true);
 		while ((driveData.distance - driveData.totalDist) > 12) EndTimeSlice();
 		moveGoalIntake(IN, false);
@@ -322,17 +324,18 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		stackNewCone();
 
 		turnToRealign();
-		driveStraight(-36 + distAdjustment);
+		driveStraight(-41 + distAdjustment);
 	}
 	else {
 		turnToRealign();
 
-		if (SKILLZ_MODE)
+		if (SKILLZ_MODE) {
 			driveAndGoal(-36, IN);
-		else
-			driveStraight(-36 + distAdjustment);
-
-		maybeAbort();
+		}
+		else {
+			stackNewCone();
+			driveStraight(-41 + distAdjustment);
+		}
 	}
 
 	if (zone == FIVE) {	//score in 5pt
@@ -357,7 +360,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			turn(direction * 90);	//accu
 		}
 		else {	//near ten
-			turn(direction * 205);	//225
+			turn(direction * 215);	//225
 		}
 
 		while (stacking) EndTimeSlice();
@@ -414,7 +417,7 @@ void crossFieldGoal(bool twentyPt, bool neer, bool intakeFully=false, bool middl
 		wait1Msec(250);
 	}
 
-	driveStraight(70 - nearOffset - (RECKON_IN_SKILLZ ? 0 : 15));
+	driveStraight(65 - nearOffset - (RECKON_IN_SKILLZ ? 0 : 15));
 
 	if (twentyPt || middle) {
 		driveAndGoal(40+nearOffset, MID);
@@ -426,7 +429,7 @@ void crossFieldGoal(bool twentyPt, bool neer, bool intakeFully=false, bool middl
 		if (clearCones) moveGoalIntake(IN);
 	}
 	else {
-		driveAndGoal(31+nearOffset, MID);
+		driveAndGoal(40+nearOffset, MID);
 	}
 
 	scoreGoal(twentyPt, align, intakeFully);
@@ -436,16 +439,16 @@ void backUpGoal(bool redSide, bool intakeFully=false, bool reversed=false) {
 	int direction = (reversed ? -1 : 1);
 
 	moveGoalIntake(MID, true);
-	driveStraight(-lineToGoalDist[robot] - (redSide ? 13 : 15.5));	//accuDrive?
+	accuDrive(-lineToGoalDist[robot] - (redSide ? 16 : 15.5));	//driveStraight?
 	waitForMovementToFinish(goalIntake);
 	if (redSide)
-		turnToAbsAngle(-direction * 93);
+		turnToAbsAngle(-direction * 90);
 	else
 		turn(-direction * 90);
 	//turn(-direction * (redSide ? 90 : 90));	//accu
 	moveGoalIntake(OUT);
 	driveStraight(redSide ? 22 : 22);
-	driveAndGoal(redSide ? 7 : 4, IN);
+	driveAndGoal(redSide ? 7.5 : 5, IN);
 	turn(direction * (redSide ? 100 : 95));	//accu
 	driveStraight(barToLineDist[robot] + lineToGoalDist[robot] + 8);
 	scoreGoal(false, false, intakeFully);
@@ -457,12 +460,15 @@ void skillz() {
 	sideGoal(TWENTY, false, 0, false, true, false, false);	//near left side goal to twenty
 
 	moveGoalIntake(OUT, true);
-	turnDriveTurn(90, goalToMidDist[robot], 90);	//near left middle goal to ten
+	turn(90);
+	accuDrive(goalToMidDist[robot] + 5.5);
+	turn(90, false, turnDefaults.rampConst1, turnDefaults.rampConst2, turnDefaults.rampConst3, 0.05, 300);
+	//turnDriveTurn(90, goalToMidDist[robot], 90);	//near left middle goal to ten
 
 	middleGoal(true, false);
 
 	backUpGoal(true); //near right middle goal
-	aboutFace(-80);
+	aboutFace(-85);
 
 	crossFieldGoal(false, false);	//far right middle goal to 10pt
 
@@ -478,9 +484,12 @@ void skillz() {
 	//turn(90);
 	scoreGoal(true, false);
 
+	//park
+	turn(120);
+	driveForDuration(2500);
 	//far right side goal to middle ten
-	turnDriveTurn(90, 20, 45);
-	driveStraight(60);
+	/*turnDriveTurn(90, 20, 45);
+	driveStraight(60);*/
 	//sideGoal(TEN, true, 0, false, false, false, true);
 }
 
@@ -512,22 +521,23 @@ void altSkillz() {
 void counterDefensive(int defensiveDelay) {
 	wait1Msec(defensiveDelay);
 	driveStraight(10);
-	turn(47);
+	turn(turnDefaults.reversed ? 45 : 50);
 	driveStraight(75);
 	driveAndGoal(-40, OUT, false, false, 2000);
 	turn(30);
 	driveStraight(20);
-	driveAndGoal(-30, IN, true);
+	driveAndGoal(-35, IN, true);
 	turn(130);
 	driveStraight(35);
 	scoreGoal(false);
+	turn(135);
 }
 
 void stationaryScore() {
 	//moveFourBar(true);
 	setLiftState(S_BASE_POS);
 
-	driveStraight(20);
+	quadDrive(15);
 
 	waitForLiftingToFinish();
 	moveFourBar(false, false);
@@ -540,9 +550,9 @@ void stationaryScore() {
 
 	setToStillSpeed(roller);
 	//moveFourBar(true, true);
-	createManeuver(goalIntake, goalPos[MID]-100);
+	moveGoalIntake(OUT, true);	//createManeuver(goalIntake, goalPos[MID]-100);
 	setLiftTargetAndPID(liftPos[L_SAFE] + 50);
-	driveStraight(-16);
+	driveStraight(-19);
 	waitForLiftingToFinish();
 }
 //#endregion
@@ -601,26 +611,29 @@ task autonomous() {
 		else
 			zone = FIVE;
 
-		if (!(STACK_SIDE_CONES && variant)) extraCones = 0;
+		sideGoal(zone, false, extraCones, false, true, false, (zone==TWENTY && variant));
+		//sidGol(zone, middl, extraCones, rever, mBar, align, inta,                  hasFi);
 
-		sideGoal(zone, false, extraCones, false, true, false, (zone!=FIVE || variant || STACK_SIDE_CONES));
 
-		//if (variant || extraCones>0) {	//drive to other side
+		if (variant) {	//drive to other side
 			switch (zone) {
 				case FIVE:
 					turn(45);
 					break;
 				case TEN:
 					//turnDriveTurn(90, 3);
-					turn(-10);
+					//turn(-10);
+					moveGoalIntake(OUT, true);
 					break;
 				case TWENTY:
-					turnDriveTurn(90, 21);
+					turnDriveTurn(90, 18);
 					break;
 			}
 
-			driveStraight(-75);
-		//}
+			driveStraight(-80);
+			turn(-50);
+			driveStraight(30);
+		}
 	}
 	else if (modePos < 3820) {	//defensive
 		int defensiveDelay;
@@ -639,10 +652,10 @@ task autonomous() {
 		//driveForDuration(2000, 127);
 		stationaryScore();
 
-		turn(-86);
+		turn(-90);
 
 		sideGoal(TEN, false, extraCones, false, false, false, true, false);
-		//sideGoal(NTY, middl, extraCones, rever, omBar, align, inta, hasFi);
+		//sideGoal(zon, middl, extraCones, rever, omBar, align, inta, hasFi);
 	}
 
 	autonDebug[0] = time(autonTimer);
