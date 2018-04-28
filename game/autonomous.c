@@ -284,7 +284,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 	} else {
 		moveGoalIntake(OUT, false);
 		driveStraight(startingFromBar ? 53 : 45, true);
-		while ((driveData.distance - driveData.totalDist) > 12) EndTimeSlice();
+		while ((driveData.distance - driveData.totalDist) > 10) EndTimeSlice();
 		moveGoalIntake(IN, false);
 	}
 
@@ -324,7 +324,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		stackNewCone();
 
 		turnToRealign();
-		driveStraight(-41 + distAdjustment);
+		driveStraight(-39 + distAdjustment);
 	}
 	else {
 		turnToRealign();
@@ -334,7 +334,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		}
 		else {
 			stackNewCone();
-			driveStraight(-41 + distAdjustment);
+			driveStraight(-39 + distAdjustment);
 		}
 	}
 
@@ -355,7 +355,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			if (SKILLZ_MODE)
 				accuDrive(zone==TEN ? 12 : 25);
 			else
-				driveStraight(zone==TEN ? 3 : 21);
+				driveStraight(zone==TEN ? 3 : 19);
 
 			turn(direction * 90);	//accu
 		}
@@ -520,13 +520,16 @@ void altSkillz() {
 
 void counterDefensive(int defensiveDelay) {
 	wait1Msec(defensiveDelay);
-	driveStraight(10);
-	turn(turnDefaults.reversed ? 45 : 50);
+	driveStraight(11);
+	turn(turnDefaults.reversed ? 45 : 45);
 	driveStraight(75);
 	driveAndGoal(-40, OUT, false, false, 2000);
-	turn(30);
+	turn(25);
 	driveStraight(20);
-	driveAndGoal(-35, IN, true);
+	moveGoalIntake(IN, false);
+	stackNewCone();
+	driveStraight(-35);
+	//driveAndGoal(-35, IN, true);
 	turn(130);
 	driveStraight(35);
 	scoreGoal(false);
@@ -622,8 +625,8 @@ task autonomous() {
 					break;
 				case TEN:
 					//turnDriveTurn(90, 3);
-					//turn(-10);
 					moveGoalIntake(OUT, true);
+					//turn(-5);
 					break;
 				case TWENTY:
 					turnDriveTurn(90, 18);
@@ -631,7 +634,7 @@ task autonomous() {
 			}
 
 			driveStraight(-80);
-			turn(-50);
+			turn(-40);
 			driveStraight(30);
 		}
 	}
