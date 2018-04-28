@@ -31,7 +31,7 @@ enum robotId { E_PASSIVE, E_ROLLER, E_PNEUMATIC };
 #define RECKON_IN_SKILLZ false
 #define PULSE_ROLLERS    true
 #define ABORT_AFTER_15   true	//general
-#define USE_ENC_CORR     true
+#define USE_ENC_CORR     false
 #define DRIVE_FOR_10     false
 #define ANTI_MARK        1
 #define ABORT_IF_NO_GOAL false
@@ -228,7 +228,7 @@ float l_offset[NUM_ROBOTS]       = { 3.5,   2.5,  5 };
 float goalToMidDist[NUM_ROBOTS]  = { 17,    12,   17 };	//distance from field diagonal to mid goal
 float lineToGoalDist[NUM_ROBOTS] = { 26,    10,   22 };	//distance from line to mid goal - TODO: wtf?
 float barToLineDist[NUM_ROBOTS]  = { 9,     9,    9 };
-float interConeDist[NUM_ROBOTS]  = { 9,     7.5,  9 };
+float interConeDist[NUM_ROBOTS]  = { 9,     7,    9 };
 //#endregion
 
 //#region cone counts

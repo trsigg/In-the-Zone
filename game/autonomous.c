@@ -173,8 +173,8 @@ void turnDriveTurn(int angle, int dist, int angle2=0) {
 	turn(angle2==0 ? -angle : angle2);
 }
 
-void quadDrive(int dist, bool runAsTask=false) {
-	driveStraight(dist, runAsTask, 30, 120, -20, 250, 20, false);
+void quadDrive(int dist, bool runAsTask=false, float in1=30, float in2=120, float in3=-20, float in4=250, float in5=20) {
+	driveStraight(dist, runAsTask, in1, in2, in3, in4, in5, false);
 }
 
 void accuDrive(int dist, bool runAsTask=false) {
@@ -283,8 +283,8 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		}
 	} else {
 		moveGoalIntake(OUT, false);
-		driveStraight(startingFromBar ? 53 : 45, true);
-		while ((driveData.distance - driveData.totalDist) > 10) EndTimeSlice();
+		driveStraight(startingFromBar ? 51 : 45, true);
+		while ((driveData.distance - driveData.totalDist) > 11.5) EndTimeSlice();
 		moveGoalIntake(IN, false);
 	}
 
@@ -324,7 +324,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		stackNewCone();
 
 		turnToRealign();
-		driveStraight(-39 + distAdjustment);
+		driveStraight(-44 + distAdjustment);
 	}
 	else {
 		turnToRealign();
@@ -334,7 +334,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		}
 		else {
 			stackNewCone();
-			driveStraight(-39 + distAdjustment);
+			driveStraight(-44 + distAdjustment);
 		}
 	}
 
@@ -345,8 +345,9 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		liftToConeSafePos();
 		while (turnData.isTurning) EndTimeSlice();
 		moveGoalIntake(OUT);
-		quadDrive(-13);
+		quadDrive(-13, 30, 90);
 		if (intakeFully) moveGoalIntake(IN);
+
 	}
 	else {	//ten or twenty
 		if (middle || zone==TWENTY || DRIVE_FOR_10) {
@@ -625,11 +626,11 @@ task autonomous() {
 					break;
 				case TEN:
 					//turnDriveTurn(90, 3);
+					turnToAbsAngle(205);
 					moveGoalIntake(OUT, true);
-					//turn(-5);
 					break;
 				case TWENTY:
-					turnDriveTurn(90, 18);
+					turnDriveTurn(90, 13, -100);
 					break;
 			}
 
