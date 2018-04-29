@@ -283,7 +283,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		}
 	} else {
 		moveGoalIntake(OUT, false);
-		driveStraight(startingFromBar ? 51 : 45, true);
+		driveStraight(startingFromBar ? 52 : 45, true);
 		while ((driveData.distance - driveData.totalDist) > 11.5) EndTimeSlice();
 		moveGoalIntake(IN, false);
 	}
@@ -324,7 +324,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		stackNewCone();
 
 		turnToRealign();
-		driveStraight(-44 + distAdjustment);
+		driveStraight(-43 + distAdjustment);
 	}
 	else {
 		turnToRealign();
@@ -334,7 +334,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 		}
 		else {
 			stackNewCone();
-			driveStraight(-44 + distAdjustment);
+			driveStraight(-43 + distAdjustment);
 		}
 	}
 
@@ -356,7 +356,7 @@ void sideGoal(zoneType zone=TWENTY, bool middle=false, int numExtraCones=0, bool
 			if (SKILLZ_MODE)
 				accuDrive(zone==TEN ? 12 : 25);
 			else
-				driveStraight(zone==TEN ? 3 : 19);
+				driveStraight(zone==TEN ? 3 : 16);
 
 			turn(direction * 90);	//accu
 		}
@@ -521,17 +521,17 @@ void altSkillz() {
 
 void counterDefensive(int defensiveDelay) {
 	wait1Msec(defensiveDelay);
-	driveStraight(11);
+	driveStraight(11.5);
 	turn(turnDefaults.reversed ? 45 : 45);
 	driveStraight(75);
-	driveAndGoal(-40, OUT, false, false, 2000);
-	turn(25);
-	driveStraight(20);
+	driveAndGoal(-40, OUT, false, false, 0);
+	turn(30);
+	driveStraight(15);
 	moveGoalIntake(IN, false);
 	stackNewCone();
-	driveStraight(-35);
+	driveStraight(-30);
 	//driveAndGoal(-35, IN, true);
-	turn(130);
+	turn(133);
 	driveStraight(35);
 	scoreGoal(false);
 	turn(135);

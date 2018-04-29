@@ -26,7 +26,10 @@ void handleGoalIntakeInput() {
 			setPower(goalIntake, goalPower);
 			//lift.stillSpeed = 0;
 
-			if (goalPower > goalIntake.stillSpeed) numCones = 0;
+			if (goalPower > goalIntake.stillSpeed) {
+				numCones = 0;
+				lift.stillSpeedReversed = false;
+			}
 		}
 		/*else {
 			lift.stillSpeed = l_StillSpeed[robot];
